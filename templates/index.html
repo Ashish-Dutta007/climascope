@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>D5-2 Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <link href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/chroma-js@2.4.2/chroma.min.js"></script>
+  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+  <link rel="stylesheet" href="/static/styles.css?v={{ av('styles.css') }}" />
+  <link rel="stylesheet" href="/static/css/coverage_panel.css?v={{ av('css/coverage_panel.css') }}" />
+  <link rel="stylesheet" href="/static/css/catchment_panel.css?v={{ av('css/catchment_panel.css') }}" />
+  <link rel="stylesheet" href="/static/css/filter_panel.css?v={{ av('css/filter_panel.css') }}" />
+  <link rel="stylesheet" href="/static/css/dashboard.css?v={{ av('css/dashboard.css') }}" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <div id="sidebar">
+
+    <div id="sidebar-header">
+      <div id="logo-mark">CS</div>
+      <div>
+        <div id="app-title">ClimaScope</div>
+        <div id="app-sub">D5-2 Climate Prototype</div>
+      </div>
+    </div>
+
+    <div id="mode-bar">
+      <button id="mode-explore"   class="mode-btn active">Explore</button>
+      <button id="mode-dashboard" class="mode-btn">Dashboard</button>
+    </div>
+
+    <!-- ===== EXPLORE PANEL ===== -->
+    <div id="panel-explore" class="panel">
+
+      <div class="section">
+        <div class="section-label">
+          Council Area
+          <span id="council-status" class="status-badge"></span>
+        </div>
+        <div class="select-wrap">
+          <select id="council"><option value="">— All Scotland —</option></select>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">
+          Catchment
+          <span id="catchment-status" class="status-badge"></span>
+        </div>
+        <div class="select-wrap">
+          <select id="catchment"><option value="">— All councils —</option></select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section">
+        <div class="section-label">Metric</div>
+        <div id="metric-grid" class="metric-grid">
+          <!-- populated by JS from /api/layers -->
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Period</div>
+        <div class="select-wrap">
+          <select id="period">
+            <option value="1990-2019">1990–2019 (observed)</option>
+            <option value="2020-2049">2020–2049</option>
+            <option value="2050-2079" selected>2050–2079</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">
+          Month&nbsp;<span id="monthLabel" class="month-badge">May</span>
+        </div>
+        <input type="range" id="month" min="1" max="12" value="5"/>
+        <div class="month-ticks">
+          <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
+          <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section">
+        <button id="load" class="primary-btn">↻&nbsp;&nbsp;Refresh Layer</button>
+      </div>
+
+    </div>
+
+    <div id="jhi-credit">
+      <a href="https://www.hutton.ac.uk/" target="_blank" rel="noopener">
+        <img src="https://www.hutton.ac.uk/wp-content/uploads/2024/11/Hutton_logo_Horiz_Web-corner.png"
+             alt="The James Hutton Institute">
+      </a>
+      <span>D5-2 Climate Change Impacts<br>on Natural Capital</span>
+    </div>
+    <div id="sidebar-footer">Contains OS data © Crown copyright</div>
+  </div>
+
+  <!-- ===== MAIN COLUMN (map + dashboard bottom) ===== -->
+  <div id="main-col">
+
+    <!-- ===== MAP AREA ===== -->
+    <div id="map-area">
+      <div id="map"></div>
+      <div id="legend"></div>
+      <div id="loading-bar" class="loading-bar hidden"></div>
+    </div>
+
+    <!-- ===== DASHBOARD BOTTOM PANELS (hidden unless dashboard mode) ===== -->
+    <div id="dash-bottom">
+      <div id="dash-bars"></div>
+      <div id="dash-pie"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== RIGHT PANEL (tabbed: Coverage | Filter) ===== -->
+  <div id="right-panel">
+    <button id="rp-toggle" title="Toggle panel">◀</button>
+    <div id="right-panel-inner">
+      <div class="rp-tabbar">
+        <button class="rp-tab active" data-tab="coverage">Coverage</button>
+        <button class="rp-tab"        data-tab="filter">Filter</button>
+      </div>
+      <div id="coverage-panel" class="rp-pane"></div>
+      <div id="filter-panel"   class="rp-pane hidden"></div>
+    </div>
+  </div>
+
+</div>
+<script src="/static/js/coverage_panel.js?v={{ av('js/coverage_panel.js') }}"></script>
+<script src="/static/js/catchment_panel.js?v={{ av('js/catchment_panel.js') }}"></script>
+<script src="/static/js/filter_panel.js?v={{ av('js/filter_panel.js') }}"></script>
+<script src="/static/js/dashboard.js?v={{ av('js/dashboard.js') }}"></script>
+<script src="/static/script.js?v={{ av('script.js') }}"></script>
+</body>
+</html>

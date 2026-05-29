@@ -1,0 +1,9 @@
+services:
+  climascope:
+    build: .
+    ports:
+      - "8123:8000"
+    volumes:
+      - ./data:/data
+    shm_size: '256m'
+    restart: unless-stopped

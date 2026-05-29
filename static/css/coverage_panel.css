@@ -1,0 +1,335 @@
+/* ==========================================================
+   COVERAGE PANEL  — right-hand sidebar
+   ========================================================== */
+
+#map-area {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+#coverage-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* ── Mobile collapse handle ── */
+.cp-collapse-handle {
+  display: none;
+  justify-content: center;
+  padding: 6px 0 2px;
+  cursor: pointer;
+}
+.cp-collapse-handle::before {
+  content: '';
+  display: block;
+  width: 32px; height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.2);
+}
+@media (max-width: 767px) {
+  .cp-collapse-handle { display: flex; }
+}
+
+/* ── Header ── */
+.cp-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.cp-scope-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.cp-scope-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Segmented scope toggle */
+.cp-toggle {
+  display: flex;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cp-toggle-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: transparent;
+  color: rgba(255,255,255,.4);
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.cp-toggle-btn + .cp-toggle-btn {
+  border-left: 1px solid var(--border-default);
+}
+
+.cp-toggle-btn.active {
+  background: rgba(59,130,246,.3);
+  color: var(--accent-light);
+}
+
+.cp-toggle-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* Subheader: metric/month tags + "Show periods" button */
+.cp-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cp-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,.3);
+}
+
+.cp-meta-tag {
+  background: rgba(255,255,255,.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: .3px;
+}
+
+/* "Show periods" toggle button */
+.cp-period-btn {
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border-default);
+  color: rgba(255,255,255,.4);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cp-period-btn:hover {
+  background: rgba(255,255,255,.09);
+  color: rgba(255,255,255,.7);
+}
+
+.cp-period-btn.active {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+/* ── Period pair selector row ── */
+.cp-period-pair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 5px;
+  flex-shrink: 0;
+}
+
+.cp-pp-label {
+  font-size: 10px;
+  color: rgba(255,255,255,.3);
+  white-space: nowrap;
+}
+
+.cp-pp-vs {
+  font-size: 10px;
+  color: rgba(255,255,255,.25);
+}
+
+.cp-pp-sel {
+  font-size: 10px;
+  padding: 2px 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--text-primary);
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.cp-pp-sel:focus { outline: none; border-color: var(--accent); }
+
+/* ── Legend strip ── */
+.cp-legend-strip {
+  display: flex;
+  gap: 12px;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  flex-shrink: 0;
+}
+
+.cp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: rgba(255,255,255,.35);
+}
+
+.cp-legend-swatch {
+  width: 12px;
+  height: 6px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ── Body ── */
+.cp-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.07) transparent;
+  padding: 2px 0;
+}
+
+.cp-sparse-msg {
+  padding: 6px 10px 2px;
+  font-size: 10px;
+  color: rgba(255,255,255,.35);
+  font-style: italic;
+}
+
+.cp-loading, .cp-error {
+  padding: 18px 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+  text-align: center;
+}
+
+.cp-error { color: #ff6b6b; }
+
+/* ── Rows ── */
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  min-height: 32px;
+  transition: background .1s;
+}
+
+.cp-row:hover { background: rgba(255,255,255,.02); }
+
+.cp-row-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 128px;
+  min-width: 128px;
+  flex-shrink: 0;
+}
+
+.cp-lc-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cp-lc-info { min-width: 0; }
+
+.cp-lc-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cp-lc-area {
+  font-size: 9px;
+  color: rgba(255,255,255,.28);
+  margin-top: 1px;
+}
+
+.cp-bar-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.cp-bar-cell svg {
+  width: 100%;
+  overflow: visible;
+}
+
+.cp-bar-empty {
+  width: 100%;
+  height: 6px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.04);
+}
+
+.cp-delta-cell {
+  width: 52px;
+  min-width: 52px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cp-delta-bad     { color: var(--error); }
+.cp-delta-good    { color: #22c55e; }
+.cp-delta-neutral { color: rgba(255,255,255,.4); }
+.cp-dash          { color: rgba(255,255,255,.18); font-weight: 400; }
+
+/* ── Totals row ── */
+.cp-row-totals {
+  background: rgba(59,130,246,.06);
+  border-top: 1px solid rgba(255,255,255,.07) !important;
+  border-bottom: none !important;
+}
+
+.cp-row-totals .cp-lc-name { font-weight: 700; }
+
+/* ── Footer ── */
+.cp-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+}
+
+/* ← Scotland back link */
+.cp-back-link {
+  font-size: 10px;
+  color: rgba(139,171,255,.7);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.cp-back-link:hover { color: var(--accent-light); }

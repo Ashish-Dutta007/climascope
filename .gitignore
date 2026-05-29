@@ -1,0 +1,32 @@
+# Data files — too large for git, and some are under third-party licensing terms
+data/
+
+# Job outputs generated at runtime
+data/outputs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+logs/
+
+# Runtime process files
+*.pid
+
+# Environment / secrets
+.env
+
+# R and HDF5 outputs (precompute pipeline artefacts)
+*.rds
+*.h5
+
+# Virtual environment (included in repo for deployment convenience,
+# but should not be tracked — re-create with pip install -r requirements.txt)
+venv/
+
+# Editor
+.idea/
+*.swp
