@@ -1,6 +1,4 @@
-/* ==========================================================
-   RIGHT PANEL WRAPPER — tab host for Coverage + Catchment
-   ========================================================== */
+
 
 #right-panel {
   position: relative;
@@ -117,9 +115,7 @@ body.dashboard-mode #rp-toggle {
   #rp-toggle { display: none !important; }
 }
 
-/* ==========================================================
-   CATCHMENT PANEL
-   ========================================================== */
+
 
 #catchment-panel {
   overflow-y: auto;
