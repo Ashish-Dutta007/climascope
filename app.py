@@ -266,14 +266,22 @@ def slice_facts(metric, period, month, member):
         precomp = os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={month}.parquet")
         if os.path.exists(precomp):
             return pd.read_parquet(precomp, columns=["id_1km", "Change"])
+    else:
+        # Prefer precomputed member parquet when available
+        member_precomp = _resolve_precomp_path(metric, period, str(month), member)
+        if os.path.exists(member_precomp):
+            return pd.read_parquet(member_precomp, columns=["id_1km", "Change"])
 
     dset = get_dset()
     filt = (ds.field("Metric")==metric) & (ds.field("Period")==period) & (ds.field("Month")==month)
     cols = ["id_1km","Change"]
     if member:
-        try:    member_val = int(member)
-        except: member_val = member
-        filt = filt & (ds.field("Member")==member_val)
+        # Raw dataset stores member as float string: "1.0", "7.0", not "01", "07"
+        try:
+            member_raw = f"{int(member)}.0"
+        except (ValueError, TypeError):
+            member_raw = str(member)
+        filt = filt & (ds.field("Member") == member_raw)
         cols.append("Member")
     tbl = dset.to_table(columns=cols, filter=filt)
     df  = tbl.to_pandas()
@@ -310,6 +318,20 @@ app.jinja_env.globals["av"] = _asset_v
 def index():
     from flask import render_template, make_response
     resp = make_response(render_template("index.html"))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+@app.route("/immersive")
+def immersive():
+    from flask import render_template, make_response
+    resp = make_response(render_template("immersive.html"))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+@app.route("/immersive/control")
+def immersive_control():
+    from flask import render_template, make_response
+    resp = make_response(render_template("immersive_control.html"))
     resp.headers["Cache-Control"] = "no-store"
     return resp
 
@@ -820,13 +842,14 @@ def timeseries():
     metric  = request.args.get("metric", "CWBPT")
     period  = request.args.get("period", "2020-2049")
     cell_id = request.args.get("id_1km", type=int)
+    member  = request.args.get("member", None)
 
     if cell_id is None:
         return jsonify({"error": "MISSING_ID"}), 400
 
     months, values = [], []
     for m in range(1, 13):
-        fpath = os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={m}.parquet")
+        fpath = _resolve_precomp_path(metric, period, str(m), member)
         if not os.path.exists(fpath):
             continue
         tbl = pq.read_table(fpath, columns=["id_1km", "Change"],
@@ -1171,7 +1194,7 @@ def _nf(x):
         return None
 
 
-def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period_2='2050-2079', aoi_cell_ids=None):
+def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period_2='2050-2079', aoi_cell_ids=None, member=None):
     metric_type = COVERAGE_METRIC_TYPES[metric]
     is_balance  = metric_type == 'balance'
     thr         = float(threshold)
@@ -1196,9 +1219,16 @@ def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period
         cell_ids   = _COUNCIL_CELLS[council_name]
         scope_info = {'type': 'council', 'id': council_name, 'name': council_name}
 
-    # Check data exists
-    curr_glob = os.path.join(PRECOMP_DIR, f'Metric={metric}', f'Period={period_1}', 'Month=*.parquet')
-    fut_glob  = os.path.join(PRECOMP_DIR, f'Metric={metric}', f'Period={period_2}', 'Month=*.parquet')
+    # Check data exists — use member-specific parquets when available, fall back to mean
+    def _cglob(period):
+        if member and member != 'mean' and period != '1990-2019' and member in _VALID_MEMBERS:
+            g = os.path.join(PRECOMP_DIR, f'Metric={metric}', f'Period={period}', 'Month=*', f'Member={member}.parquet')
+            if _glob.glob(g):
+                return g
+        return os.path.join(PRECOMP_DIR, f'Metric={metric}', f'Period={period}', 'Month=*.parquet')
+
+    curr_glob = _cglob(period_1)
+    fut_glob  = _cglob(period_2)
     if not _glob.glob(curr_glob):
         raise FileNotFoundError(f"No precomputed data for metric={metric}, Period={period_1}")
     if not _glob.glob(fut_glob):
@@ -1348,8 +1378,8 @@ def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period
 
 
 @lru_cache(maxsize=512)
-def _coverage_json_cached(metric, scope_str, threshold, period_1='2020-2049', period_2='2050-2079'):
-    return json.dumps(_compute_coverage(metric, scope_str, threshold, period_1=period_1, period_2=period_2))
+def _coverage_json_cached(metric, scope_str, threshold, period_1='2020-2049', period_2='2050-2079', member=None):
+    return json.dumps(_compute_coverage(metric, scope_str, threshold, period_1=period_1, period_2=period_2, member=member))
 
 
 @app.route('/api/coverage', methods=['GET', 'POST'])
@@ -1361,6 +1391,9 @@ def coverage():
         cell_ids = body.get('cell_ids')
         period_1 = str(body.get('period_1', '2020-2049')).strip()
         period_2 = str(body.get('period_2', '2050-2079')).strip()
+        member   = body.get('member', None)
+        if member and member not in _VALID_MEMBERS:
+            member = None
 
         if metric not in COVERAGE_METRIC_TYPES:
             return jsonify({'error': f'Unknown metric: {metric!r}. Valid: {list(COVERAGE_METRIC_TYPES)}'}), 400
@@ -1371,7 +1404,7 @@ def coverage():
         except ValueError:
             return jsonify({'error': f'Invalid threshold: {thr_s!r}'}), 400
         try:
-            result = _compute_coverage(metric, 'aoi', threshold, period_1=period_1, period_2=period_2, aoi_cell_ids=cell_ids)
+            result = _compute_coverage(metric, 'aoi', threshold, period_1=period_1, period_2=period_2, aoi_cell_ids=cell_ids, member=member)
             return jsonify(result)
         except Exception as e:
             app.logger.exception('coverage AOI error')
@@ -1383,6 +1416,9 @@ def coverage():
     thr_s    = request.args.get('threshold', '0').strip()
     period_1 = request.args.get('period_1', '2020-2049').strip()
     period_2 = request.args.get('period_2', '2050-2079').strip()
+    member   = request.args.get('member', None)
+    if member and member not in _VALID_MEMBERS:
+        member = None
 
     if metric not in COVERAGE_METRIC_TYPES:
         return jsonify({'error': f'Unknown metric: {metric!r}. Valid: {list(COVERAGE_METRIC_TYPES)}'}), 400
@@ -1399,7 +1435,7 @@ def coverage():
         return jsonify({'error': f'Invalid threshold: {thr_s!r}'}), 400
 
     try:
-        result_json = _coverage_json_cached(metric, scope, threshold, period_1, period_2)
+        result_json = _coverage_json_cached(metric, scope, threshold, period_1, period_2, member)
         return app.response_class(result_json, mimetype='application/json')
     except KeyError as e:
         return jsonify({'error': f'Council not found: {e}'}), 400
@@ -1706,6 +1742,16 @@ def _precomp_path(metric: str, period: str, month: str) -> str:
     return os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={month}.parquet")
 
 
+def _resolve_precomp_path(metric: str, period: str, month: str, member: str | None = None) -> str:
+    """Return member-specific parquet path if valid and present, else fall back to mean."""
+    if member and member != 'mean' and period != '1990-2019' and member in _VALID_MEMBERS:
+        p = os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}",
+                         f"Month={month}", f"Member={member}.parquet")
+        if os.path.exists(p):
+            return p
+    return _precomp_path(metric, period, month)
+
+
 @app.route('/tiles/<int:z>/<int:x>/<int:y>.pbf')
 def serve_tile(z, x, y):
     with sqlite3.connect(MBTILES_FILE) as conn:
@@ -1722,17 +1768,133 @@ def serve_tile(z, x, y):
     return resp
 
 
+_VALID_MEMBERS = {'01','04','05','06','07','08','09','10','11','12','13','15'}
+
+# Metrics and periods served by the immersive wall display
+_IMMERSIVE_PANELS  = ('CWBPT', 'Prec_sum', 'Tmax_mean', 'ETPT_sum')
+_IMMERSIVE_PERIODS = (
+    ('1990-2019', 'obs_value'),   # absolute baseline
+    ('2020-2049', 'proj_value'),  # absolute projected
+    ('2050-2079', 'proj_value'),  # absolute projected
+)
+
+
+@app.route('/api/immersive_values')
+def get_immersive_values():
+    """Batch endpoint for the wall display.
+
+    Returns all 4 metrics × 3 periods in one response:
+      {metric: {period: {id_1km_str: value}}}
+
+    Column logic mirrors /api/values with ?col= param:
+      - 1990-2019  → obs_value  (absolute baseline)
+      - 2020-2049, 2050-2079 → proj_value (absolute projected)
+      - Specific member + future period + member parquet present → same absolute column from member parquet
+
+    Uses a single UNION ALL query across all 12 parquet files so DuckDB can
+    parallelise the reads (~1.2 s warm vs ~2.2 s serial).  flask_compress
+    (already active globally) brotli-compresses the ~27 MB JSON to ~7.8 MB.
+    """
+    month  = request.args.get('month', '7')
+    member = request.args.get('member', None)
+
+    try:
+        month_int = int(month)
+        if not 1 <= month_int <= 12:
+            raise ValueError
+    except ValueError:
+        return jsonify({'error': 'month must be 1–12'}), 400
+    month = str(month_int)
+
+    if member and member != 'mean':
+        if member not in _VALID_MEMBERS:
+            return jsonify({'error': f'invalid member {member!r}'}), 400
+
+    # Collect (metric, period, col, path) for every combination that exists on disk.
+    # Paths are constructed from server-side constants; only month is user-supplied
+    # (validated above to be a digit 1–12, so safe to embed in filesystem paths).
+    parts  = []   # SQL fragments for UNION ALL
+    params = []   # positional params for metric/period labels and path
+
+    for metric in _IMMERSIVE_PANELS:
+        for period, default_col in _IMMERSIVE_PERIODS:
+            col = default_col
+            if member and member != 'mean' and period != '1990-2019':
+                member_path = os.path.join(
+                    PRECOMP_DIR, f"Metric={metric}", f"Period={period}",
+                    f"Month={month}", f"Member={member}.parquet"
+                )
+                if os.path.exists(member_path):
+                    path = member_path
+                else:
+                    path = _precomp_path(metric, period, month)
+            else:
+                path = _precomp_path(metric, period, month)
+
+            if not os.path.exists(path):
+                continue
+
+            # col comes from _IMMERSIVE_PERIODS (hardcoded); double-quote it for DuckDB.
+            # metric, period and path are passed as ? params.
+            parts.append(
+                f'SELECT ? AS metric, ? AS period, id_1km, "{col}" AS value'
+                f' FROM read_parquet(?)'
+            )
+            params.extend([metric, period, path])
+
+    result = {m: {p: {} for p, _ in _IMMERSIVE_PERIODS} for m in _IMMERSIVE_PANELS}
+
+    if parts:
+        con = duckdb.connect(':memory:')
+        try:
+            rows = con.execute(' UNION ALL '.join(parts), params).fetchall()
+            for (metric, period, id_1km, value) in rows:
+                result[metric][period][str(id_1km)] = value
+        finally:
+            con.close()
+
+    resp = jsonify(result)
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+
 @app.route('/api/values')
 def get_values():
     metric = request.args.get('metric', 'CWBPT')
     period = request.args.get('period', '2050-2079')
     month  = request.args.get('month', '7')
+    member = request.args.get('member', None)
 
     if metric in _INVALID_METRICS and period not in _CWR_VALID_PERIODS:
         return jsonify({'error': f'{metric} data not available for period {period!r}'}), 404
 
-    col  = 'obs_value' if period == '1990-2019' else 'Change'
-    path = _precomp_path(metric, period, month)
+    if member and member != 'mean':
+        if member not in _VALID_MEMBERS:
+            return jsonify({'error': f'invalid member {member!r}; valid: {sorted(_VALID_MEMBERS)}'}), 400
+
+    _ALLOWED_COL = {'proj_value', 'obs_value'}
+    _col_override = request.args.get('col')
+    if _col_override in _ALLOWED_COL:
+        col = _col_override
+    else:
+        col = 'obs_value' if period == '1990-2019' else 'Change'
+
+    fallback = False
+    if member and member != 'mean' and period != '1990-2019':
+        member_path = os.path.join(
+            PRECOMP_DIR, f"Metric={metric}", f"Period={period}",
+            f"Month={month}", f"Member={member}.parquet"
+        )
+        if os.path.exists(member_path):
+            path = member_path
+            if _col_override not in _ALLOWED_COL:
+                col = 'Change'
+        else:
+            path = _precomp_path(metric, period, month)
+            fallback = True
+    else:
+        path = _precomp_path(metric, period, month)
+
     if not os.path.exists(path):
         return jsonify({'error': 'not found'}), 404
 
@@ -1745,6 +1907,8 @@ def get_values():
     result = {str(r[0]): r[1] for r in rows}
     resp = jsonify(result)
     resp.headers['Cache-Control'] = 'public, max-age=3600'
+    if fallback:
+        resp.headers['X-Fallback'] = 'mean'
     return resp
 
 
@@ -1761,13 +1925,16 @@ def filter_range():
     period = request.args.get("period", "").strip()
     month  = request.args.get("month",  "").strip()
     scope  = request.args.get("scope", "national").strip()
+    member = request.args.get("member", None)
+    if member:
+        member = member.strip()
 
     if not metric or not period or not month:
         return jsonify({"error": "metric, period and month are required"}), 400
     if metric not in COVERAGE_METRIC_TYPES:
         return jsonify({"error": f"unknown metric: {metric!r}"}), 400
 
-    path = _precomp_path(metric, period, month)
+    path = _resolve_precomp_path(metric, period, month, member)
     if not os.path.exists(path):
         return jsonify({"error": f"no data for {metric}/{period}/Month={month}"}), 404
 
@@ -1804,6 +1971,7 @@ def filter_query():
     logic   = body.get("logic", "AND").upper()
     scope   = body.get("scope", "national")
     aoi_ids = body.get("aoi_ids")  # explicit cell list when scope=='aoi'
+    member  = body.get("member", None)
 
     if not rules:
         return jsonify({"error": "rules must be a non-empty list"}), 400
@@ -1847,7 +2015,7 @@ def filter_query():
                     [lc_path, lc_name, thr]
                 )
             else:
-                path = _precomp_path(r["metric"], r["period"], str(r["month"]))
+                path = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
                 if not os.path.exists(path):
                     conn.close()
                     return jsonify({"error": f"rule[{i}] no data for {r['metric']}/{r['period']}/Month={r['month']}"}), 404
@@ -1909,6 +2077,7 @@ def filter_export():
     scope   = body.get("scope", "national")
     aoi_ids = body.get("aoi_ids")
     fmt     = body.get("fmt", "csv")
+    member  = body.get("member", None)
     if fmt not in ("csv", "geojson"):
         fmt = "csv"
 
@@ -1930,7 +2099,7 @@ def filter_export():
         conn = duckdb.connect(":memory:")
         subqueries = []
         for i, r in enumerate(rules):
-            path = _precomp_path(r["metric"], r["period"], str(r["month"]))
+            path = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
             if not os.path.exists(path):
                 conn.close()
                 return jsonify({"error": f"rule[{i}] no data for {r['metric']}/{r['period']}/Month={r['month']}"}), 404
@@ -1981,7 +2150,7 @@ def filter_export():
     })
 
     for r in rules:
-        path  = _precomp_path(r["metric"], r["period"], str(r["month"]))
+        path  = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
         col   = _filter_col(r["metric"])
         cname = f"{r['metric']}_{r['period']}_{r['month']}"
         try:
@@ -2039,6 +2208,7 @@ def aoi_features():
     metric  = body.get("metric", "CWBPT")
     period  = body.get("period", "2050-2079")
     month   = int(body.get("month", 7))
+    member  = body.get("member", None)
 
     if not geom_gj:
         return jsonify({"error": "geometry required"}), 400
@@ -2062,7 +2232,7 @@ def aoi_features():
         return jsonify({"type": "FeatureCollection", "features": []})
 
     cell_ids = frozenset(sub["id_1km"].astype(int).tolist())
-    df = slice_facts(metric, period, month, None)
+    df = slice_facts(metric, period, month, member)
     if df.empty:
         return jsonify({"type": "FeatureCollection", "features": []})
 
