@@ -935,6 +935,46 @@ def lidar_coverage():
     return jsonify(_lidar_cov)
 
 
+_terrain_df = None
+# variable -> (column, label, units)
+TERRAIN_VARS = {
+    "elevation":  ("elev_mean",  "Elevation (mean)", "m"),
+    "slope":      ("slope_mean", "Slope (mean)",     "°"),
+    "ruggedness": ("ruggedness", "Ruggedness (TRI)", "m"),
+    "roughness":  ("roughness",  "Roughness",        "m"),
+}
+
+def _get_terrain():
+    global _terrain_df
+    if _terrain_df is None:
+        path = _data("data/terrain_metrics.parquet")
+        _terrain_df = pd.read_parquet(path) if os.path.exists(path) else pd.DataFrame()
+    return _terrain_df
+
+@app.route("/api/terrain/vars", methods=["GET"])
+def terrain_vars():
+    df = _get_terrain()
+    return jsonify({
+        "available": not df.empty,
+        "count": int(len(df)),
+        "vars": [{"id": k, "label": v[1], "units": v[2]} for k, v in TERRAIN_VARS.items()],
+    })
+
+@app.route("/api/terrain", methods=["GET"])
+def terrain():
+    """Per-cell terrain values for one variable: {id_1km: value}. Static (no period/month)."""
+    var = request.args.get("var", "elevation")
+    if var not in TERRAIN_VARS:
+        return jsonify({"error": f"unknown var {var!r}"}), 400
+    df = _get_terrain()
+    if df.empty:
+        return jsonify({"error": "NO_TERRAIN_DATA"}), 404
+    col = TERRAIN_VARS[var][0]
+    sub = df[["id_1km", col]].dropna()
+    return jsonify({str(int(i)): round(float(v), 2)
+                    for i, v in zip(sub["id_1km"], sub[col])})
+
+
 @lru_cache(maxsize=256)
 def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
     if not variable or variable == 'LCM':

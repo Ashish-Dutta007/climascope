@@ -694,7 +694,18 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   accent-color: var(--accent-light);
   cursor: pointer;
 }
-#lc-legend, #lidar-legend {
+.overlay-select {
+  margin-top: 2px;
+  width: 100%;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+#lc-legend, #lidar-legend, #terrain-legend {
   position: absolute;
   bottom: 172px;
   left: 8px;
@@ -706,11 +717,21 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   border: 1px solid var(--border-subtle);
   box-shadow: 0 4px 20px rgba(0,0,0,.5);
   backdrop-filter: blur(8px);
+  min-width: 150px;
 }
-#lc-legend .legend-title, #lidar-legend .legend-title {
+#lc-legend .legend-title, #lidar-legend .legend-title, #terrain-legend .legend-title {
   font-size: 9px; font-weight: 600; letter-spacing: .6px;
   text-transform: uppercase; color: rgba(255,255,255,.3);
   margin-bottom: 8px;
+}
+#terrain-legend .legend-subtitle {
+  font-size: 9px; color: rgba(255,255,255,.2);
+  margin-top: -5px; margin-bottom: 8px;
+}
+#terrain-legend .legend-ramp { height: 10px; border-radius: 3px; margin-bottom: 6px; }
+#terrain-legend .legend-labels {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: rgba(255,255,255,.35);
 }
 .lc-legend-row {
   display: flex;

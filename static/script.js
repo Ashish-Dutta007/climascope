@@ -161,6 +161,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const LIDAR_FILL_COLOR = ['match', ['coalesce', ['feature-state', 'lcov'], 0],
     3, '#0e7490', 2, '#22d3ee', 1, '#a5f3fc', 'rgba(0,0,0,0)'];
 
+  // Terrain: sequential ramps per variable, driven by feature-state 'tval'
+  const TERRAIN_RAMPS = {
+    elevation:  ['#2c7bb6', '#78c679', '#fdae61', '#8c510a', '#f7f7f7'],
+    slope:      ['#ffffcc', '#fd8d3c', '#bd0026'],
+    ruggedness: ['#ffffcc', '#fd8d3c', '#bd0026'],
+    roughness:  ['#ffffcc', '#fd8d3c', '#bd0026'],
+  };
+  function _terrainStops(lo, hi, ramp) {
+    const n = ramp.length, out = [];
+    for (let i = 0; i < n; i++) out.push(lo + (hi - lo) * i / (n - 1), ramp[i]);
+    return out;
+  }
+  function buildTerrainColor(lo, hi, varId) {
+    const ramp = TERRAIN_RAMPS[varId] || TERRAIN_RAMPS.slope;
+    const fs = ['feature-state', 'tval'];
+    return ['case', ['==', fs, null], 'rgba(0,0,0,0)',
+      ['interpolate', ['linear'], fs, ..._terrainStops(lo, hi, ramp)]];
+  }
+
   let mode            = 'explore';
   let _drawActive     = false;
   let activeCouncil   = null;
@@ -181,6 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let _lcDominant      = null;   // cached /api/landcover/dominant payload
   let lidarOverlayOn   = false;
   let _lidarCov        = null;   // cached /api/lidar/coverage payload
+  let terrainOverlayOn = false;
+  let terrainVar       = 'elevation';
+  const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
+  let _terrainApplied  = false;  // whether feature-states are currently set
 
   // Whole-of-Scotland framing incl. Orkney & Shetland — reused on load and on "All Scotland" reset
   const SCOTLAND_VIEW = { center: [-4.0, 57.9], zoom: 5.5 };
@@ -247,6 +270,13 @@ document.addEventListener('DOMContentLoaded', () => {
     <div id="overlay-body">
       <label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
       <label><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
+      <label><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
+      <select id="terrain-var" class="overlay-select" style="display:none">
+        <option value="elevation">Elevation</option>
+        <option value="slope">Slope</option>
+        <option value="ruggedness">Ruggedness</option>
+        <option value="roughness">Roughness</option>
+      </select>
     </div>`;
   map.getContainer().appendChild(_ovEl);
   document.getElementById('overlay-head').addEventListener('click', () => {
@@ -257,13 +287,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Overlays are mutually exclusive — two feature-state fills on the same cells
   // would muddy each other, so turning one on clears the other.
   document.getElementById('lc-overlay-cb').addEventListener('change', e => {
-    if (e.target.checked) _setLidarOverlay(false);
+    if (e.target.checked) { _setLidarOverlay(false); _setTerrainOverlay(false); }
     toggleLcOverlay(e.target.checked);
   });
   document.getElementById('lidar-overlay-cb').addEventListener('change', e => {
-    if (e.target.checked) _setLcOverlay(false);
+    if (e.target.checked) { _setLcOverlay(false); _setTerrainOverlay(false); }
     toggleLidarOverlay(e.target.checked);
   });
+  document.getElementById('terrain-overlay-cb').addEventListener('change', e => {
+    if (e.target.checked) { _setLcOverlay(false); _setLidarOverlay(false); }
+    document.getElementById('terrain-var').style.display = e.target.checked ? 'block' : 'none';
+    toggleTerrainOverlay(e.target.checked);
+  });
+  document.getElementById('terrain-var').addEventListener('change', e => {
+    terrainVar = e.target.value;
+    if (terrainOverlayOn) loadTerrainVar(terrainVar);
+  });
+  // Terrain data may not be present — disable the toggle with a hint until it is.
+  (async () => {
+    const cb = document.getElementById('terrain-overlay-cb');
+    const lbl = cb?.closest('label');
+    try {
+      const info = await fetch('/api/terrain/vars').then(r => r.json());
+      if (!info.available) {
+        cb.disabled = true;
+        if (lbl) { lbl.style.opacity = '.45'; lbl.title = 'Terrain data not available yet'; }
+      }
+    } catch(_) {
+      if (cb) cb.disabled = true;
+    }
+  })();
   function _setLcOverlay(on) {
     const cb = document.getElementById('lc-overlay-cb');
     if (cb && cb.checked !== on) { cb.checked = on; toggleLcOverlay(on); }
@@ -271,6 +324,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function _setLidarOverlay(on) {
     const cb = document.getElementById('lidar-overlay-cb');
     if (cb && cb.checked !== on) { cb.checked = on; toggleLidarOverlay(on); }
+  }
+  function _setTerrainOverlay(on) {
+    const cb = document.getElementById('terrain-overlay-cb');
+    if (cb && cb.checked !== on) {
+      cb.checked = on;
+      document.getElementById('terrain-var').style.display = on ? 'block' : 'none';
+      toggleTerrainOverlay(on);
+    }
   }
 
   // ===== LAND-COVER OVERLAY =====
@@ -423,6 +484,83 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leg) leg.style.display = on ? 'block' : 'none';
   }
   // ===== END LIDAR COVERAGE OVERLAY =====
+
+  // ===== TERRAIN OVERLAY (Phase 1) =====
+  const TERRAIN_LABELS = {
+    elevation: ['Elevation', 'm'], slope: ['Slope', '°'],
+    ruggedness: ['Ruggedness', 'm'], roughness: ['Roughness', 'm'],
+  };
+
+  function _applyTerrainStates(data) {
+    for (const id in data) {
+      map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: +id }, { tval: data[id] });
+    }
+    _terrainApplied = true;
+  }
+  function _clearTerrainStates() {
+    if (!_terrainApplied) return;
+    const cur = _terrainCache[terrainVar];
+    if (cur) for (const id in cur.data)
+      map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: +id }, { tval: null });
+    _terrainApplied = false;
+  }
+
+  function _renderTerrainLegend(varId, lo, hi) {
+    let leg = document.getElementById('terrain-legend');
+    if (!leg) { leg = document.createElement('div'); leg.id = 'terrain-legend'; map.getContainer().appendChild(leg); }
+    const [label, units] = TERRAIN_LABELS[varId] || [varId, ''];
+    const ramp = TERRAIN_RAMPS[varId] || TERRAIN_RAMPS.slope;
+    const grad = `linear-gradient(to right, ${ramp.join(',')})`;
+    leg.innerHTML =
+      `<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>`
+      + `<div class="legend-subtitle">LiDAR-derived · 1km</div>`
+      + `<div class="legend-ramp" style="background:${grad}"></div>`
+      + `<div class="legend-labels"><span>${lo.toFixed(lo<10?1:0)}</span><span>${hi.toFixed(hi<10?1:0)}</span></div>`;
+    leg.style.display = 'block';
+  }
+
+  function _syncTerrainDimming() {
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', terrainOverlayOn ? 0.1 : 1.0); } catch(_) {}
+    try { map.setPaintProperty('grid-fill', 'fill-opacity', terrainOverlayOn ? Math.min(layerOpacity, 0.1) : layerOpacity); } catch(_) {}
+  }
+
+  async function loadTerrainVar(varId) {
+    let entry = _terrainCache[varId];
+    if (!entry) {
+      try {
+        const resp = await fetch(`/api/terrain?var=${encodeURIComponent(varId)}`);
+        if (!resp.ok) throw new Error(resp.status);
+        const data = await resp.json();
+        const vals = Object.values(data).filter(v => v != null && isFinite(v));
+        if (!vals.length) throw new Error('empty');
+        entry = { data, min: Math.min(...vals), max: Math.max(...vals) };
+        _terrainCache[varId] = entry;
+      } catch(_) { return false; }
+    }
+    _clearTerrainStates();
+    map.setPaintProperty('terrain-fill', 'fill-color', buildTerrainColor(entry.min, entry.max, varId));
+    _applyTerrainStates(entry.data);
+    _renderTerrainLegend(varId, entry.min, entry.max);
+    return true;
+  }
+
+  async function toggleTerrainOverlay(on) {
+    terrainOverlayOn = on;
+    if (on) {
+      const ok = await loadTerrainVar(terrainVar);
+      if (!ok) {
+        terrainOverlayOn = false;
+        const cb = document.getElementById('terrain-overlay-cb');
+        if (cb) { cb.checked = false; document.getElementById('terrain-var').style.display = 'none'; }
+        return;
+      }
+    }
+    try { map.setLayoutProperty('terrain-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    _syncTerrainDimming();
+    const leg = document.getElementById('terrain-legend');
+    if (leg) leg.style.display = on ? 'block' : 'none';
+  }
+  // ===== END TERRAIN OVERLAY =====
 
   // ===== PLACE SEARCH =====
   (function() {
@@ -678,6 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
       paint: { 'fill-antialias': false, 'fill-color': LIDAR_FILL_COLOR, 'fill-opacity': 0.8 }
     });
 
+    // Terrain overlay — continuous LiDAR-derived values (see TERRAIN OVERLAY)
+    map.addLayer({
+      id: 'terrain-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
+      layout: { visibility: 'none' },
+      paint: { 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': 0.9 }
+    });
+
     // Filter-results outline layer (independent source). Matched cells keep their
     // real choropleth colour — no fill — and get a thin neutral border; non-matched
     // cells are dimmed via grid-fill-mask.
@@ -895,6 +1040,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lidarOverlayOn) {
       _applyLidarStates();            // feature-states dropped on basemap switch
       _syncLidarDimming();
+    }
+
+    if (!map.getLayer('terrain-fill'))
+      map.addLayer({ id:'terrain-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
+        layout:{ visibility: terrainOverlayOn ? 'visible' : 'none' },
+        paint:{ 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': 0.9 } });
+    else
+      map.setLayoutProperty('terrain-fill', 'visibility', terrainOverlayOn ? 'visible' : 'none');
+    if (terrainOverlayOn) {
+      _terrainApplied = false;        // feature-states dropped on basemap switch
+      loadTerrainVar(terrainVar);
+      _syncTerrainDimming();
     }
 
     if (!map.getLayer('filter-cells-line'))
