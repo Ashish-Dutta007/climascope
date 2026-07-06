@@ -201,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lidarOverlayOn   = false;
   let _lidarCov        = null;   // cached /api/lidar/coverage payload
   let terrainOverlayOn = false;
+  let hillshadeOn      = false;
   let terrainVar       = 'elevation';
   const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
   let _terrainApplied  = false;  // whether feature-states are currently set
@@ -277,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="ruggedness">Ruggedness</option>
         <option value="canopy">Canopy height</option>
       </select>
+      <div class="overlay-divider"></div>
+      <label><input type="checkbox" id="hillshade-cb"> Hillshade (LiDAR)</label>
     </div>`;
   map.getContainer().appendChild(_ovEl);
   document.getElementById('overlay-head').addEventListener('click', () => {
@@ -316,6 +319,20 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(_) {
       if (cb) cb.disabled = true;
     }
+  })();
+
+  // Hillshade raster layer — independent base terrain (renders under the data).
+  document.getElementById('hillshade-cb').addEventListener('change', e => toggleHillshade(e.target.checked));
+  (async () => {
+    const cb = document.getElementById('hillshade-cb');
+    const lbl = cb?.closest('label');
+    try {
+      const info = await fetch('/api/terrain/hillshade_info').then(r => r.json());
+      if (!info.available) {
+        cb.disabled = true;
+        if (lbl) { lbl.style.opacity = '.45'; lbl.title = 'Hillshade not available yet'; }
+      }
+    } catch(_) { if (cb) cb.disabled = true; }
   })();
   function _setLcOverlay(on) {
     const cb = document.getElementById('lc-overlay-cb');
@@ -561,6 +578,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leg) leg.style.display = on ? 'block' : 'none';
   }
   // ===== END TERRAIN OVERLAY =====
+
+  // ===== HILLSHADE RASTER LAYER =====
+  function _addHillshadeLayer() {
+    if (!map.getSource('terrain-hs')) {
+      map.addSource('terrain-hs', {
+        type: 'raster',
+        tiles: [window.location.origin + '/terrain_tiles/{z}/{x}/{y}.png'],
+        tileSize: 256, minzoom: 6, maxzoom: 18,
+        attribution: 'Terrain © NatureScot / Scottish Government (NLP LiDAR)',
+      });
+    }
+    if (!map.getLayer('terrain-hs-layer')) {
+      // insert under the data layers so choropleth/overlays sit on top
+      const before = map.getLayer('grid-fill') ? 'grid-fill' : undefined;
+      map.addLayer({
+        id: 'terrain-hs-layer', type: 'raster', source: 'terrain-hs',
+        layout: { visibility: hillshadeOn ? 'visible' : 'none' },
+        paint: { 'raster-opacity': 0.85 },
+      }, before);
+    } else {
+      map.setLayoutProperty('terrain-hs-layer', 'visibility', hillshadeOn ? 'visible' : 'none');
+    }
+  }
+
+  function toggleHillshade(on) {
+    hillshadeOn = on;
+    _addHillshadeLayer();
+    try { map.setLayoutProperty('terrain-hs-layer', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+  }
+  // ===== END HILLSHADE RASTER LAYER =====
 
   // ===== PLACE SEARCH =====
   (function() {
@@ -1053,6 +1100,8 @@ document.addEventListener('DOMContentLoaded', () => {
       loadTerrainVar(terrainVar);
       _syncTerrainDimming();
     }
+
+    _addHillshadeLayer();             // raster source/layer dropped on basemap switch
 
     if (!map.getLayer('filter-cells-line'))
       map.addLayer({ id:'filter-cells-line', type:'line', source:SRC.filterCells,

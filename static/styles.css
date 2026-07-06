@@ -694,6 +694,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   accent-color: var(--accent-light);
   cursor: pointer;
 }
+.overlay-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0 3px;
+}
 .overlay-select {
   margin-top: 2px;
   width: 100%;

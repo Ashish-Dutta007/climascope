@@ -1860,6 +1860,40 @@ def serve_tile(z, x, y):
     return resp
 
 
+HILLSHADE_MBTILES = os.environ.get("HILLSHADE_MBTILES", _data("data/tiles/terrain_hillshade.mbtiles"))
+
+@app.route('/terrain_tiles/<int:z>/<int:x>/<int:y>.png')
+def serve_hillshade_tile(z, x, y):
+    """LiDAR-derived hillshade raster tiles (PNG) for the higher-res terrain layer."""
+    if not os.path.exists(HILLSHADE_MBTILES):
+        return '', 204
+    with sqlite3.connect(HILLSHADE_MBTILES) as conn:
+        row = conn.execute(
+            'SELECT tile_data FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?',
+            (z, x, (2**z - 1 - y))  # mbtiles TMS y -> MapLibre XYZ
+        ).fetchone()
+    if row is None:
+        return '', 204
+    resp = app.response_class(row[0], mimetype='image/png')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Cache-Control'] = 'public, max-age=86400'
+    return resp
+
+@app.route('/api/terrain/hillshade_info')
+def hillshade_info():
+    """Availability + zoom range for the hillshade layer (drives the toggle)."""
+    if not os.path.exists(HILLSHADE_MBTILES):
+        return jsonify({"available": False})
+    try:
+        with sqlite3.connect(HILLSHADE_MBTILES) as conn:
+            zs = [r[0] for r in conn.execute('SELECT DISTINCT zoom_level FROM tiles')]
+            meta = dict(conn.execute('SELECT name, value FROM metadata').fetchall())
+        return jsonify({"available": bool(zs), "minzoom": min(zs), "maxzoom": max(zs),
+                        "bounds": meta.get("bounds")})
+    except Exception:
+        return jsonify({"available": False})
+
+
 _VALID_MEMBERS = {'01','04','05','06','07','08','09','10','11','12','13','15'}
 
 # Metrics and periods served by the immersive wall display
