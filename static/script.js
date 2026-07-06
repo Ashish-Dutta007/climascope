@@ -257,6 +257,35 @@ document.addEventListener('DOMContentLoaded', () => {
     leg.innerHTML = `<div class="legend-title">Dominant land cover <span style="opacity:.35;font-weight:400">1km</span></div>${rows}`;
   }
 
+  // Scope the overlay to the active council/catchment/AOI — outside cells render fully
+  // transparent via the 'lcs' feature-state; national scope lifts the restriction.
+  const LC_SCOPED_OPACITY = ['case', ['boolean', ['feature-state', 'lcs'], false], LC_FILL_OPACITY, 0];
+  let _lcScopeApplied = new Set();
+
+  function _lcScopeIds() {
+    if (filterPanel?._aoiActive && filterPanel?._aoiCells?.length)
+      return new Set(filterPanel._aoiCells.map(Number));
+    if ((activeCouncil || activeCatchment || aoiGeoJSON) && currentGJ?.features)
+      return new Set(currentGJ.features.map(f => +f.properties.id_1km));
+    return null;
+  }
+
+  function _updateLcScope() {
+    if (!lcOverlayOn || !map.getLayer('lc-fill')) return;
+    const fs  = id => ({ source: 'cells-vt', sourceLayer: 'cells', id });
+    const ids = _lcScopeIds();
+    if (ids === null) {
+      for (const id of _lcScopeApplied) map.setFeatureState(fs(id), { lcs: false });
+      _lcScopeApplied = new Set();
+      map.setPaintProperty('lc-fill', 'fill-opacity', LC_FILL_OPACITY);
+      return;
+    }
+    for (const id of _lcScopeApplied) if (!ids.has(id)) map.setFeatureState(fs(id), { lcs: false });
+    for (const id of ids) if (!_lcScopeApplied.has(id)) map.setFeatureState(fs(id), { lcs: true });
+    _lcScopeApplied = ids;
+    map.setPaintProperty('lc-fill', 'fill-opacity', LC_SCOPED_OPACITY);
+  }
+
   // Dim the climate choropleth while the overlay is on so the two fills don't fight
   function _syncLcDimming() {
     try { map.setPaintProperty('cells-fill', 'fill-opacity', lcOverlayOn ? 0.15 : 1.0); } catch(_) {}
@@ -281,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _renderLcLegend();
     }
     try { map.setLayoutProperty('lc-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    if (on) _updateLcScope();
     _syncLcDimming();
     const leg = document.getElementById('lc-legend');
     if (leg) leg.style.display = on ? 'block' : 'none';
@@ -657,6 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setPaintProperty('grid-fill', 'fill-color', buildFillColor(dMin, dMax));
       _lastLayerState = { geojson: gj, dataMin: dMin, dataMax: dMax };
       updateLegend(gj);
+      _updateLcScope();
     } catch(err) { console.error('_paintAoiFeature failed:', err); }
     finally { showLoading(false); }
   }
@@ -735,7 +766,9 @@ document.addEventListener('DOMContentLoaded', () => {
     else
       map.setLayoutProperty('lc-fill', 'visibility', lcOverlayOn ? 'visible' : 'none');
     if (lcOverlayOn) {
-      _applyLcStates();   // feature-states are dropped on basemap switch
+      _applyLcStates();               // feature-states are dropped on basemap switch
+      _lcScopeApplied = new Set();    // scope flags were dropped too — reapply from scratch
+      _updateLcScope();
       _syncLcDimming();
     }
 
@@ -1099,6 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         map.setPaintProperty('grid-line', 'line-width', 0.3);
         _lastLayerState = { geojson: gj, dataMin: cMin, dataMax: cMax };
         updateLegend(gj);
+        _updateLcScope();
       } catch(e) {
         console.error('loadLayer catchment:', e);
       } finally {
@@ -1122,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setLayoutProperty('grid-fill',  'visibility', 'none');
       map.setLayoutProperty('grid-line',  'visibility', 'none');
       await loadValues(metric, period, month);
+      _updateLcScope();
       return;
     }
 
@@ -1162,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setPaintProperty('grid-line', 'line-width', 0.3);
       _lastLayerState = { geojson: gj, dataMin: _cMin, dataMax: _cMax };
       updateLegend(gj);
+      _updateLcScope();
     } catch(e) {
       console.error('loadLayer:', e);
     } finally {
@@ -1376,6 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setData(SRC.aoi, emptyFC());
     map.getCanvas().style.cursor = '';
+    _updateLcScope();
     _emitStateChange();
   });
 
