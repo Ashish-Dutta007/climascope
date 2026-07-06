@@ -883,6 +883,24 @@ def landcover():
     return jsonify(classes)
 
 
+_lc_dominant = None
+
+@app.route("/api/landcover/dominant", methods=["GET"])
+def landcover_dominant():
+    """Dominant landcover class per 1km cell, as parallel arrays for the map overlay."""
+    global _lc_dominant
+    if _lc_dominant is None:
+        lc, classes = get_lc()
+        dom = lc.loc[lc.groupby("id_1km")["frac"].idxmax()]
+        _lc_dominant = {
+            "classes": classes,
+            "ids":     dom["id_1km"].astype(int).tolist(),
+            "codes":   dom["lc_code"].astype(int).tolist(),
+            "fracs":   dom["frac"].round(3).tolist(),
+        }
+    return jsonify(_lc_dominant)
+
+
 @lru_cache(maxsize=256)
 def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
     if not variable or variable == 'LCM':

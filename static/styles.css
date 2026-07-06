@@ -121,6 +121,7 @@ html, body { margin:0; padding:0; height:100%; font-family: system-ui,-apple-sys
 
 /* Sections */
 .section { padding: 13px 18px; }
+.section-note { font-size: 10px; color: var(--text-muted); margin-top: 5px; line-height: 1.4; }
 .section-label {
   font-size: 10px;
   font-weight: 600;
@@ -385,23 +386,30 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   padding: 8px 12px;
   border-top: 1px solid var(--border-subtle);
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
   background: var(--bg-sidebar);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #jhi-credit a { display: flex; align-items: center; flex-shrink: 0; }
 
 #jhi-credit img {
-  height: 34px;
+  height: 32px;
   width: auto;
+  flex-shrink: 0;
+  filter: brightness(1.1);
   opacity: 1;
 }
 
 #jhi-credit span {
   font-size: 9px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 
 #sidebar-footer {
@@ -636,6 +644,66 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 }
 
 /* ===========================
+   LAND-COVER OVERLAY
+=========================== */
+#lc-ctrl {
+  position: absolute;
+  bottom: 94px;
+  left: 8px;
+  background: rgba(17,24,39,0.88);
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  padding: 4px 8px;
+  z-index: 2;
+}
+#lc-ctrl label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+}
+#lc-ctrl input[type="checkbox"] {
+  accent-color: var(--accent-light);
+  cursor: pointer;
+}
+#lc-legend {
+  position: absolute;
+  bottom: 26px;
+  right: 200px;
+  background: rgba(17,24,39,.95);
+  color: var(--text-primary);
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  backdrop-filter: blur(8px);
+}
+#lc-legend .legend-title {
+  font-size: 9px; font-weight: 600; letter-spacing: .6px;
+  text-transform: uppercase; color: rgba(255,255,255,.3);
+  margin-bottom: 8px;
+}
+.lc-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: rgba(255,255,255,.65);
+  line-height: 1.8;
+}
+.lc-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ===========================
    BASEMAP TOGGLE
 =========================== */
 #basemap-toggle {
@@ -661,3 +729,58 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   border-color: var(--accent-light);
 }
 .metric-unavail { color: rgba(255,255,255,.25); font-style: italic; }
+
+/* ===========================
+   MAP SEARCH
+=========================== */
+#map-search {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  width: 240px;
+}
+#search-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  font-size: 13px;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+#search-input::placeholder { color: var(--text-muted); }
+#search-input:focus { border-color: var(--accent); }
+#search-results {
+  display: none;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+}
+#search-results.open { display: block; }
+.search-result {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result:last-child { border-bottom: none; }
+.search-result:hover { background: var(--bg-hover); color: var(--text-primary); }
+.search-result { display: flex; justify-content: space-between; align-items: center; }
+.search-type { font-size: 10px; color: var(--text-muted); flex-shrink: 0; margin-left: 8px; opacity: 0.7; }
+/* Result-type pills: council (blue), catchment (orange), place (neutral) */
+.search-tag { padding: 1px 7px; border-radius: 999px; font-weight: 600; opacity: 1; }
+.search-tag-council   { color: #cdd9ff; background: rgba(91,131,240,0.22); }   /* council outline blue */
+.search-tag-catchment { color: #ffd9a0; background: rgba(245,158,11,0.20); }   /* catchment outline orange */
+.search-tag-place     { color: var(--text-muted); background: rgba(255,255,255,0.06); }

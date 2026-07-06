@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>D5-2 Prototype</title>
+  <title>ClimaScope</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <link href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css" rel="stylesheet" />
@@ -80,10 +80,32 @@
       </div>
 
       <div class="section">
-        <div class="section-label">
-          Month&nbsp;<span id="monthLabel" class="month-badge">May</span>
+        <div class="section-label">Ensemble Member</div>
+        <div class="select-wrap">
+          <select id="member">
+            <option value="mean">Mean</option>
+            <option value="01">Member 01</option>
+            <option value="04">Member 04</option>
+            <option value="05">Member 05</option>
+            <option value="06">Member 06</option>
+            <option value="07">Member 07</option>
+            <option value="08">Member 08</option>
+            <option value="09">Member 09</option>
+            <option value="10">Member 10</option>
+            <option value="11">Member 11</option>
+            <option value="12">Member 12</option>
+            <option value="13">Member 13</option>
+            <option value="15">Member 15</option>
+          </select>
         </div>
-        <input type="range" id="month" min="1" max="12" value="5"/>
+
+      </div>
+
+      <div class="section">
+        <div class="section-label">
+          Month&nbsp;<span id="monthLabel" class="month-badge">Jun</span>
+        </div>
+        <input type="range" id="month" min="1" max="12" value="6"/>
         <div class="month-ticks">
           <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
           <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
@@ -100,7 +122,7 @@
 
     <div id="jhi-credit">
       <a href="https://www.hutton.ac.uk/" target="_blank" rel="noopener">
-        <img src="https://www.hutton.ac.uk/wp-content/uploads/2024/11/Hutton_logo_Horiz_Web-corner.png"
+        <img src="/static/hutton_logo.png"
              alt="The James Hutton Institute">
       </a>
       <span>D5-2 Climate Change Impacts<br>on Natural Capital</span>

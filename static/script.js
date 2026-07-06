@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       month:         parseInt($('month')?.value || 7),
       period:        $('period')?.value || '2050-2079',
       scope,
+      member:        activeMember || 'mean',
       aoiCells:      hasAoi ? filterPanel._aoiCells : null,
       councilName:   activeCouncil   || null,
       catchmentName: activeCatchment || null,
@@ -140,6 +141,17 @@ document.addEventListener('DOMContentLoaded', () => {
     '#f87171','#38bdf8','#fb923c','#c084fc','#2dd4bf'
   ];
 
+  // Land-cover overlay: cells with a weak dominant class render washed-out
+  const LC_FILL_OPACITY = ['interpolate', ['linear'],
+    ['coalesce', ['feature-state', 'lcf'], 0], 0.2, 0.35, 1, 0.85];
+
+  function buildLcFillColor(classes) {
+    const expr = ['match', ['coalesce', ['feature-state', 'lc'], -1]];
+    classes.forEach((c, i) => expr.push(c.lc_code, LC_PALETTE[i % LC_PALETTE.length]));
+    expr.push('rgba(0,0,0,0)');
+    return expr;
+  }
+
   let mode            = 'explore';
   let _drawActive     = false;
   let activeCouncil   = null;
@@ -155,6 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let _filterCellsGJ   = null;   // persisted filter-cells GeoJSON for basemap-switch re-apply
   let _vtValues        = null;   // { id_1km_str: value } — cache for basemap-switch re-apply
   let layerOpacity     = 0.85;
+  let activeMember     = 'mean';
+  let lcOverlayOn      = false;
+  let _lcDominant      = null;   // cached /api/landcover/dominant payload
+
+  // Whole-of-Scotland framing incl. Orkney & Shetland — reused on load and on "All Scotland" reset
+  const SCOTLAND_VIEW = { center: [-4.0, 57.9], zoom: 5.5 };
 
   const map = new maplibregl.Map({
     container: 'map',
@@ -172,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       layers: [{ id:'carto', type:'raster', source:'carto' }]
     },
-    center: [-4.2, 56.8],
-    zoom: 6.2
+    center: SCOTLAND_VIEW.center,
+    zoom: SCOTLAND_VIEW.zoom
   });
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -186,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('layer-opacity').addEventListener('input', e => {
     layerOpacity = parseFloat(e.target.value);
+    if (lcOverlayOn) { _syncLcDimming(); return; }
     try { map.setPaintProperty('grid-fill', 'fill-opacity', layerOpacity); } catch(_) {}
   });
 
@@ -206,6 +225,255 @@ document.addEventListener('DOMContentLoaded', () => {
       switchBasemap(bm);
     });
   });
+
+  // ===== LAND-COVER OVERLAY =====
+  const _lcEl = document.createElement('div');
+  _lcEl.id = 'lc-ctrl';
+  _lcEl.innerHTML = '<label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>';
+  map.getContainer().appendChild(_lcEl);
+  document.getElementById('lc-overlay-cb').addEventListener('change', e => toggleLcOverlay(e.target.checked));
+
+  function _applyLcStates() {
+    if (!_lcDominant) return;
+    const { ids, codes, fracs } = _lcDominant;
+    for (let i = 0; i < ids.length; i++) {
+      map.setFeatureState(
+        { source: 'cells-vt', sourceLayer: 'cells', id: ids[i] },
+        { lc: codes[i], lcf: fracs[i] }
+      );
+    }
+  }
+
+  function _renderLcLegend() {
+    let leg = document.getElementById('lc-legend');
+    if (!leg) {
+      leg = document.createElement('div');
+      leg.id = 'lc-legend';
+      map.getContainer().appendChild(leg);
+    }
+    const rows = _lcDominant.classes.map((c, i) =>
+      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${LC_PALETTE[i % LC_PALETTE.length]}"></span>${c.lc_name}</div>`
+    ).join('');
+    leg.innerHTML = `<div class="legend-title">Dominant land cover <span style="opacity:.35;font-weight:400">1km</span></div>${rows}`;
+  }
+
+  // Dim the climate choropleth while the overlay is on so the two fills don't fight
+  function _syncLcDimming() {
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', lcOverlayOn ? 0.15 : 1.0); } catch(_) {}
+    try { map.setPaintProperty('grid-fill', 'fill-opacity', lcOverlayOn ? Math.min(layerOpacity, 0.15) : layerOpacity); } catch(_) {}
+  }
+
+  async function toggleLcOverlay(on) {
+    lcOverlayOn = on;
+    if (on && !_lcDominant) {
+      try {
+        const resp = await fetch('/api/landcover/dominant');
+        if (!resp.ok) throw new Error(resp.status);
+        _lcDominant = await resp.json();
+      } catch(_) {
+        lcOverlayOn = false;
+        const cb = document.getElementById('lc-overlay-cb');
+        if (cb) cb.checked = false;
+        return;
+      }
+      map.setPaintProperty('lc-fill', 'fill-color', buildLcFillColor(_lcDominant.classes));
+      _applyLcStates();
+      _renderLcLegend();
+    }
+    try { map.setLayoutProperty('lc-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    _syncLcDimming();
+    const leg = document.getElementById('lc-legend');
+    if (leg) leg.style.display = on ? 'block' : 'none';
+  }
+  // ===== END LAND-COVER OVERLAY =====
+
+  // ===== PLACE SEARCH =====
+  (function() {
+    const _srchEl = document.createElement('div');
+    _srchEl.id = 'map-search';
+    _srchEl.innerHTML =
+      '<input type="text" id="search-input" placeholder="Search a place …">' +
+      '<div id="search-results"></div>';
+    map.getContainer().appendChild(_srchEl);
+
+    // ── OS Names API (place search) ──
+    const OS_NAMES_ENDPOINT = 'https://api.os.uk/search/names/v1/find';
+    const OS_NAMES_KEY      = 'My3J0Pob0dAqt6HWbOPpisj8imEDCgNq';   // OS Data Hub project API key
+    const OS_NAMES_BOUNDS   = '0,530000,470000,1220000'; // Scotland extent in BNG/EPSG:27700 (minE,minN,maxE,maxN)
+
+    const input   = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+    let _debounce = null;
+
+    function clearResults() {
+      results.innerHTML = '';
+      results.classList.remove('open');
+    }
+
+    // BNG (EPSG:27700) easting/northing → WGS84 [lng, lat].
+    // Airy 1830 inverse transverse Mercator + Helmert datum shift to WGS84
+    // (~metre accuracy, ample for a flyTo). No proj4 dependency.
+    function bngToWgs84(E, N) {
+      const a = 6377563.396, b = 6356256.909;            // Airy 1830
+      const F0 = 0.9996012717;
+      const lat0 = 49 * Math.PI / 180, lon0 = -2 * Math.PI / 180;
+      const N0 = -100000, E0 = 400000;
+      const e2 = 1 - (b * b) / (a * a);
+      const n = (a - b) / (a + b), n2 = n * n, n3 = n * n * n;
+
+      let lat = lat0, M = 0;
+      do {
+        lat = (N - N0 - M) / (a * F0) + lat;
+        const Ma = (1 + n + 1.25 * n2 + 1.25 * n3) * (lat - lat0);
+        const Mb = (3 * n + 3 * n2 + 2.625 * n3) * Math.sin(lat - lat0) * Math.cos(lat + lat0);
+        const Mc = (1.875 * n2 + 1.875 * n3) * Math.sin(2 * (lat - lat0)) * Math.cos(2 * (lat + lat0));
+        const Md = (35 / 24) * n3 * Math.sin(3 * (lat - lat0)) * Math.cos(3 * (lat + lat0));
+        M = b * F0 * (Ma - Mb + Mc - Md);
+      } while (Math.abs(N - N0 - M) >= 0.00001);
+
+      const sinLat = Math.sin(lat), cosLat = Math.cos(lat), tanLat = Math.tan(lat);
+      const nu  = a * F0 / Math.sqrt(1 - e2 * sinLat * sinLat);
+      const rho = a * F0 * (1 - e2) / Math.pow(1 - e2 * sinLat * sinLat, 1.5);
+      const eta2 = nu / rho - 1;
+      const tan2 = tanLat * tanLat, tan4 = tan2 * tan2, secLat = 1 / cosLat;
+      const VII  = tanLat / (2 * rho * nu);
+      const VIII = tanLat / (24 * rho * nu ** 3) * (5 + 3 * tan2 + eta2 - 9 * tan2 * eta2);
+      const IX   = tanLat / (720 * rho * nu ** 5) * (61 + 90 * tan2 + 45 * tan4);
+      const X    = secLat / nu;
+      const XI   = secLat / (6 * nu ** 3) * (nu / rho + 2 * tan2);
+      const XII  = secLat / (120 * nu ** 5) * (5 + 28 * tan2 + 24 * tan4);
+      const XIIA = secLat / (5040 * nu ** 7) * (61 + 662 * tan2 + 1320 * tan4 + 720 * tan2 * tan4);
+      const dE = E - E0;
+      const latA = lat - VII * dE ** 2 + VIII * dE ** 4 - IX * dE ** 6;
+      const lonA = lon0 + X * dE - XI * dE ** 3 + XII * dE ** 5 - XIIA * dE ** 7;
+
+      // OSGB36 (Airy) geodetic → cartesian
+      const sinA = Math.sin(latA), cosA = Math.cos(latA);
+      const nuA = a / Math.sqrt(1 - e2 * sinA * sinA);
+      const x1 = nuA * cosA * Math.cos(lonA);
+      const y1 = nuA * cosA * Math.sin(lonA);
+      const z1 = (1 - e2) * nuA * sinA;
+
+      // Helmert OSGB36 → WGS84
+      const tx = 446.448, ty = -125.157, tz = 542.060, s = -20.4894e-6;
+      const rx = 0.1502 / 3600 * Math.PI / 180;
+      const ry = 0.2470 / 3600 * Math.PI / 180;
+      const rz = 0.8421 / 3600 * Math.PI / 180;
+      const x2 = tx + (1 + s) * x1 - rz * y1 + ry * z1;
+      const y2 = ty + rz * x1 + (1 + s) * y1 - rx * z1;
+      const z2 = tz - ry * x1 + rx * y1 + (1 + s) * z1;
+
+      // WGS84 cartesian → geodetic
+      const aW = 6378137.0, bW = 6356752.314245;
+      const e2W = 1 - (bW * bW) / (aW * aW);
+      const p = Math.sqrt(x2 * x2 + y2 * y2);
+      let latW = Math.atan2(z2, p * (1 - e2W)), prev;
+      do {
+        prev = latW;
+        const sinW = Math.sin(latW);
+        const nuW = aW / Math.sqrt(1 - e2W * sinW * sinW);
+        latW = Math.atan2(z2 + e2W * nuW * sinW, p);
+      } while (Math.abs(latW - prev) >= 1e-11);
+      const lonW = Math.atan2(y2, x2);
+
+      return [lonW * 180 / Math.PI, latW * 180 / Math.PI];
+    }
+
+    function _escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+    // STEP 1 — local councils + catchments (in memory from startup, no network).
+    // Councils first, then catchments, max 4 of each.
+    function _localHits(q) {
+      const lower = q.toLowerCase();
+      const councils = (councilsGJ?.features || [])
+        .map(f => f.properties.council_name)
+        .filter(name => name && name.toLowerCase().includes(lower))
+        .slice(0, 4)
+        .map(name => ({ kind: 'council', name }));
+      const catchments = (catchmentsData || [])
+        .filter(c => c.name && c.name.toLowerCase().includes(lower))
+        .slice(0, 4)
+        .map(c => ({ kind: 'catchment', name: c.name }));
+      return councils.concat(catchments);
+    }
+
+    // Replicate the left-sidebar dropdown change exactly: set value + fire 'change'
+    // so the existing handler runs (state, fitBounds, loadLayer, _emitStateChange).
+    function _selectSidebar(selId, name) {
+      const sel = $(selId);
+      if (!sel) return;
+      sel.value = name;
+      sel.dispatchEvent(new Event('change'));
+    }
+
+    function _renderResults(localHits, placeHits) {
+      if (!localHits.length && !placeHits.length) { clearResults(); return; }
+      const tag = (kind, label) =>
+        `<span class="search-type search-tag search-tag-${kind}">${label}</span>`;
+      let html = '';
+      localHits.forEach(h => {
+        const label = h.kind === 'council' ? 'Council' : 'Catchment';
+        html += `<div class="search-result">${_escHtml(h.name)}${tag(h.kind, label)}</div>`;
+      });
+      placeHits.forEach(g => {
+        html += `<div class="search-result">${_escHtml(g.NAME1)}${tag('place', 'Place')}</div>`;
+      });
+      results.innerHTML = html;
+      results.classList.add('open');
+
+      results.querySelectorAll('.search-result').forEach((el, idx) => {
+        el.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          clearTimeout(_debounce);
+          if (idx < localHits.length) {
+            const h = localHits[idx];
+            _selectSidebar(h.kind === 'council' ? 'council' : 'catchment', h.name);
+            input.value = h.name;
+          } else {
+            const g = placeHits[idx - localHits.length];
+            const [lng, lat] = bngToWgs84(g.GEOMETRY_X, g.GEOMETRY_Y);
+            map.flyTo({ center: [lng, lat], zoom: 10 });
+            input.value = g.NAME1;
+          }
+          clearResults();
+        });
+      });
+    }
+
+    // STEP 2 — OS Names (async); appended below the local results.
+    async function doSearch(q) {
+      const localHits = _localHits(q);
+      let placeHits = [];
+      try {
+        const url = OS_NAMES_ENDPOINT
+          + `?query=${encodeURIComponent(q)}`
+          + `&key=${OS_NAMES_KEY}`
+          + `&bounds=${OS_NAMES_BOUNDS}`
+          + `&maxresults=8`;
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const data = await resp.json();
+          placeHits = (data.results || [])
+            .map(r => r.GAZETTEER_ENTRY)
+            .filter(g => g && g.GEOMETRY_X != null && g.GEOMETRY_Y != null);
+        }
+      } catch { /* keep local-only results */ }
+
+      if (input.value.trim() !== q) return;   // stale response — query moved on
+      _renderResults(localHits, placeHits);
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(_debounce);
+      const q = input.value.trim();
+      if (!q) { clearResults(); return; }
+      _renderResults(_localHits(q), []);              // STEP 1: instant, local only
+      _debounce = setTimeout(() => doSearch(q), 400); // STEP 2: OS Names appended
+    });
+
+    input.addEventListener('blur', () => { setTimeout(clearResults, 200); });
+  })();
+  // ===== END PLACE SEARCH =====
 
   const draw = new MapboxDraw({
     displayControlsDefault: false,   // hide built-in buttons (they were unclickable due to z-index)
@@ -254,15 +522,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Filter-results highlight layer (independent source)
+    // Land-cover context overlay — dominant class per cell, above the choropleth,
+    // below filter outlines and boundaries. Toggled via the map checkbox.
+    map.addLayer({
+      id: 'lc-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
+      layout: { visibility: lcOverlayOn ? 'visible' : 'none' },
+      paint: {
+        'fill-antialias': false,
+        'fill-color': _lcDominant ? buildLcFillColor(_lcDominant.classes) : 'rgba(0,0,0,0)',
+        'fill-opacity': LC_FILL_OPACITY
+      }
+    });
+
+    // Filter-results outline layer (independent source). Matched cells keep their
+    // real choropleth colour — no fill — and get a thin neutral border; non-matched
+    // cells are dimmed via grid-fill-mask.
     map.addSource(SRC.filterCells, { type: 'geojson', data: emptyFC() });
     map.addLayer({
-      id: 'filter-cells-fill', type: 'fill', source: SRC.filterCells,
-      paint: { 'fill-color': '#60a5fa', 'fill-opacity': 0.5 }
-    });
-    map.addLayer({
       id: 'filter-cells-line', type: 'line', source: SRC.filterCells,
-      paint: { 'line-color': '#60a5fa', 'line-width': 1.5 }
+      paint: { 'line-color': 'rgba(255,255,255,0.85)', 'line-width': 0.8 }
     });
 
     // Council boundary overlay
@@ -296,6 +574,21 @@ document.addEventListener('DOMContentLoaded', () => {
     map.addLayer({
       id:'aoi-line', type:'line', source:SRC.aoi,
       paint:{ 'line-color':'#00d4ff', 'line-width':1.8 }
+    });
+
+    // Reference labels overlay — always on top; fades in from zoom 8→9
+    // World_Dark_Gray_Reference has light text that reads on dark, satellite, and light basemaps
+    map.addSource('esri-labels', {
+      type: 'raster',
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256,
+      attribution: '© Esri'
+    });
+    map.addLayer({
+      id: 'esri-labels-layer',
+      type: 'raster',
+      source: 'esri-labels',
+      paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0, 9, 0.9] }
     });
 
     attachPopup();
@@ -351,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
           metric:   state.metric,
           period:   state.period,
           month:    state.month,
+          ...(state.member && state.member !== 'mean' ? { member: state.member } : {}),
         }),
       });
       if (!resp.ok) return;
@@ -432,12 +726,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (!map.getLayer('filter-cells-fill'))
-      map.addLayer({ id:'filter-cells-fill', type:'fill', source:SRC.filterCells,
-        paint:{ 'fill-color':'#60a5fa', 'fill-opacity':0.5 } });
+    if (!map.getLayer('lc-fill'))
+      map.addLayer({ id:'lc-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
+        layout:{ visibility: lcOverlayOn ? 'visible' : 'none' },
+        paint:{ 'fill-antialias': false,
+                'fill-color': _lcDominant ? buildLcFillColor(_lcDominant.classes) : 'rgba(0,0,0,0)',
+                'fill-opacity': LC_FILL_OPACITY } });
+    else
+      map.setLayoutProperty('lc-fill', 'visibility', lcOverlayOn ? 'visible' : 'none');
+    if (lcOverlayOn) {
+      _applyLcStates();   // feature-states are dropped on basemap switch
+      _syncLcDimming();
+    }
+
     if (!map.getLayer('filter-cells-line'))
       map.addLayer({ id:'filter-cells-line', type:'line', source:SRC.filterCells,
-        paint:{ 'line-color':'#60a5fa', 'line-width':1.5 } });
+        paint:{ 'line-color':'rgba(255,255,255,0.85)', 'line-width':0.8 } });
 
     if (!map.getLayer('council-fill'))
       map.addLayer({ id:'council-fill', type:'fill', source:SRC.council,
@@ -459,6 +763,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map.getLayer('aoi-line'))
       map.addLayer({ id:'aoi-line', type:'line', source:SRC.aoi,
         paint:{ 'line-color':'#00d4ff', 'line-width':1.8 } });
+
+    // Labels always last — on top of every data layer
+    if (!map.getSource('esri-labels'))
+      map.addSource('esri-labels', {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: '© Esri'
+      });
+    if (!map.getLayer('esri-labels-layer'))
+      map.addLayer({ id:'esri-labels-layer', type:'raster', source:'esri-labels',
+        paint:{ 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0, 9, 0.9] } });
 
     if (activeCatchment) {
       fetch(`/api/catchments/${encodeURIComponent(activeCatchment)}/geometry`)
@@ -554,7 +870,23 @@ document.addEventListener('DOMContentLoaded', () => {
     _emitStateChange();
   });
 
-  $('period').addEventListener('change', () => { loadLayer(); _emitStateChange(); });
+  $('period').addEventListener('change', () => {
+    const isObserved = $('period').value === '1990-2019';
+    const memberEl = $('member');
+    if (memberEl) {
+      memberEl.disabled = isObserved;
+      memberEl.title = isObserved ? 'Observed baseline has no ensemble members' : '';
+      if (isObserved) { activeMember = 'mean'; memberEl.value = 'mean'; }
+    }
+    loadLayer();
+    _emitStateChange();
+  });
+
+  $('member').addEventListener('change', () => {
+    activeMember = $('member').value;
+    loadLayer();
+    _emitStateChange();
+  });
 
   async function loadMetrics() {
     const grid = $('metric-grid');
@@ -747,8 +1079,9 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setLayoutProperty('grid-line',  'visibility', 'visible');
       showLoading(true);
       try {
+        const _catchMemberP = activeMember !== 'mean' ? `&member=${activeMember}` : '';
         const url = `/api/catchments/${encodeURIComponent(activeCatchment)}/features`
-                  + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}`;
+                  + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${_catchMemberP}`;
         const resp = await fetch(url);
         if (!resp.ok) {
           setData(SRC.grid, emptyFC());
@@ -807,8 +1140,9 @@ document.addEventListener('DOMContentLoaded', () => {
     map.setLayoutProperty('grid-line',  'visibility', 'visible');
     showLoading(true);
     try {
+      const _councilMemberP = activeMember !== 'mean' ? `&member=${activeMember}` : '';
       const url  = `/api/councils/${encodeURIComponent(activeCouncil)}/features`
-                 + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}`;
+                 + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${_councilMemberP}`;
       const resp = await fetch(url);
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -840,7 +1174,8 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadValues(metric, period, month) {
     showLoading(true);
     try {
-      const url  = `/api/values?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}`;
+      const memberParam = (activeMember && activeMember !== 'mean') ? `&member=${activeMember}` : '';
+      const url  = `/api/values?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${memberParam}`;
       const resp = await fetch(url);
       if (!resp.ok) { updateLegend(null); return; }
       const data = await resp.json();
@@ -897,8 +1232,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (minVal === null) {
       const _isNat = !activeCouncil && !activeCatchment;
+      const _memberLabel = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
       legend.innerHTML = `<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
-        <div class="legend-subtitle">${_isNat ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : 'Projected change from 1990-2019 baseline'}</div>`;
+        <div class="legend-subtitle">${_isNat ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : `${_memberLabel} : Change from 1990-2019 baseline`}</div>`;
       return;
     }
 
@@ -935,7 +1271,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const isNational = !activeCouncil && !activeCatchment;
-    const subtitle = isNational ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : 'Projected change from 1990-2019 baseline';
+    const _memberLabel = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
+    const subtitle = isNational ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : `${_memberLabel} : Change from 1990-2019 baseline`;
     legend.innerHTML = `
       <div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
       <div class="legend-subtitle">${subtitle}</div>
@@ -1044,19 +1381,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function exportCurrentView() {
     if (!currentGJ?.features?.length) { alert('No data loaded yet.'); return; }
-    const { metric, period, month } = _getMapState();
-    const colName = `${metric}_${period}_${month}`;
+    const { metric, period, month, member, scope, councilName, catchmentName } = _getMapState();
+    const memberLabel = member && member !== 'mean' ? member : 'mean';
+    const memberSuffix = memberLabel !== 'mean' ? `_member_${memberLabel}` : `_ensemble_mean`;
+    const colName = `${metric}_${period}_${month}${memberSuffix}`;
     const exported = {
       ...currentGJ,
+      properties: {
+        ...(currentGJ.properties || {}),
+        metric,
+        period,
+        month,
+        ensemble_member: memberLabel,
+        scope,
+        council: councilName,
+        catchment: catchmentName,
+        value_field: colName,
+      },
       features: currentGJ.features.map(f => {
         const { Change, ...rest } = f.properties || {};
-        return { ...f, properties: { ...rest, [colName]: Change } };
+        return {
+          ...f,
+          properties: {
+            ...rest,
+            metric,
+            period,
+            month,
+            ensemble_member: memberLabel,
+            [colName]: Change,
+          },
+        };
       }),
     };
     const blob = new Blob([JSON.stringify(exported, null, 2)], { type:'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `climascope_${metric}_${period}_${month}.geojson`;
+    a.download = `climascope_${metric}_${period}_${month}${memberSuffix}.geojson`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
@@ -1175,7 +1535,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     try {
       const period = $('period').value || '2050-2079';
-      const ts = await fetch(`/api/timeseries?metric=${activeMetric.id}&period=${encodeURIComponent(period)}&id_1km=${id}`).then(r=>r.json());
+      const _tsMemberP = (activeMember && activeMember !== 'mean') ? `&member=${activeMember}` : '';
+      const ts = await fetch(`/api/timeseries?metric=${activeMetric.id}&period=${encodeURIComponent(period)}&id_1km=${id}${_tsMemberP}`).then(r=>r.json());
       const ctx = canvas.getContext('2d');
       if (canvas._chart) canvas._chart.destroy();
       const activeM = +($('month')?.value || 0);
@@ -1251,6 +1612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if ($('catchment')) $('catchment').value = '';
         setData(SRC.council,   emptyFC());
         setData(SRC.catchment, emptyFC());
+        map.easeTo({ center: SCOTLAND_VIEW.center, zoom: SCOTLAND_VIEW.zoom, duration: 700 });
         loadLayer();
         _emitStateChange();
       }

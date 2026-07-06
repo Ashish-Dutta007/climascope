@@ -121,7 +121,7 @@ class DashboardPie {
     const titleEl = this.el.querySelector('#dp-title');
     if (titleEl) {
       const label = _DP_VAR_LABELS[this.variable] || this.variable;
-      titleEl.textContent = label + ' — ';
+      titleEl.textContent = label + ' : ';
     }
 
     const emptyEl = this.el.querySelector('#dp-empty');

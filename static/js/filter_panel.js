@@ -46,6 +46,7 @@ class FilterPanel {
     this.maskMode     = 'none';
     this._lastApplied = null;
     this._lastScope   = 'national';
+    this._lastMember  = 'mean';
     this._lcItems     = [];
     this._aoiGeoJSON   = null;
     this._aoiCells     = null;
@@ -333,13 +334,14 @@ class FilterPanel {
   _updateScopeBadge() {
     const badge = this.el.querySelector('#fp-scope-badge');
     if (!badge) return;
+    const s = this._lastMapState;
+    const memberSuffix = (s?.member && s.member !== 'mean') ? ` · Member ${s.member}` : '';
     if (this._aoiActive && this._aoiCells) {
-      badge.textContent = `AOI (${this._aoiCells.length.toLocaleString()} cells)`;
+      badge.textContent = `AOI (${this._aoiCells.length.toLocaleString()} cells)${memberSuffix}`;
     } else {
-      const s = this._lastMapState;
-      if (s?.catchmentName)   badge.textContent = s.catchmentName.split(' : ')[0];
-      else if (s?.councilName) badge.textContent = s.councilName;
-      else                      badge.textContent = 'All Scotland';
+      if (s?.catchmentName)   badge.textContent = s.catchmentName.split(' : ')[0] + memberSuffix;
+      else if (s?.councilName) badge.textContent = s.councilName + memberSuffix;
+      else                      badge.textContent = 'All Scotland' + memberSuffix;
     }
   }
 
@@ -347,11 +349,12 @@ class FilterPanel {
   onMapStateChange(state) {
     this._lastMapState = state;
     // Update scope badge (AOI overrides when active)
-    if (!this._aoiActive) this._updateScopeBadge();
+    this._updateScopeBadge();
 
-    // Invalidate results when scope changes
-    if (state.scope !== this._lastScope) {
-      this._lastScope = state.scope;
+    // Invalidate results when scope or member changes
+    if (state.scope !== this._lastScope || state.member !== this._lastMember) {
+      this._lastScope  = state.scope;
+      this._lastMember = state.member;
       this.matchedIds   = null;
       this._lastApplied = null;
       const resultEl = this.el.querySelector('#fp-result');
@@ -362,7 +365,7 @@ class FilterPanel {
       this.el.querySelectorAll('[data-mask]').forEach(b =>
         b.classList.toggle('active', b.dataset.mask === 'none'));
       this._dispatchMask();
-      // Re-fetch range hints for all rules with new scope
+      // Re-fetch range hints for all rules with new scope/member
       this.rules.forEach((_, i) => {
         this.rules[i].rangeMin = null;
         this.rules[i].rangeMax = null;
@@ -524,10 +527,13 @@ class FilterPanel {
     const r = this.rules[idx];
     if (!r) return;
     const { metric, period, month } = r;
-    const scope = this.getMapState().scope;
+    const state  = this.getMapState();
+    const scope  = state.scope;
+    const member = state.member || 'mean';
+    const memberParam = member !== 'mean' ? `&member=${encodeURIComponent(member)}` : '';
     try {
       const resp = await fetch(
-        `/api/filter/range?metric=${encodeURIComponent(metric)}&period=${encodeURIComponent(period)}&month=${month}&scope=${encodeURIComponent(scope)}`
+        `/api/filter/range?metric=${encodeURIComponent(metric)}&period=${encodeURIComponent(period)}&month=${month}&scope=${encodeURIComponent(scope)}${memberParam}`
       );
       if (!resp.ok) return;
       const data = await resp.json();
@@ -576,9 +582,11 @@ class FilterPanel {
     resultEl.textContent = '';
 
     try {
-      const underlying = this.getMapState().scope;
+      const mapState   = this.getMapState();
+      const underlying = mapState.scope;
       const scope      = this._aoiActive ? 'aoi' : underlying;
-      const body       = { rules, logic: this.logic, scope };
+      const member     = mapState.member || 'mean';
+      const body       = { rules, logic: this.logic, scope, member };
       if (this._aoiActive && this._aoiCells) body.aoi_ids = this._aoiCells;
       const resp = await fetch('/api/filter/query', {
         method:  'POST',
@@ -588,7 +596,7 @@ class FilterPanel {
       const data = await resp.json();
       if (!resp.ok) { resultEl.textContent = data.error || `Error ${resp.status}`; return; }
       this.matchedIds = data.matched_ids;
-      this._lastApplied = { rules, logic: this.logic, scope };
+      this._lastApplied = { rules, logic: this.logic, scope, member };
       if (this._aoiActive && this._aoiCells) this._lastApplied.aoi_ids = this._aoiCells;
       resultEl.innerHTML = `<span class="fp-match-count">${this.matchedIds.length.toLocaleString()} cells matched</span>`;
       // Auto-activate "Highlight matched" after every Apply

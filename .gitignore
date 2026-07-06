@@ -30,3 +30,6 @@ venv/
 # Editor
 .idea/
 *.swp
+
+# Ad-hoc backup files
+*.bak_*

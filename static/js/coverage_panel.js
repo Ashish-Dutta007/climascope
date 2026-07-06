@@ -72,20 +72,21 @@ class CoveragePanel {
       <div class="cp-collapse-handle" id="cp-collapse-handle"></div>
       <div class="cp-header">
         <div class="cp-scope-row">
-          <span class="cp-scope-label" id="cp-scope-label">Scotland (national)</span>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <div class="cp-scope-left">
             <a class="cp-back-link hidden" id="cp-back-link" href="#">← Scotland</a>
-            <div class="cp-toggle">
-              <button class="cp-toggle-btn active" data-scope="national">National</button>
-              <button class="cp-toggle-btn" data-scope="council" disabled>Council</button>
-              <button class="cp-toggle-btn" data-scope="catchment" disabled>Catchment</button>
-            </div>
+            <span class="cp-scope-label" id="cp-scope-label">Scotland (national)</span>
+          </div>
+          <div class="cp-toggle">
+            <button class="cp-toggle-btn active" data-scope="national">National</button>
+            <button class="cp-toggle-btn" data-scope="council" disabled>Council</button>
+            <button class="cp-toggle-btn" data-scope="catchment" disabled>Catchment</button>
           </div>
         </div>
         <div class="cp-subheader">
           <div class="cp-meta">
             <span class="cp-meta-tag" id="cp-metric-echo">—</span>
             <span class="cp-meta-tag" id="cp-month-echo">—</span>
+            <span class="cp-meta-tag" id="cp-period-echo">—</span>
           </div>
           <button class="cp-period-btn" id="cp-period-btn">Show periods</button>
         </div>
@@ -103,6 +104,7 @@ class CoveragePanel {
             <option value="2050-2079" selected>2050–2079</option>
           </select>
         </div>
+        <div class="cp-divider"></div>
       </div>
       <div class="cp-legend-strip" id="cp-legend-strip">
         <span class="cp-legend-item"><span class="cp-legend-swatch" style="background:#4575b4"></span>Wetter</span>
@@ -143,8 +145,17 @@ class CoveragePanel {
 
     const p1Sel = this.el.querySelector('#cp-p1-sel');
     const p2Sel = this.el.querySelector('#cp-p2-sel');
-    if (p1Sel) p1Sel.addEventListener('change', () => { this.period1 = p1Sel.value; this._reloadPeriods(); });
-    if (p2Sel) p2Sel.addEventListener('change', () => { this.period2 = p2Sel.value; this._reloadPeriods(); });
+    if (p1Sel) p1Sel.addEventListener('change', () => {
+      // Never let both sides show the same period — swap the other one
+      if (p1Sel.value === this.period2) { this.period2 = this.period1; if (p2Sel) p2Sel.value = this.period2; }
+      this.period1 = p1Sel.value;
+      this._reloadPeriods();
+    });
+    if (p2Sel) p2Sel.addEventListener('change', () => {
+      if (p2Sel.value === this.period1) { this.period1 = this.period2; if (p1Sel) p1Sel.value = this.period1; }
+      this.period2 = p2Sel.value;
+      this._reloadPeriods();
+    });
   }
 
   _reloadPeriods() {
@@ -180,16 +191,17 @@ class CoveragePanel {
     this.currentMonth = state.month;
     const scope    = state.scope  || 'national';
     const metric   = state.metric || 'CWBPT';
+    const member   = state.member || 'mean';
     const isAoi    = scope === 'aoi' && state.aoiCells?.length > 0;
     this.aoiCells  = state.aoiCells || null;
 
     const periods  = `${this.period1}~${this.period2}`;
     const fetchKey = isAoi
-      ? `${metric}|aoi:${state.aoiCells.length}:${state.aoiCells[0]}|${periods}`
-      : `${metric}|${scope}|${periods}`;
+      ? `${metric}|aoi:${state.aoiCells.length}:${state.aoiCells[0]}|${periods}|${member}`
+      : `${metric}|${scope}|${periods}|${member}`;
     this.lastFetchKey = fetchKey;
 
-    this._setMeta(metric, state.month);
+    this._setMeta(metric, state.month, state.period);
     this._setScopeLabel(scope, state.aoiCells);
     this._updateToggle(scope, state.councilName, state.catchmentName, isAoi);
     this._setLoading(true);
@@ -203,14 +215,17 @@ class CoveragePanel {
           body:    JSON.stringify({
             metric, threshold: this.threshold, cell_ids: state.aoiCells,
             period_1: this.period1, period_2: this.period2,
+            ...(member !== 'mean' ? { member } : {}),
           }),
         });
       } else {
+        const memberParam = member !== 'mean' ? `&member=${encodeURIComponent(member)}` : '';
         const url = `/api/coverage?metric=${encodeURIComponent(metric)}`
                   + `&scope=${encodeURIComponent(scope)}`
                   + `&threshold=${this.threshold}`
                   + `&period_1=${encodeURIComponent(this.period1)}`
-                  + `&period_2=${encodeURIComponent(this.period2)}`;
+                  + `&period_2=${encodeURIComponent(this.period2)}`
+                  + memberParam;
         resp = await fetch(url);
       }
       if (!resp.ok) {
@@ -230,12 +245,13 @@ class CoveragePanel {
   onMapStateChange(newState) {
     this.currentMonth = newState.month;
     const isAoi    = newState.scope === 'aoi' && newState.aoiCells?.length > 0;
+    const member   = newState.member || 'mean';
     const periods  = `${this.period1}~${this.period2}`;
     const fetchKey = isAoi
-      ? `${newState.metric}|aoi:${newState.aoiCells.length}:${newState.aoiCells[0]}|${periods}`
-      : `${newState.metric}|${newState.scope}|${periods}`;
+      ? `${newState.metric}|aoi:${newState.aoiCells.length}:${newState.aoiCells[0]}|${periods}|${member}`
+      : `${newState.metric}|${newState.scope}|${periods}|${member}`;
 
-    this._setMeta(newState.metric, newState.month);
+    this._setMeta(newState.metric, newState.month, newState.period);
     this._setScopeLabel(newState.scope, newState.aoiCells);
     this._updateToggle(newState.scope, newState.councilName, newState.catchmentName, isAoi);
 
@@ -258,11 +274,13 @@ class CoveragePanel {
     if (body) body.innerHTML = `<div class="cp-error">${msg}</div>`;
   }
 
-  _setMeta(metric, month) {
+  _setMeta(metric, month, period) {
     const mEl = this.el.querySelector('#cp-metric-echo');
     const mo  = this.el.querySelector('#cp-month-echo');
+    const pe  = this.el.querySelector('#cp-period-echo');
     if (mEl) mEl.textContent = metric || '—';
     if (mo)  mo.textContent  = _CP_MONTHS[month] || String(month);
+    if (pe)  pe.textContent  = period ? period.replace('-', '–') : '—';
   }
 
   _setScopeLabel(scope, aoiCells) {
@@ -466,7 +484,7 @@ class CoveragePanel {
       <title>${tip}</title>
       <rect x="0" y="2"  width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>
       <rect x="0" y="13" width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>
-      <rect x="0" y="2"  width="${currW.toFixed(1)}" height="9" rx="2" fill="${col1}" fill-opacity="0.35"/>
+      <rect x="0" y="2"  width="${currW.toFixed(1)}" height="9" rx="2" fill="${col1}" fill-opacity="0.3" stroke="rgba(255,255,255,.55)" stroke-width="1" vector-effect="non-scaling-stroke"/>
       <rect x="0" y="13" width="${futW.toFixed(1)}"  height="9" rx="2" fill="${col2}"/>
     </svg>`;
   }

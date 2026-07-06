@@ -1,0 +1,362 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0d0f1a;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #e0e4f0;
+}
+
+#wall {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ── Selection strip (month · member) ────────────────────────────── */
+
+#selection-strip {
+  flex-shrink: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 600;
+  color: #dce6ff;
+  background: #080a17;
+  border-bottom: 2px solid #1a1e38;
+  letter-spacing: 0.5px;
+}
+
+#locator-inset {
+  position: fixed;
+  top: 74px;
+  right: 30px;
+  z-index: 20;
+  width: 210px;
+  height: 260px;
+  padding: 14px;
+  border: 2px solid rgba(210,225,255,0.24);
+  background: rgba(8,10,23,0.82);
+  box-shadow: 0 10px 36px rgba(0,0,0,0.34);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#locator-inset.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#locator-inset svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.locator-context {
+  fill: rgba(25,31,58,0.78);
+  stroke: rgba(210,225,255,0.42);
+  stroke-width: 0.75;
+}
+
+.locator-region {
+  fill: rgba(255,232,132,0.86);
+  stroke: #fff4ad;
+  stroke-width: 2.2;
+}
+
+.locator-dot {
+  fill: #ffffff;
+  stroke: #091022;
+  stroke-width: 2.5;
+}
+
+.locator-ring {
+  fill: none;
+  stroke: rgba(255,244,173,0.95);
+  stroke-width: 2;
+}
+
+/* ── Panel row ─────────────────────────────────────────────────────── */
+
+#panels {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  background: #181c34;
+}
+
+.panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d0f1a;
+}
+
+/* ── Per-panel header: metric name (left) + shared legend (right) ─── */
+
+.panel-header {
+  flex-shrink: 0;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 26px;
+  background: #0b0d1c;
+  border-bottom: 2px solid #1a1e38;
+}
+
+.panel-metric {
+  font-size: 44px;
+  font-weight: 700;
+  color: #dce6ff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Shared legend lives inline in the header */
+.panel-legend {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 240px;
+  max-width: 340px;
+}
+
+.legend-ramp-wrap {
+  position: relative;
+  height: 14px;
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.legend-ramp {
+  width: 100%;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legend-zero {
+  position: absolute;
+  top: -5px;
+  width: 2px;
+  height: 24px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.legend-minmax {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 28px;
+  color: rgba(180,200,255,0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend-units {
+  font-size: 24px;
+  color: rgba(180,200,255,0.35);
+}
+
+/* ── Three maps side by side ─────────────────────────────────────── */
+
+.panel-maps-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 3px;
+  background: #060810;
+}
+
+.map-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.period-label {
+  flex-shrink: 0;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 500;
+  color: rgba(180,200,255,0.5);
+  background: #0a0c1b;
+  border-bottom: 1px solid #141830;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.period-label.baseline {
+  color: rgba(210,225,255,0.80);
+}
+
+.map-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Seasonal chart cell — same sizing as a map cell */
+.chart-col {
+  border-left: 2px solid #181c34;
+}
+
+.chart-wrap {
+  background: #0a0c1b;
+}
+
+.chart-wrap svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  background: #0d0f1a;
+}
+
+/* ── Stats strip ─────────────────────────────────────────────────── */
+
+.stats-strip {
+  flex-shrink: 0;
+  height: 122px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 14px 28px 0;
+  gap: 10px;
+  background: #0a0c1b;
+  border-top: 2px solid #1a1e38;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-value {
+  font-size: 64px;
+  font-weight: 700;
+  color: #dce6ff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+
+.stat-period {
+  font-size: 28px;
+  font-weight: 400;
+  color: rgba(180,200,255,0.42);
+  letter-spacing: 0.3px;
+}
+
+.stat-arrow {
+  font-size: 40px;
+  color: rgba(180,200,255,0.28);
+  flex-shrink: 0;
+  /* align arrow baseline with the number row */
+  line-height: 64px;
+  align-self: flex-start;
+  padding-top: 0;
+}
+
+.stat-units {
+  font-size: 34px;
+  color: rgba(180,200,255,0.42);
+  flex-shrink: 0;
+  line-height: 64px;
+  align-self: flex-start;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+
+#wall-footer {
+  flex-shrink: 0;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 0 32px;
+  background: #0b0d1c;
+  border-top: 1px solid #181c34;
+}
+
+.footer-logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(180,200,255,0.4);
+}
+
+.footer-period {
+  font-size: 20px;
+  color: rgba(180,200,255,0.28);
+  letter-spacing: 0.3px;
+}
+
+/* ── Updating indicator ──────────────────────────────────────────── */
+
+.panel-maps-row {
+  transition: opacity 0.25s;
+}
+
+.panel.updating .panel-maps-row {
+  opacity: 0.45;
+}
+
+/* ── MapLibre overrides ──────────────────────────────────────────── */
+
+.maplibregl-ctrl-attrib {
+  font-size: 9px !important;
+  background: rgba(10,12,24,0.6) !important;
+}
+
+.maplibregl-ctrl-bottom-right {
+  bottom: 4px !important;
+  right: 4px !important;
+}
+
+.maplibregl-ctrl-bottom-left {
+  bottom: 8px !important;
+  left: 8px !important;
+}
+
+.maplibregl-ctrl-scale {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  padding: 3px 10px !important;
+  color: #ffffff !important;
+  background: rgba(8,10,23,0.78) !important;
+  border: 2px solid rgba(220,230,255,0.85) !important;
+  border-top: none !important;
+  text-shadow: 0 1px 3px #000, 0 0 2px #000 !important;
+}

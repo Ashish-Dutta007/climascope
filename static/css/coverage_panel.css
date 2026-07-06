@@ -16,6 +16,9 @@
   flex-direction: column;
   overflow: hidden;
   flex: 1;
+  /* Use the app's standard sans-serif stack directly so labels don't depend
+     on inheritance from #right-panel-inner (defined in another panel's CSS) */
+  font-family: system-ui,-apple-system,sans-serif;
 }
 
 /* ── Mobile collapse handle ── */
@@ -38,41 +41,53 @@
 
 /* ── Header ── */
 .cp-header {
-  padding: 10px 12px 8px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 10px 10px 10px;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .cp-scope-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  width: 100%;
+  gap: 6px;
+}
+
+.cp-scope-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .cp-scope-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
+  white-space: nowrap;
+  max-width: 180px;
+  flex-shrink: 1;
 }
 
 /* Segmented scope toggle */
 .cp-toggle {
   display: flex;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  overflow: hidden;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .cp-toggle-btn {
-  padding: 3px 10px;
-  font-size: 11px;
+  padding: 3px 7px;
+  font-size: 10px;
   font-weight: 500;
   background: transparent;
   color: rgba(255,255,255,.4);
@@ -100,14 +115,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  width: 100%;
+  gap: 4px;
 }
 
 .cp-meta {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
   font-size: 10px;
   color: rgba(255,255,255,.3);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  flex-wrap: wrap;
 }
 
 .cp-meta-tag {
@@ -119,7 +140,7 @@
 
 /* "Show periods" toggle button */
 .cp-period-btn {
-  padding: 3px 9px;
+  padding: 3px 8px;
   font-size: 10px;
   font-weight: 500;
   background: rgba(255,255,255,.05);
@@ -147,9 +168,10 @@
 .cp-period-pair {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px 5px;
-  flex-shrink: 0;
+  gap: 6px;
+  font-size: 11px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .cp-pp-label {
@@ -166,7 +188,13 @@
 .cp-pp-sel {
   font-size: 10px;
   padding: 2px 4px;
+  padding-right: 18px;
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--bg-elevated);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' fill='none' stroke='%23f9fafb' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
   border: 1px solid var(--border-default);
   border-radius: 4px;
   color: var(--text-primary);
@@ -184,6 +212,7 @@
   padding: 5px 10px;
   border-bottom: 1px solid rgba(255,255,255,.04);
   flex-shrink: 0;
+  margin-top: 28px;
 }
 
 .cp-legend-item {
@@ -209,6 +238,7 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.07) transparent;
   padding: 2px 0;
+  margin-top: 4px;
 }
 
 .cp-sparse-msg {
@@ -246,7 +276,11 @@
   gap: 5px;
   width: 128px;
   min-width: 128px;
+  max-width: 128px;
   flex-shrink: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cp-lc-dot {
@@ -258,6 +292,7 @@
 .cp-lc-info { min-width: 0; }
 
 .cp-lc-name {
+  font-family: inherit;
   font-size: 10px;
   font-weight: 600;
   color: var(--text-primary);
@@ -282,7 +317,8 @@
 
 .cp-bar-cell svg {
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
+  display: block;
 }
 
 .cp-bar-empty {
@@ -294,7 +330,8 @@
 
 .cp-delta-cell {
   width: 52px;
-  min-width: 52px;
+  min-width: 36px;
+  flex-shrink: 0;
   text-align: right;
   font-size: 10px;
   font-weight: 700;
@@ -331,3 +368,10 @@
   transition: color .15s;
 }
 .cp-back-link:hover { color: var(--accent-light); }
+
+/* ── Header / body divider ── */
+.cp-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0 0 0;
+}

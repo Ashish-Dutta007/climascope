@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClimaScope — Wall Controller</title>
+  <link rel="stylesheet" href="/static/immersive/control.css?v={{ av('immersive/control.css') }}" />
+</head>
+<body>
+  <p class="page-title">ClimaScope Wall Controller</p>
+
+  <div class="section-label">Month</div>
+  <div class="btn-grid" id="month-grid"></div>
+
+  <div class="section-label">Ensemble Member</div>
+  <div class="btn-grid" id="member-grid"></div>
+
+  <div class="region-head">
+    <div class="section-label">Region</div>
+    <button id="reset-region" class="reset-btn" type="button">↺ Reset to Scotland</button>
+  </div>
+  <div class="region-row">
+    <div class="region-col">
+      <span class="region-sublabel">Council</span>
+      <select id="council-select" class="region-select">
+        <option value="">All Scotland</option>
+      </select>
+    </div>
+    <div class="region-col">
+      <span class="region-sublabel">Catchment</span>
+      <select id="catchment-select" class="region-select">
+        <option value="">All Scotland</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <script src="/static/immersive/control.js?v={{ av('immersive/control.js') }}"></script>
+</body>
+</html>
