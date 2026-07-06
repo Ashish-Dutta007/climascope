@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let _lidarCov        = null;   // cached /api/lidar/coverage payload
   let terrainOverlayOn = false;
   let hillshadeOn      = false;
+  let _hillshadeInfo   = null;   // { minzoom, maxzoom, bounds } from /api/terrain/hillshade_info
   let terrainVar       = 'elevation';
   const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
   let _terrainApplied  = false;  // whether feature-states are currently set
@@ -239,9 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('layer-opacity').addEventListener('input', e => {
     layerOpacity = parseFloat(e.target.value);
-    if (lcOverlayOn) { _syncLcDimming(); return; }
-    try { map.setPaintProperty('grid-fill', 'fill-opacity', layerOpacity); } catch(_) {}
+    _applyDataOpacity();
   });
+
+  // Single source of truth for the climate choropleth opacity. Applies to BOTH
+  // grid-fill (council/catchment/AOI view) and cells-fill (national view) so the
+  // slider works in every mode; dims when a cell overlay is active.
+  function _anyCellOverlayOn() { return lcOverlayOn || lidarOverlayOn || terrainOverlayOn; }
+  function _applyDataOpacity() {
+    const op = _anyCellOverlayOn() ? Math.min(layerOpacity, 0.12) : layerOpacity;
+    try { map.setPaintProperty('grid-fill',  'fill-opacity', op); } catch(_) {}
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', op); } catch(_) {}
+  }
 
   const _bmEl = document.createElement('div');
   _bmEl.id = 'basemap-toggle';
@@ -331,6 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!info.available) {
         cb.disabled = true;
         if (lbl) { lbl.style.opacity = '.45'; lbl.title = 'Hillshade not available yet'; }
+      } else {
+        _hillshadeInfo = info;   // { minzoom, maxzoom, bounds:"w,s,e,n" }
       }
     } catch(_) { if (cb) cb.disabled = true; }
   })();
@@ -419,11 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
     _renderLcLegend(ids);
   }
 
-  // Dim the climate choropleth while the overlay is on so the two fills don't fight
-  function _syncLcDimming() {
-    try { map.setPaintProperty('cells-fill', 'fill-opacity', lcOverlayOn ? 0.15 : 1.0); } catch(_) {}
-    try { map.setPaintProperty('grid-fill', 'fill-opacity', lcOverlayOn ? Math.min(layerOpacity, 0.15) : layerOpacity); } catch(_) {}
-  }
+  // Dim the climate choropleth while an overlay is on so the two fills don't fight
+  function _syncLcDimming() { _applyDataOpacity(); }
 
   async function toggleLcOverlay(on) {
     lcOverlayOn = on;
@@ -474,10 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
       + `<span style="opacity:.35;font-weight:400">${pct}% of grid</span></div>${rows}`;
   }
 
-  function _syncLidarDimming() {
-    try { map.setPaintProperty('cells-fill', 'fill-opacity', lidarOverlayOn ? 0.15 : 1.0); } catch(_) {}
-    try { map.setPaintProperty('grid-fill', 'fill-opacity', lidarOverlayOn ? Math.min(layerOpacity, 0.15) : layerOpacity); } catch(_) {}
-  }
+  function _syncLidarDimming() { _applyDataOpacity(); }
 
   async function toggleLidarOverlay(on) {
     lidarOverlayOn = on;
@@ -536,10 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
     leg.style.display = 'block';
   }
 
-  function _syncTerrainDimming() {
-    try { map.setPaintProperty('cells-fill', 'fill-opacity', terrainOverlayOn ? 0.1 : 1.0); } catch(_) {}
-    try { map.setPaintProperty('grid-fill', 'fill-opacity', terrainOverlayOn ? Math.min(layerOpacity, 0.1) : layerOpacity); } catch(_) {}
-  }
+  function _syncTerrainDimming() { _applyDataOpacity(); }
 
   async function loadTerrainVar(varId) {
     let entry = _terrainCache[varId];
@@ -582,20 +585,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== HILLSHADE RASTER LAYER =====
   function _addHillshadeLayer() {
     if (!map.getSource('terrain-hs')) {
-      map.addSource('terrain-hs', {
+      const src = {
         type: 'raster',
         tiles: [window.location.origin + '/terrain_tiles/{z}/{x}/{y}.png'],
-        tileSize: 256, minzoom: 6, maxzoom: 18,
+        tileSize: 256,
+        // match the mbtiles' real zoom range + footprint so MapLibre never
+        // requests tiles that don't exist (avoids 204/decode spam + 429s)
+        minzoom: _hillshadeInfo?.minzoom ?? 10,
+        maxzoom: _hillshadeInfo?.maxzoom ?? 14,
         attribution: 'Terrain © NatureScot / Scottish Government (NLP LiDAR)',
-      });
+      };
+      const b = _hillshadeInfo?.bounds;
+      if (b) { const p = b.split(',').map(Number); if (p.length === 4) src.bounds = p; }
+      map.addSource('terrain-hs', src);
     }
     if (!map.getLayer('terrain-hs-layer')) {
-      // insert under the data layers so choropleth/overlays sit on top
-      const before = map.getLayer('grid-fill') ? 'grid-fill' : undefined;
+      // insert under the lowest data layer so choropleth/overlays sit on top
+      const before = ['grid-fill', 'cells-fill', 'grid-line'].find(id => map.getLayer(id));
       map.addLayer({
         id: 'terrain-hs-layer', type: 'raster', source: 'terrain-hs',
         layout: { visibility: hillshadeOn ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.85 },
+        paint: { 'raster-opacity': 0.9 },
       }, before);
     } else {
       map.setLayoutProperty('terrain-hs-layer', 'visibility', hillshadeOn ? 'visible' : 'none');
@@ -1565,6 +1575,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       updateLegend(null, { min: dMin, max: dMax, mean: dMean, count: vals.length });
+      _applyDataOpacity();   // apply current slider value to national cells-fill
     } catch(e) {
       console.error('loadValues:', e);
     } finally {

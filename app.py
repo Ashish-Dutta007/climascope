@@ -1,4 +1,4 @@
-import os, json, uuid, math, glob as _glob, logging, time, sqlite3
+import os, json, uuid, math, glob as _glob, logging, time, sqlite3, base64
 from urllib.parse import quote as _url_quote
 from datetime import datetime, timezone
 
@@ -1862,22 +1862,29 @@ def serve_tile(z, x, y):
 
 HILLSHADE_MBTILES = os.environ.get("HILLSHADE_MBTILES", _data("data/tiles/terrain_hillshade.mbtiles"))
 
+# 1x1 fully transparent PNG — returned for tiles with no data so MapLibre's image
+# decoder never sees an empty (204) body, which it logs as "could not be decoded".
+_TRANSPARENT_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+)
+
+def _png_tile(data):
+    resp = app.response_class(data, mimetype='image/png')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Cache-Control'] = 'public, max-age=86400'
+    return resp
+
 @app.route('/terrain_tiles/<int:z>/<int:x>/<int:y>.png')
 def serve_hillshade_tile(z, x, y):
     """LiDAR-derived hillshade raster tiles (PNG) for the higher-res terrain layer."""
     if not os.path.exists(HILLSHADE_MBTILES):
-        return '', 204
+        return _png_tile(_TRANSPARENT_PNG)
     with sqlite3.connect(HILLSHADE_MBTILES) as conn:
         row = conn.execute(
             'SELECT tile_data FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?',
             (z, x, (2**z - 1 - y))  # mbtiles TMS y -> MapLibre XYZ
         ).fetchone()
-    if row is None:
-        return '', 204
-    resp = app.response_class(row[0], mimetype='image/png')
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Cache-Control'] = 'public, max-age=86400'
-    return resp
+    return _png_tile(row[0] if row is not None else _TRANSPARENT_PNG)
 
 @app.route('/api/terrain/hillshade_info')
 def hillshade_info():
