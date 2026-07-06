@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elevation:  ['#2c7bb6', '#78c679', '#fdae61', '#8c510a', '#f7f7f7'],
     slope:      ['#ffffcc', '#fd8d3c', '#bd0026'],
     ruggedness: ['#ffffcc', '#fd8d3c', '#bd0026'],
-    roughness:  ['#ffffcc', '#fd8d3c', '#bd0026'],
+    canopy:     ['#f7fcf5', '#74c476', '#238b45', '#00441b'],
   };
   function _terrainStops(lo, hi, ramp) {
     const n = ramp.length, out = [];
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="elevation">Elevation</option>
         <option value="slope">Slope</option>
         <option value="ruggedness">Ruggedness</option>
-        <option value="roughness">Roughness</option>
+        <option value="canopy">Canopy height</option>
       </select>
     </div>`;
   map.getContainer().appendChild(_ovEl);
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== TERRAIN OVERLAY (Phase 1) =====
   const TERRAIN_LABELS = {
     elevation: ['Elevation', 'm'], slope: ['Slope', '°'],
-    ruggedness: ['Ruggedness', 'm'], roughness: ['Roughness', 'm'],
+    ruggedness: ['Ruggedness', 'm'], canopy: ['Canopy height', 'm'],
   };
 
   function _applyTerrainStates(data) {

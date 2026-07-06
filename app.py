@@ -938,10 +938,10 @@ def lidar_coverage():
 _terrain_df = None
 # variable -> (column, label, units)
 TERRAIN_VARS = {
-    "elevation":  ("elev_mean",  "Elevation (mean)", "m"),
-    "slope":      ("slope_mean", "Slope (mean)",     "°"),
-    "ruggedness": ("ruggedness", "Ruggedness (TRI)", "m"),
-    "roughness":  ("roughness",  "Roughness",        "m"),
+    "elevation":  ("elev_mean",   "Elevation (mean)",  "m"),
+    "slope":      ("slope_mean",  "Slope (mean)",      "°"),
+    "ruggedness": ("ruggedness",  "Ruggedness (TRI)",  "m"),
+    "canopy":     ("canopy_mean", "Canopy height",     "m"),
 }
 
 def _get_terrain():
