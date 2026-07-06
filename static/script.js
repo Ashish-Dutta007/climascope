@@ -244,16 +244,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function _renderLcLegend() {
+  // scopeIds null → national: list every class; otherwise only classes that are
+  // dominant in at least one in-scope cell
+  function _renderLcLegend(scopeIds) {
+    if (!_lcDominant) return;
     let leg = document.getElementById('lc-legend');
     if (!leg) {
       leg = document.createElement('div');
       leg.id = 'lc-legend';
       map.getContainer().appendChild(leg);
     }
-    const rows = _lcDominant.classes.map((c, i) =>
-      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${LC_PALETTE[i % LC_PALETTE.length]}"></span>${c.lc_name}</div>`
-    ).join('');
+    let present = null;
+    if (scopeIds) {
+      present = new Set();
+      const { ids, codes } = _lcDominant;
+      for (let i = 0; i < ids.length; i++) if (scopeIds.has(ids[i])) present.add(codes[i]);
+    }
+    const rows = _lcDominant.classes
+      .map((c, i) => ({ c, color: LC_PALETTE[i % LC_PALETTE.length] }))
+      .filter(x => !present || present.has(x.c.lc_code))
+      .map(x => `<div class="lc-legend-row"><span class="lc-swatch" style="background:${x.color}"></span>${x.c.lc_name}</div>`)
+      .join('');
     leg.innerHTML = `<div class="legend-title">Dominant land cover <span style="opacity:.35;font-weight:400">1km</span></div>${rows}`;
   }
 
@@ -278,12 +289,14 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const id of _lcScopeApplied) map.setFeatureState(fs(id), { lcs: false });
       _lcScopeApplied = new Set();
       map.setPaintProperty('lc-fill', 'fill-opacity', LC_FILL_OPACITY);
+      _renderLcLegend(null);
       return;
     }
     for (const id of _lcScopeApplied) if (!ids.has(id)) map.setFeatureState(fs(id), { lcs: false });
     for (const id of ids) if (!_lcScopeApplied.has(id)) map.setFeatureState(fs(id), { lcs: true });
     _lcScopeApplied = ids;
     map.setPaintProperty('lc-fill', 'fill-opacity', LC_SCOPED_OPACITY);
+    _renderLcLegend(ids);
   }
 
   // Dim the climate choropleth while the overlay is on so the two fills don't fight
@@ -307,7 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       map.setPaintProperty('lc-fill', 'fill-color', buildLcFillColor(_lcDominant.classes));
       _applyLcStates();
-      _renderLcLegend();
     }
     try { map.setLayoutProperty('lc-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
     if (on) _updateLcScope();
