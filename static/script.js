@@ -152,6 +152,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return expr;
   }
 
+  // LiDAR coverage tiers: 1=point cloud, 2=terrain (DTM/DSM), 3=both
+  const LIDAR_TIERS = [
+    { tier: 3, color: '#0e7490', label: 'Terrain + point cloud' },
+    { tier: 2, color: '#22d3ee', label: 'Terrain (DTM/DSM)' },
+    { tier: 1, color: '#a5f3fc', label: 'Point cloud only' },
+  ];
+  const LIDAR_FILL_COLOR = ['match', ['coalesce', ['feature-state', 'lcov'], 0],
+    3, '#0e7490', 2, '#22d3ee', 1, '#a5f3fc', 'rgba(0,0,0,0)'];
+
   let mode            = 'explore';
   let _drawActive     = false;
   let activeCouncil   = null;
@@ -170,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeMember     = 'mean';
   let lcOverlayOn      = false;
   let _lcDominant      = null;   // cached /api/landcover/dominant payload
+  let lidarOverlayOn   = false;
+  let _lidarCov        = null;   // cached /api/lidar/coverage payload
 
   // Whole-of-Scotland framing incl. Orkney & Shetland — reused on load and on "All Scotland" reset
   const SCOTLAND_VIEW = { center: [-4.0, 57.9], zoom: 5.5 };
@@ -226,12 +237,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ===== OVERLAYS GROUP (collapsible) =====
+  const _ovEl = document.createElement('div');
+  _ovEl.id = 'overlay-ctrl';
+  _ovEl.innerHTML = `
+    <button id="overlay-head" type="button">
+      <span>Overlays</span><span id="overlay-caret">▾</span>
+    </button>
+    <div id="overlay-body">
+      <label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
+      <label><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
+    </div>`;
+  map.getContainer().appendChild(_ovEl);
+  document.getElementById('overlay-head').addEventListener('click', () => {
+    _ovEl.classList.toggle('collapsed');
+    document.getElementById('overlay-caret').textContent =
+      _ovEl.classList.contains('collapsed') ? '▸' : '▾';
+  });
+  // Overlays are mutually exclusive — two feature-state fills on the same cells
+  // would muddy each other, so turning one on clears the other.
+  document.getElementById('lc-overlay-cb').addEventListener('change', e => {
+    if (e.target.checked) _setLidarOverlay(false);
+    toggleLcOverlay(e.target.checked);
+  });
+  document.getElementById('lidar-overlay-cb').addEventListener('change', e => {
+    if (e.target.checked) _setLcOverlay(false);
+    toggleLidarOverlay(e.target.checked);
+  });
+  function _setLcOverlay(on) {
+    const cb = document.getElementById('lc-overlay-cb');
+    if (cb && cb.checked !== on) { cb.checked = on; toggleLcOverlay(on); }
+  }
+  function _setLidarOverlay(on) {
+    const cb = document.getElementById('lidar-overlay-cb');
+    if (cb && cb.checked !== on) { cb.checked = on; toggleLidarOverlay(on); }
+  }
+
   // ===== LAND-COVER OVERLAY =====
-  const _lcEl = document.createElement('div');
-  _lcEl.id = 'lc-ctrl';
-  _lcEl.innerHTML = '<label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>';
-  map.getContainer().appendChild(_lcEl);
-  document.getElementById('lc-overlay-cb').addEventListener('change', e => toggleLcOverlay(e.target.checked));
 
   function _applyLcStates() {
     if (!_lcDominant) return;
@@ -328,6 +370,59 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leg) leg.style.display = on ? 'block' : 'none';
   }
   // ===== END LAND-COVER OVERLAY =====
+
+  // ===== LIDAR COVERAGE OVERLAY =====
+  function _applyLidarStates() {
+    if (!_lidarCov) return;
+    const { ids, tiers } = _lidarCov;
+    for (let i = 0; i < ids.length; i++) {
+      map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: ids[i] }, { lcov: tiers[i] });
+    }
+  }
+
+  function _renderLidarLegend() {
+    let leg = document.getElementById('lidar-legend');
+    if (!leg) {
+      leg = document.createElement('div');
+      leg.id = 'lidar-legend';
+      map.getContainer().appendChild(leg);
+    }
+    const s = _lidarCov?.summary;
+    const pct = s ? Math.round(100 * s.any / s.total) : 0;
+    const rows = LIDAR_TIERS.map(t =>
+      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${t.color}"></span>${t.label}</div>`
+    ).join('');
+    leg.innerHTML = `<div class="legend-title">LiDAR coverage `
+      + `<span style="opacity:.35;font-weight:400">${pct}% of grid</span></div>${rows}`;
+  }
+
+  function _syncLidarDimming() {
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', lidarOverlayOn ? 0.15 : 1.0); } catch(_) {}
+    try { map.setPaintProperty('grid-fill', 'fill-opacity', lidarOverlayOn ? Math.min(layerOpacity, 0.15) : layerOpacity); } catch(_) {}
+  }
+
+  async function toggleLidarOverlay(on) {
+    lidarOverlayOn = on;
+    if (on && !_lidarCov) {
+      try {
+        const resp = await fetch('/api/lidar/coverage');
+        if (!resp.ok) throw new Error(resp.status);
+        _lidarCov = await resp.json();
+      } catch(_) {
+        lidarOverlayOn = false;
+        const cb = document.getElementById('lidar-overlay-cb');
+        if (cb) cb.checked = false;
+        return;
+      }
+      _applyLidarStates();
+      _renderLidarLegend();
+    }
+    try { map.setLayoutProperty('lidar-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    _syncLidarDimming();
+    const leg = document.getElementById('lidar-legend');
+    if (leg) leg.style.display = on ? 'block' : 'none';
+  }
+  // ===== END LIDAR COVERAGE OVERLAY =====
 
   // ===== PLACE SEARCH =====
   (function() {
@@ -576,6 +671,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // LiDAR coverage overlay — availability tier per cell (see LIDAR COVERAGE OVERLAY)
+    map.addLayer({
+      id: 'lidar-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
+      layout: { visibility: lidarOverlayOn ? 'visible' : 'none' },
+      paint: { 'fill-antialias': false, 'fill-color': LIDAR_FILL_COLOR, 'fill-opacity': 0.8 }
+    });
+
     // Filter-results outline layer (independent source). Matched cells keep their
     // real choropleth colour — no fill — and get a thin neutral border; non-matched
     // cells are dimmed via grid-fill-mask.
@@ -782,6 +884,17 @@ document.addEventListener('DOMContentLoaded', () => {
       _lcScopeApplied = new Set();    // scope flags were dropped too — reapply from scratch
       _updateLcScope();
       _syncLcDimming();
+    }
+
+    if (!map.getLayer('lidar-fill'))
+      map.addLayer({ id:'lidar-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
+        layout:{ visibility: lidarOverlayOn ? 'visible' : 'none' },
+        paint:{ 'fill-antialias': false, 'fill-color': LIDAR_FILL_COLOR, 'fill-opacity': 0.8 } });
+    else
+      map.setLayoutProperty('lidar-fill', 'visibility', lidarOverlayOn ? 'visible' : 'none');
+    if (lidarOverlayOn) {
+      _applyLidarStates();            // feature-states dropped on basemap switch
+      _syncLidarDimming();
     }
 
     if (!map.getLayer('filter-cells-line'))

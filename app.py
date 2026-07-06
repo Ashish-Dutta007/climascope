@@ -901,6 +901,40 @@ def landcover_dominant():
     return jsonify(_lc_dominant)
 
 
+_lidar_cov = None
+
+@app.route("/api/lidar/coverage", methods=["GET"])
+def lidar_coverage():
+    """Per-1km-cell LiDAR availability tier for the coverage overlay.
+    tier: 1=point cloud only, 2=terrain (DTM+DSM), 3=both raster+point cloud.
+    Cells with no LiDAR are omitted (rendered transparent)."""
+    global _lidar_cov
+    if _lidar_cov is None:
+        path = _data("data/lidar_coverage.parquet")
+        if not os.path.exists(path):
+            return jsonify({"error": "NO_COVERAGE_DATA"}), 404
+        df     = pd.read_parquet(path)
+        raster = df["has_dtm"] & df["has_dsm"]
+        tier   = pd.Series(0, index=df.index)
+        tier[df["has_pc"]]        = 1
+        tier[raster]              = 2
+        tier[raster & df["has_pc"]] = 3
+        sub = df.assign(tier=tier)
+        sub = sub[sub["tier"] > 0]
+        _lidar_cov = {
+            "ids":   sub["id_1km"].astype(int).tolist(),
+            "tiers": sub["tier"].astype(int).tolist(),
+            "summary": {
+                "total":  int(len(df)),
+                "any":    int((tier > 0).sum()),
+                "raster": int(raster.sum()),
+                "pc":     int(df["has_pc"].sum()),
+                "nlp":    int(df["has_nlp"].sum()),
+            },
+        }
+    return jsonify(_lidar_cov)
+
+
 @lru_cache(maxsize=256)
 def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
     if not variable or variable == 'LCM':
