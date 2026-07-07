@@ -1809,95 +1809,157 @@ document.addEventListener('DOMContentLoaded', () => {
   $('panel-explore').appendChild(exportBtn);
   exportBtn.querySelector('#btn-export').addEventListener('click', exportCurrentView);
 
+  // ----- context-aware popups (localized to the active overlay) -----
+  const _LIDAR_TIER_LABEL = { 3: 'Terrain + point cloud', 2: 'Terrain (DTM/DSM)', 1: 'Point cloud' };
+  let _lcById = null, _lcCodeName = null, _lidarTierById = null;
+  function _buildLcLookup() {
+    if (!_lcDominant) return;
+    _lcById = new Map(); _lcCodeName = new Map(_lcDominant.classes.map(c => [c.lc_code, c.lc_name]));
+    _lcDominant.ids.forEach((id, i) => _lcById.set(id, { code: _lcDominant.codes[i], frac: _lcDominant.fracs[i] }));
+  }
+  function _buildLidarLookup() {
+    if (!_lidarCov) return;
+    _lidarTierById = new Map();
+    _lidarCov.ids.forEach((id, i) => _lidarTierById.set(id, _lidarCov.tiers[i]));
+  }
+  function _activeContext() {
+    if (terrainOverlayOn) return 'terrain';
+    if (lidarOverlayOn)   return 'lidar';
+    if (lcOverlayOn)      return 'landcover';
+    return 'climate';
+  }
+  function _cellClimateVal(f, id) {
+    if (f.properties && 'Change' in f.properties) return +f.properties.Change;
+    return _vtValues ? _vtValues[String(id)] : null;
+  }
+
+  // one-line summary from in-memory data (no fetch) — for the hover tooltip
+  function _ctxSummary(id, climateVal, isBase) {
+    const ctx = _activeContext();
+    if (ctx === 'terrain') {
+      const v = _terrainCache[terrainVar]?.data?.[id];
+      const [lab, un] = TERRAIN_LABELS[terrainVar] || [terrainVar, ''];
+      return v == null ? `${lab}: no data` : `${lab}: <strong>${v} ${un}</strong>`;
+    }
+    if (ctx === 'lidar') {
+      if (!_lidarTierById) _buildLidarLookup();
+      const t = _lidarTierById?.get(id);
+      return t ? `LiDAR: <strong>${_LIDAR_TIER_LABEL[t]}</strong>` : 'No LiDAR here';
+    }
+    if (ctx === 'landcover') {
+      if (!_lcById) _buildLcLookup();
+      const r = _lcById?.get(id);
+      const name = r ? _lcCodeName.get(r.code) : null;
+      return name ? `<strong>${name}</strong> (${Math.round(r.frac * 100)}%)` : 'No land-cover data';
+    }
+    if (climateVal == null) return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: N/A`;
+    const un = METRIC_UNITS[activeMetric.id] || '';
+    const d = isBase ? `${(+climateVal).toFixed(1)} ${un}` : `${+climateVal >= 0 ? '+' : ''}${(+climateVal).toFixed(1)} ${un}`;
+    return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong>${d}</strong>`;
+  }
+
+  function _openCellClick(id, lngLat, climateVal, col, month, isBase) {
+    const ctx = _activeContext();
+    const header = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">`
+      + `<div style="width:10px;height:10px;border-radius:2px;background:${col};flex-shrink:0"></div>`
+      + `<strong style="font-size:13px">Cell ${id}</strong></div>`;
+    if (ctx === 'climate') {
+      const un = METRIC_UNITS[activeMetric.id] || '';
+      const valDisplay = climateVal == null ? 'N/A'
+        : isBase ? `${(+climateVal).toFixed(2)} ${un} (observed)`
+                 : `${+climateVal >= 0 ? '+' : ''}${(+climateVal).toFixed(2)} ${un} (change)`;
+      new maplibregl.Popup({ maxWidth: '320px' }).setLngLat(lngLat).setHTML(`
+        <div style="min-width:270px">${header}
+          <div style="font-size:11px;opacity:.6;margin-bottom:6px">${MONTH_NAMES[month] || month} &nbsp;·&nbsp;
+            ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong></div>
+          <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
+          <canvas id="ts-${id}" width="260" height="110"></canvas>
+        </div>`).addTo(map);
+      setTimeout(() => { loadTS(id); loadWetness(id); }, 0);
+    } else {
+      new maplibregl.Popup({ maxWidth: '300px' }).setLngLat(lngLat).setHTML(
+        `<div style="min-width:210px">${header}<div id="ctxbody-${id}" style="font-size:12px;opacity:.85;line-height:1.6">loading…</div></div>`
+      ).addTo(map);
+      setTimeout(() => _fillCtxBody(id, ctx), 0);
+    }
+  }
+
+  async function _fillCtxBody(id, ctx) {
+    const el = document.getElementById(`ctxbody-${id}`); if (!el) return;
+    if (ctx === 'landcover') {
+      if (!_lcById) _buildLcLookup();
+      const r = _lcById?.get(id);
+      if (!r) { el.textContent = 'No land-cover data'; return; }
+      el.innerHTML = `<strong style="color:#4ade80">Dominant:</strong> ${_lcCodeName.get(r.code)} (${Math.round(r.frac * 100)}%)`;
+      try {
+        const comp = await fetch('/api/landuse_composition', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aoi_ids: [id], variable: 'LCM' }) }).then(r => r.json());
+        const rows = Object.entries(comp).sort((a, b) => b[1] - a[1]).slice(0, 6)
+          .map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="opacity:.65">${v.toFixed(0)}%</span></div>`).join('');
+        if (rows) el.innerHTML += `<div style="margin-top:6px">${rows}</div>`;
+      } catch {}
+      return;
+    }
+    try {
+      const d = await fetch(`/api/cell_lidar?id_1km=${id}`).then(r => r.json());
+      if (ctx === 'terrain') {
+        const t = d.terrain;
+        if (!t || t.elevation == null) { el.textContent = 'No terrain data for this cell'; return; }
+        el.innerHTML = [['Elevation', t.elevation, 'm'], ['Slope', t.slope, '°'], ['Ruggedness', t.ruggedness, ''], ['Canopy height', t.canopy, 'm']]
+          .filter(r => r[1] != null)
+          .map(([k, v, u]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:#e2e8f4">${v} ${u}</span></div>`).join('');
+      } else {
+        if (!d.has_lidar) { el.textContent = 'No LiDAR coverage here'; return; }
+        const avail = []; if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM'); if (d.point_cloud) avail.push('point cloud');
+        el.innerHTML = (d.collections ? `<div><strong style="color:#7dd3fc">Phase:</strong> ${d.collections}</div>` : '')
+          + `<div style="margin-top:4px"><strong style="color:#7dd3fc">Captured:</strong> ${avail.join(' · ') || '—'}</div>`;
+      }
+    } catch { el.textContent = 'error'; }
+  }
+
+  // hover tooltip — active-context value, from memory (no fetch)
+  const _hoverPop = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, className: 'hover-pop' });
+  function _onCellHover(e) {
+    if (_drawActive) { _hoverPop.remove(); return; }
+    const f = e.features[0];
+    const id = f.id ?? f.properties?.id_1km;
+    if (id == null || (f.properties?.catchment_name && f.properties?.id_1km == null)) { _hoverPop.remove(); return; }
+    const isBase = ($('period')?.value || '') === '1990-2019';
+    _hoverPop.setLngLat(e.lngLat)
+      .setHTML(`<div class="hover-pop-inner">Cell ${id} · ${_ctxSummary(id, _cellClimateVal(f, id), isBase)}</div>`)
+      .addTo(map);
+    map.getCanvas().style.cursor = 'crosshair';
+  }
+  function _offCellHover() { _hoverPop.remove(); map.getCanvas().style.cursor = ''; }
+
   function attachPopup() {
     map.on('click', 'grid-fill', e => {
       if (_drawActive) return;
       const f = e.features[0];
-
-        if (f.properties?.catchment_name && f.properties?.id_1km == null) {
-        const name = f.properties.catchment_name;
-        const sel  = $('catchment');
-        if (sel) { sel.value = name; sel.dispatchEvent(new Event('change')); }
+      if (f.properties?.catchment_name && f.properties?.id_1km == null) {
+        const sel = $('catchment');
+        if (sel) { sel.value = f.properties.catchment_name; sel.dispatchEvent(new Event('change')); }
         return;
       }
-
-      const id      = f.properties?.id_1km;
-      const m       = f.properties?.Month ?? +($('month')?.value || 5);
-      const rawVal  = +(f.properties?.Change ?? 0);
-      const col     = valueToColor(rawVal);
-      const _isBase = ($('period')?.value || '') === '1990-2019';
-      const units_  = METRIC_UNITS[activeMetric.id] || '';
-      const valDisplay = _isBase
-        ? `${rawVal.toFixed(2)} ${units_} (observed)`
-        : `${rawVal >= 0 ? '+' : ''}${rawVal.toFixed(2)} ${units_} (change)`;
-
-      new maplibregl.Popup({ maxWidth:'320px' })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div style="min-width:270px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <div style="width:10px;height:10px;border-radius:2px;background:${col};flex-shrink:0"></div>
-              <strong style="font-size:13px">Cell ${id}</strong>
-            </div>
-            <div style="font-size:11px;opacity:.6;margin-bottom:6px">
-              ${MONTH_NAMES[m] || m} &nbsp;·&nbsp;
-              ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong>
-            </div>
-            <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
-            <div id="lidar-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px;line-height:1.5"></div>
-            <canvas id="ts-${id}" width="260" height="110"></canvas>
-          </div>
-        `)
-        .addTo(map);
-
-      setTimeout(() => { loadTS(id); loadWetness(id); loadCellLidar(id); }, 0);
+      const id = f.properties?.id_1km;
+      const m  = f.properties?.Month ?? +($('month')?.value || 5);
+      const rawVal = +(f.properties?.Change ?? 0);
+      _openCellClick(id, e.lngLat, rawVal, valueToColor(rawVal), m, ($('period')?.value || '') === '1990-2019');
     });
-
-    map.on('mouseenter', 'grid-fill', () => map.getCanvas().style.cursor = 'crosshair');
-    map.on('mouseleave', 'grid-fill', () => map.getCanvas().style.cursor = '');
 
     map.on('click', 'cells-fill', e => {
       if (_drawActive) return;
-      const f   = e.features[0];
-      const id  = f.id;  // promoted from id_1km via promoteId
-      const value   = _vtValues ? _vtValues[String(id)] : null;
-      const col     = value != null ? valueToColor(+value) : '#888888';
-      const _isBase = ($('period')?.value || '') === '1990-2019';
-      const units_  = METRIC_UNITS[activeMetric.id] || '';
-      const valDisplay = value != null
-        ? _isBase
-          ? `${(+value).toFixed(2)} ${units_} (observed)`
-          : `${+value >= 0 ? '+' : ''}${(+value).toFixed(2)} ${units_} (change)`
-        : 'N/A';
-      const m    = parseInt($('month')?.value || 7);
-
-      new maplibregl.Popup({ maxWidth: '320px' })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div style="min-width:270px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <div style="width:10px;height:10px;border-radius:2px;background:${col};flex-shrink:0"></div>
-              <div>
-                <div id="ctx-${id}" style="font-size:13px;font-weight:600">…</div>
-                <div style="font-size:10px;opacity:.4;margin-top:1px">id: ${id}</div>
-              </div>
-            </div>
-            <div style="font-size:11px;opacity:.6;margin-bottom:6px">
-              ${MONTH_NAMES[m] || m} &nbsp;·&nbsp;
-              ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong>
-            </div>
-            <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
-            <div id="lidar-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px;line-height:1.5"></div>
-            <canvas id="ts-${id}" width="260" height="110"></canvas>
-          </div>
-        `)
-        .addTo(map);
-
-      setTimeout(() => { loadTS(id); loadWetness(id); loadCellContext(id); loadCellLidar(id); }, 0);
+      const f = e.features[0];
+      const id = f.id;  // promoted from id_1km via promoteId
+      const value = _vtValues ? _vtValues[String(id)] : null;
+      const col = value != null ? valueToColor(+value) : '#888888';
+      _openCellClick(id, e.lngLat, value, col, parseInt($('month')?.value || 7), ($('period')?.value || '') === '1990-2019');
     });
 
-    map.on('mouseenter', 'cells-fill', () => map.getCanvas().style.cursor = 'crosshair');
-    map.on('mouseleave', 'cells-fill', () => map.getCanvas().style.cursor = '');
+    map.on('mousemove', 'grid-fill', _onCellHover);
+    map.on('mouseleave', 'grid-fill', _offCellHover);
+    map.on('mousemove', 'cells-fill', _onCellHover);
+    map.on('mouseleave', 'cells-fill', _offCellHover);
 
     map.on('click', e => {
       if (_drawActive) return;

@@ -499,6 +499,12 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   font-family:system-ui,sans-serif; font-size:12px;
 }
 .maplibregl-popup-tip { border-top-color: var(--bg-sidebar) !important; border-bottom-color: var(--bg-sidebar) !important; }
+
+/* compact, non-interactive hover tooltip */
+.hover-pop { pointer-events: none; }
+.hover-pop .maplibregl-popup-content { padding: 5px 9px !important; border-radius: 6px !important; }
+.hover-pop .maplibregl-popup-tip { display: none !important; }
+.hover-pop-inner { font-size: 11px; white-space: nowrap; color: var(--text-primary); }
 .maplibregl-popup-close-button { color:rgba(255,255,255,.35) !important; font-size:16px !important; padding:3px 7px !important; }
 .maplibregl-popup-close-button:hover { color:#fff !important; background:transparent !important; }
 .maplibregl-ctrl-group {
