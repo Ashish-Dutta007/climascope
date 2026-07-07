@@ -1247,10 +1247,9 @@ document.addEventListener('DOMContentLoaded', () => {
       rp?.classList.add('rp-collapsed');
       if (rpToggle) rpToggle.textContent = '▶';
       _initDashboard();
-    } else {
-      rp?.classList.remove('rp-collapsed');
-      if (rpToggle) rpToggle.textContent = '◀';
     }
+    // explore: leave the right panel as-is (collapsed by default; the user
+    // opens Coverage/Filter via the ▶ handle) — reclaims the space up front.
     setTimeout(() => map.resize(), 220);
     if (!skipLoad) loadLayer();
   }
