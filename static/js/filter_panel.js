@@ -427,13 +427,32 @@ class FilterPanel {
       row.className = 'fp-rule-row';
 
       const isLC = r.type === 'landcover';
+      const isTerr = r.type === 'terrain';
 
       const typeOpts =
-        `<option value="climate"${!isLC ? ' selected' : ''}>Climate</option>` +
-        `<option value="landcover"${isLC ? ' selected' : ''}>Landcover</option>`;
+        `<option value="climate"${(!isLC && !isTerr) ? ' selected' : ''}>Climate</option>` +
+        `<option value="landcover"${isLC ? ' selected' : ''}>Landcover</option>` +
+        `<option value="terrain"${isTerr ? ' selected' : ''}>Terrain (LiDAR)</option>`;
 
       let bodyHtml;
-      if (isLC) {
+      if (isTerr) {
+        const tvOpts = [['elevation','Elevation (m)'],['slope','Slope (°)'],['ruggedness','Ruggedness'],['canopy','Canopy (m)']]
+          .map(([v,l]) => `<option value="${v}"${v === r.terrain_var ? ' selected' : ''}>${l}</option>`).join('');
+        const opOpts = _FP_OPERATORS.map(op =>
+          `<option value="${op.id}"${op.id === r.operator ? ' selected' : ''}>${op.label}</option>`).join('');
+        const valHtml = r.operator === 'between'
+          ? `<input class="fp-val" type="number" step="any" data-key="value"  placeholder="lo" value="${r.value}">` +
+            `<span class="fp-between-sep">–</span>` +
+            `<input class="fp-val" type="number" step="any" data-key="valueB" placeholder="hi" value="${r.valueB}">`
+          : `<input class="fp-val fp-val-single" type="number" step="any" data-key="value" value="${r.value}">`;
+        bodyHtml = `
+          <div class="fp-rule-bot">
+            <select class="fp-sel" data-key="terrain_var" style="flex:1">${tvOpts}</select>
+            <select class="fp-sel fp-op-sel" data-key="operator">${opOpts}</select>
+          </div>
+          <div class="fp-rule-bot">${valHtml}</div>
+          <div class="fp-rule-hint">LiDAR-derived, 1km cell mean</div>`;
+      } else if (isLC) {
         const lcOpts = this._lcItems.map(it =>
           `<option value="${it.lc_name}"${it.lc_name === r.lc_class ? ' selected' : ''}>${it.lc_name}</option>`
         ).join('');
@@ -500,6 +519,11 @@ class FilterPanel {
           this.rules[i][key] = key === 'month' ? parseInt(e.target.value) : e.target.value;
           this.rules[i]._userEdited = true;
           if (key === 'type') {
+            if (e.target.value === 'terrain') {
+              const rr = this.rules[i];
+              rr.terrain_var = rr.terrain_var || 'elevation';
+              rr.operator = rr.operator || 'gt';
+            }
             this._renderRules();
           } else if (['metric', 'period', 'month'].includes(key)) {
             this.rules[i].rangeMin = null;
@@ -562,6 +586,18 @@ class FilterPanel {
         const thr = parseFloat(r.threshold);
         if (isNaN(thr) || thr < 0 || thr > 100) { resultEl.textContent = `Rule ${i+1}: threshold must be 0–100.`; return; }
         rules.push({ type: 'landcover', lc_class: r.lc_class, threshold: thr });
+      } else if (r.type === 'terrain') {
+        const base = { type: 'terrain', terrain_var: r.terrain_var || 'elevation', operator: r.operator };
+        if (r.operator === 'between') {
+          const lo = parseFloat(r.value), hi = parseFloat(r.valueB);
+          if (isNaN(lo) || isNaN(hi)) { resultEl.textContent = `Rule ${i+1}: enter two numbers for between.`; return; }
+          base.value = [lo, hi];
+        } else {
+          const v = parseFloat(r.value);
+          if (isNaN(v)) { resultEl.textContent = `Rule ${i+1}: enter a number.`; return; }
+          base.value = v;
+        }
+        rules.push(base);
       } else {
         const base = { type: 'climate', metric: r.metric, period: r.period, month: parseInt(r.month), operator: r.operator };
         if (r.operator === 'between') {

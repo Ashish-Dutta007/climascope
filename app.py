@@ -960,6 +960,26 @@ def _get_terrain():
         _terrain_df = pd.read_parquet(path) if os.path.exists(path) else pd.DataFrame()
     return _terrain_df
 
+# terrain filter variable -> parquet column (for filter rules + export)
+TERRAIN_FILTER_COLS = {
+    "elevation": "elev_mean", "slope": "slope_mean",
+    "ruggedness": "ruggedness", "canopy": "canopy_mean",
+}
+
+def _numeric_cond(col, op, val):
+    """Build a safe SQL numeric condition for a quoted/plain column name."""
+    c = f'"{col}"'
+    try:
+        if op == "gt":  return f"{c} > {float(val)}"
+        if op == "lt":  return f"{c} < {float(val)}"
+        if op == "gte": return f"{c} >= {float(val)}"
+        if op == "lte": return f"{c} <= {float(val)}"
+        if op == "between" and isinstance(val, (list, tuple)) and len(val) == 2:
+            return f"{c} BETWEEN {float(val[0])} AND {float(val[1])}"
+    except (TypeError, ValueError):
+        return None
+    return None
+
 @app.route("/api/terrain/vars", methods=["GET"])
 def terrain_vars():
     df = _get_terrain()
@@ -2166,7 +2186,8 @@ def filter_query():
     if logic not in ("AND", "OR"):
         return jsonify({"error": "logic must be AND or OR"}), 400
 
-    lc_path = _data('data/landcover_fractions.parquet')
+    lc_path      = _data('data/landcover_fractions.parquet')
+    terrain_path = _data('data/terrain_metrics.parquet')
 
     # Validate all rules upfront
     for i, r in enumerate(rules):
@@ -2175,6 +2196,14 @@ def filter_query():
             for field in ("lc_class", "threshold"):
                 if field not in r:
                     return jsonify({"error": f"rule[{i}] missing field: {field}"}), 400
+        elif rule_type == "terrain":
+            if r.get("terrain_var") not in TERRAIN_FILTER_COLS:
+                return jsonify({"error": f"rule[{i}] terrain_var must be one of {sorted(TERRAIN_FILTER_COLS)}"}), 400
+            for field in ("operator", "value"):
+                if field not in r:
+                    return jsonify({"error": f"rule[{i}] missing field: {field}"}), 400
+            if r["operator"] not in _VALID_OPERATORS:
+                return jsonify({"error": f"rule[{i}] invalid operator: {r['operator']!r}"}), 400
         else:
             for field in ("metric", "period", "month", "operator", "value"):
                 if field not in r:
@@ -2202,6 +2231,17 @@ def filter_query():
                     f"WHERE lc_name = ? AND frac >= ?",
                     [lc_path, lc_name, thr]
                 )
+            elif rule_type == "terrain":
+                if not os.path.exists(terrain_path):
+                    conn.close()
+                    return jsonify({"error": "no terrain data available"}), 404
+                col = TERRAIN_FILTER_COLS[r["terrain_var"]]
+                cond = _numeric_cond(col, r["operator"], r["value"])
+                if cond is None:
+                    conn.close()
+                    return jsonify({"error": f"rule[{i}] bad operator/value"}), 400
+                conn.execute(f'CREATE TEMP TABLE {tbl} AS SELECT id_1km FROM read_parquet(?) '
+                             f'WHERE {col} IS NOT NULL AND {cond}', [terrain_path])
             else:
                 path = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
                 if not os.path.exists(path):
@@ -2460,6 +2500,24 @@ def aoi_cells():
     return jsonify({"ids": ids, "count": len(ids)})
 
 
+def _enrich_export(result):
+    """Add LiDAR-derived terrain metrics, OS tile ref, and LiDAR phase to an
+    export DataFrame keyed by id_1km (all left-joins; missing -> NaN)."""
+    terr = _get_terrain()
+    if not terr.empty:
+        result = result.merge(
+            terr[["id_1km", "elev_mean", "slope_mean", "ruggedness", "canopy_mean"]],
+            on="id_1km", how="left")
+    cov = _get_cov_df()
+    if not cov.empty:
+        result = result.merge(cov.reset_index()[["id_1km", "tile"]], on="id_1km", how="left")
+    coll = _get_coll_df()
+    if not coll.empty:
+        result = result.merge(
+            coll.reset_index()[["id_1km", "phase"]].rename(columns={"phase": "lidar_phase"}),
+            on="id_1km", how="left")
+    return result
+
 @app.route("/api/aoi/export", methods=["POST"])
 def aoi_export():
     body    = request.get_json(force=True, silent=True) or {}
@@ -2489,11 +2547,14 @@ def aoi_export():
         "period": period,
         "month":  month,
     }).merge(sub_df, on="id_1km", how="left")
-    result = result[["id_1km", "lon", "lat", "period", "month", "Change"]]
+    result = _enrich_export(result)
+    cols = ["id_1km", "tile", "lon", "lat", "period", "month", "Change",
+            "elev_mean", "slope_mean", "ruggedness", "canopy_mean", "lidar_phase"]
+    result = result[[c for c in cols if c in result.columns]]
 
     if fmt == "geojson":
         gdf = sub_grid[["id_1km", "geometry"]].merge(result, on="id_1km", how="left")
-        gdf = gdf[["id_1km", "lon", "lat", "period", "month", "Change", "geometry"]]
+        gdf = gdf[[c for c in cols if c in gdf.columns] + ["geometry"]]
         return Response(
             gdf.to_json(),
             mimetype="application/geo+json",
