@@ -243,14 +243,20 @@ document.addEventListener('DOMContentLoaded', () => {
     _applyDataOpacity();
   });
 
-  // Single source of truth for the climate choropleth opacity. Applies to BOTH
-  // grid-fill (council/catchment/AOI view) and cells-fill (national view) so the
-  // slider works in every mode; dims when a cell overlay is active.
+  // Single source of truth for opacity. The slider drives whichever layer is on
+  // top: an active cell overlay, the hillshade, and/or the climate choropleth
+  // (which dims to a faint backdrop when a cell overlay sits over it).
   function _anyCellOverlayOn() { return lcOverlayOn || lidarOverlayOn || terrainOverlayOn; }
   function _applyDataOpacity() {
-    const op = _anyCellOverlayOn() ? Math.min(layerOpacity, 0.12) : layerOpacity;
-    try { map.setPaintProperty('grid-fill',  'fill-opacity', op); } catch(_) {}
-    try { map.setPaintProperty('cells-fill', 'fill-opacity', op); } catch(_) {}
+    const op = layerOpacity;
+    if (terrainOverlayOn) { try { map.setPaintProperty('terrain-fill', 'fill-opacity', op); } catch(_) {} }
+    if (lidarOverlayOn)   { try { map.setPaintProperty('lidar-fill',   'fill-opacity', op); } catch(_) {} }
+    if (lcOverlayOn)      { _applyLcOpacity(); }
+    if (hillshadeOn)      { try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', op); } catch(_) {} }
+    // climate base: faint backdrop under a cell overlay, else follows the slider
+    const cop = _anyCellOverlayOn() ? 0.12 : op;
+    try { map.setPaintProperty('grid-fill',  'fill-opacity', cop); } catch(_) {}
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', cop); } catch(_) {}
   }
 
   const _bmEl = document.createElement('div');
@@ -379,6 +385,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // transparent via the 'lcs' feature-state; national scope lifts the restriction.
   const LC_SCOPED_OPACITY = ['case', ['boolean', ['feature-state', 'lcs'], false], LC_FILL_OPACITY, 0];
   let _lcScopeApplied = new Set();
+  let _lcScopedActive = false;   // whether lc-fill is currently scope-clipped
+
+  // lc-fill opacity is data-driven (washed-out weak cells, 0 for out-of-scope);
+  // scale the whole expression by the slider so the opacity control affects it too.
+  function _applyLcOpacity() {
+    const base = _lcScopedActive ? LC_SCOPED_OPACITY : LC_FILL_OPACITY;
+    try { map.setPaintProperty('lc-fill', 'fill-opacity', ['*', layerOpacity, base]); } catch(_) {}
+  }
 
   function _lcScopeIds() {
     if (filterPanel?._aoiActive && filterPanel?._aoiCells?.length)
@@ -395,14 +409,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ids === null) {
       for (const id of _lcScopeApplied) map.setFeatureState(fs(id), { lcs: false });
       _lcScopeApplied = new Set();
-      map.setPaintProperty('lc-fill', 'fill-opacity', LC_FILL_OPACITY);
+      _lcScopedActive = false;
+      _applyLcOpacity();
       _renderLcLegend(null);
       return;
     }
     for (const id of _lcScopeApplied) if (!ids.has(id)) map.setFeatureState(fs(id), { lcs: false });
     for (const id of ids) if (!_lcScopeApplied.has(id)) map.setFeatureState(fs(id), { lcs: true });
     _lcScopeApplied = ids;
-    map.setPaintProperty('lc-fill', 'fill-opacity', LC_SCOPED_OPACITY);
+    _lcScopedActive = true;
+    _applyLcOpacity();
     _renderLcLegend(ids);
   }
 
@@ -591,6 +607,16 @@ document.addEventListener('DOMContentLoaded', () => {
     hillshadeOn = on;
     _addHillshadeLayer();
     try { map.setLayoutProperty('terrain-hs-layer', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    _applyDataOpacity();
+    // The hillshade only has detail at z >= minzoom; if the user toggles it on
+    // from a zoomed-out view they'd see nothing, so fly to its footprint.
+    if (on && _hillshadeInfo?.bounds) {
+      const p = _hillshadeInfo.bounds.split(',').map(Number);
+      const minz = _hillshadeInfo.minzoom ?? 8;
+      if (p.length === 4 && map.getZoom() < minz) {
+        map.fitBounds([[p[0], p[1]], [p[2], p[3]]], { padding: 40, duration: 900 });
+      }
+    }
   }
   // ===== END HILLSHADE RASTER LAYER =====
 
