@@ -903,20 +903,20 @@ def landcover_dominant():
 
 _lidar_cov = None
 
-# LiDAR acquisition phases -> colour, ordered newest -> oldest (warm -> cool ramp
-# reads as data vintage). Code is 1-based index; used for the coverage overlay.
+# LiDAR acquisition phases -> (parquet key, display label, colour), ordered
+# newest -> oldest (warm -> cool ramp reads as data vintage). Code is 1-based index.
 LIDAR_PHASES = [
-    ("NLP 2025",       "#f97316"),
-    ("NLP Phase 6",    "#fb923c"),
-    ("NLP Phase 5",    "#fbbf24"),
-    ("NLP Phase 4",    "#a3e635"),
-    ("NLP Phase 3",    "#34d399"),
-    ("NLP Phase 2",    "#22d3ee"),
-    ("NLP Phase 1",    "#60a5fa"),
-    ("Outer Hebrides", "#c084fc"),
-    ("Historic",       "#94a3b8"),
+    ("NLP 2025",       "NLP 2025",       "#f97316"),
+    ("NLP Phase 6",    "Phase 6",        "#fb923c"),
+    ("NLP Phase 5",    "Phase 5",        "#fbbf24"),
+    ("NLP Phase 4",    "Phase 4",        "#a3e635"),
+    ("NLP Phase 3",    "Phase 3",        "#34d399"),
+    ("NLP Phase 2",    "Phase 2",        "#22d3ee"),
+    ("NLP Phase 1",    "Phase 1",        "#60a5fa"),
+    ("Outer Hebrides", "Outer Hebrides", "#c084fc"),
+    ("Historic",       "Historic",       "#94a3b8"),
 ]
-_PHASE_CODE = {label: i + 1 for i, (label, _) in enumerate(LIDAR_PHASES)}
+_PHASE_CODE = {key: i + 1 for i, (key, _, _) in enumerate(LIDAR_PHASES)}
 
 @app.route("/api/lidar/coverage", methods=["GET"])
 def lidar_coverage():
@@ -933,8 +933,8 @@ def lidar_coverage():
             if code:
                 ids.append(int(cid)); phases.append(code)
         present = set(coll["phase"].unique())
-        legend = [{"code": _PHASE_CODE[l], "label": l, "color": c}
-                  for l, c in LIDAR_PHASES if l in present]
+        legend = [{"code": _PHASE_CODE[k], "label": lab, "color": c}
+                  for k, lab, c in LIDAR_PHASES if k in present]
         cov = _get_cov_df()
         summary = {"any": len(ids)}
         if not cov.empty:

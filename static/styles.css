@@ -729,6 +729,20 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   border-radius: 2px;
   flex-shrink: 0;
 }
+.lc-legend-check {
+  cursor: pointer;
+  user-select: none;
+  gap: 6px;
+}
+.lc-legend-check input[type="checkbox"] {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  accent-color: var(--accent-light);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.lc-legend-check:hover { color: rgba(255,255,255,.9); }
 
 /* ===========================
    BASEMAP TOGGLE

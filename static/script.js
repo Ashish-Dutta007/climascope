@@ -152,13 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return expr;
   }
 
-  // LiDAR coverage coloured by acquisition phase (legend/colours come from the API)
-  function buildLidarFillColor(legend) {
-    const expr = ['match', ['coalesce', ['feature-state', 'lphase'], 0]];
-    (legend || []).forEach(p => expr.push(p.code, p.color));
-    expr.push('rgba(0,0,0,0)');
-    return expr;
+  // LiDAR coverage coloured by acquisition phase (legend/colours come from the API).
+  // `enabled` (a Set of phase codes) filters which phases render — unchecked ones
+  // fall through to transparent.
+  function buildLidarFillColor(legend, enabled) {
+    const pairs = [];
+    (legend || []).forEach(p => { if (!enabled || enabled.has(p.code)) pairs.push(p.code, p.color); });
+    if (!pairs.length) return 'rgba(0,0,0,0)';
+    return ['match', ['coalesce', ['feature-state', 'lphase'], 0], ...pairs, 'rgba(0,0,0,0)'];
   }
+  let _lidarEnabled = null;   // Set of phase codes currently shown (null = all)
 
   // Terrain: sequential ramps per variable, driven by feature-state 'tval'
   const TERRAIN_RAMPS = {
@@ -464,13 +467,24 @@ document.addEventListener('DOMContentLoaded', () => {
       leg.id = 'lidar-legend';
       map.getContainer().appendChild(leg);
     }
+    const legendItems = _lidarCov?.legend || [];
+    if (!_lidarEnabled) _lidarEnabled = new Set(legendItems.map(p => p.code));
     const s = _lidarCov?.summary;
     const pct = (s && s.total) ? Math.round(100 * s.any / s.total) : 0;
-    const rows = (_lidarCov?.legend || []).map(p =>
-      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${p.color}"></span>${p.label}</div>`
+    const rows = legendItems.map(p =>
+      `<label class="lc-legend-row lc-legend-check">`
+      + `<input type="checkbox" data-code="${p.code}"${_lidarEnabled.has(p.code) ? ' checked' : ''}>`
+      + `<span class="lc-swatch" style="background:${p.color}"></span>${p.label}</label>`
     ).join('');
     leg.innerHTML = `<div class="legend-title">LiDAR by phase `
       + `<span style="opacity:.35;font-weight:400">${pct}% of grid</span></div>${rows}`;
+    leg.querySelectorAll('input[type="checkbox"]').forEach(cb =>
+      cb.addEventListener('change', () => {
+        const code = +cb.dataset.code;
+        if (cb.checked) _lidarEnabled.add(code); else _lidarEnabled.delete(code);
+        try { map.setPaintProperty('lidar-fill', 'fill-color',
+              buildLidarFillColor(_lidarCov.legend, _lidarEnabled)); } catch(_) {}
+      }));
   }
 
   function _syncLidarDimming() { _applyDataOpacity(); }
@@ -488,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cb) cb.checked = false;
         return;
       }
-      try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend)); } catch(_) {}
+      try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend, _lidarEnabled)); } catch(_) {}
       _applyLidarStates();
       _renderLidarLegend();
     }
@@ -872,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'lidar-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
       layout: { visibility: lidarOverlayOn ? 'visible' : 'none' },
       paint: { 'fill-antialias': false,
-               'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend) : 'rgba(0,0,0,0)',
+               'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend, _lidarEnabled) : 'rgba(0,0,0,0)',
                'fill-opacity': 0.85 }
     });
 
@@ -1095,12 +1109,12 @@ document.addEventListener('DOMContentLoaded', () => {
       map.addLayer({ id:'lidar-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
         layout:{ visibility: lidarOverlayOn ? 'visible' : 'none' },
         paint:{ 'fill-antialias': false,
-                'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend) : 'rgba(0,0,0,0)',
+                'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend, _lidarEnabled) : 'rgba(0,0,0,0)',
                 'fill-opacity': 0.85 } });
     else
       map.setLayoutProperty('lidar-fill', 'visibility', lidarOverlayOn ? 'visible' : 'none');
     if (lidarOverlayOn) {
-      if (_lidarCov) { try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend)); } catch(_) {} }
+      if (_lidarCov) { try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend, _lidarEnabled)); } catch(_) {} }
       _applyLidarStates();            // feature-states dropped on basemap switch
       _syncLidarDimming();
     }
