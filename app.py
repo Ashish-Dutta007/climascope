@@ -975,6 +975,52 @@ def terrain():
                     for i, v in zip(sub["id_1km"], sub[col])})
 
 
+_cov_df = None
+_coll_df = None
+
+def _get_cov_df():
+    global _cov_df
+    if _cov_df is None:
+        p = _data("data/lidar_coverage.parquet")
+        _cov_df = (pd.read_parquet(p).set_index("id_1km")
+                   if os.path.exists(p) else pd.DataFrame())
+    return _cov_df
+
+def _get_coll_df():
+    global _coll_df
+    if _coll_df is None:
+        p = _data("data/lidar_collections.parquet")
+        _coll_df = (pd.read_parquet(p).set_index("id_1km")
+                    if os.path.exists(p) else pd.DataFrame())
+    return _coll_df
+
+@app.route("/api/cell_lidar", methods=["GET"])
+def cell_lidar():
+    """LiDAR availability + collection/phase + terrain metrics for one cell (popups)."""
+    id_ = request.args.get("id_1km", type=int)
+    if id_ is None:
+        return jsonify({"error": "MISSING_ID"}), 400
+    out = {"id_1km": id_, "has_lidar": False}
+    cov = _get_cov_df()
+    if not cov.empty and id_ in cov.index:
+        r = cov.loc[id_]
+        out.update(has_lidar=bool(r["has_any"]), dtm=bool(r["has_dtm"]),
+                   dsm=bool(r["has_dsm"]), point_cloud=bool(r["has_pc"]),
+                   bluesky=bool(r["has_bluesky"]))
+    coll = _get_coll_df()
+    if not coll.empty and id_ in coll.index:
+        out["collections"] = str(coll.loc[id_, "collections"])
+    terr = _get_terrain()
+    if not terr.empty:
+        trow = terr[terr["id_1km"] == id_]
+        if not trow.empty:
+            t = trow.iloc[0]
+            def _n(v): return None if pd.isna(v) else round(float(v), 2)
+            out["terrain"] = {"elevation": _n(t["elev_mean"]), "slope": _n(t["slope_mean"]),
+                              "ruggedness": _n(t["ruggedness"]), "canopy": _n(t["canopy_mean"])}
+    return jsonify(out)
+
+
 @lru_cache(maxsize=256)
 def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
     if not variable or variable == 'LCM':

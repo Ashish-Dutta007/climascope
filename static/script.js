@@ -1844,12 +1844,13 @@ document.addEventListener('DOMContentLoaded', () => {
               ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong>
             </div>
             <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
+            <div id="lidar-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px;line-height:1.5"></div>
             <canvas id="ts-${id}" width="260" height="110"></canvas>
           </div>
         `)
         .addTo(map);
 
-      setTimeout(() => { loadTS(id); loadWetness(id); }, 0);
+      setTimeout(() => { loadTS(id); loadWetness(id); loadCellLidar(id); }, 0);
     });
 
     map.on('mouseenter', 'grid-fill', () => map.getCanvas().style.cursor = 'crosshair');
@@ -1886,12 +1887,13 @@ document.addEventListener('DOMContentLoaded', () => {
               ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong>
             </div>
             <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
+            <div id="lidar-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px;line-height:1.5"></div>
             <canvas id="ts-${id}" width="260" height="110"></canvas>
           </div>
         `)
         .addTo(map);
 
-      setTimeout(() => { loadTS(id); loadWetness(id); loadCellContext(id); }, 0);
+      setTimeout(() => { loadTS(id); loadWetness(id); loadCellContext(id); loadCellLidar(id); }, 0);
     });
 
     map.on('mouseenter', 'cells-fill', () => map.getCanvas().style.cursor = 'crosshair');
@@ -1954,6 +1956,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const top = w.classes.slice(0,2).map(c=>`${c.label} (${c.pct}%)`).join(', ');
       div.innerHTML = `<strong style="opacity:1">Soil wetness:</strong> ${top}`;
     } catch { div.textContent='Soil wetness: error'; }
+  }
+
+  // LiDAR availability + collection/phase + terrain metrics for the clicked cell
+  async function loadCellLidar(id) {
+    const el = document.getElementById(`lidar-${id}`);
+    if (!el) return;
+    try {
+      const d = await fetch(`/api/cell_lidar?id_1km=${id}`).then(r=>r.json());
+      const parts = [];
+      if (d.has_lidar) {
+        const avail = [];
+        if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM');
+        if (d.point_cloud) avail.push('point cloud');
+        let s = '<strong style="color:#7dd3fc;opacity:1">LiDAR</strong>';
+        if (d.collections) s += ` · ${d.collections}`;
+        if (avail.length) s += `<br><span style="opacity:.7">${avail.join(' · ')}</span>`;
+        parts.push(s);
+      }
+      const t = d.terrain;
+      if (t && t.elevation != null) {
+        const tp = [`Elev ${t.elevation} m`];
+        if (t.slope != null)  tp.push(`Slope ${t.slope}°`);
+        if (t.canopy != null) tp.push(`Canopy ${t.canopy} m`);
+        parts.push(`<span style="opacity:.8">${tp.join(' · ')}</span>`);
+      }
+      if (!parts.length) { el.style.display = 'none'; return; }
+      el.innerHTML = parts.join('<br>');
+    } catch { el.style.display = 'none'; }
   }
 
   async function loadCellContext(id) {
