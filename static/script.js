@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let _lidarCov        = null;   // cached /api/lidar/coverage payload
   let terrainOverlayOn = false;
   let hillshadeOn      = false;
+  let hillshadeOpacity = 0.9;
   let _hillshadeInfo   = null;   // { minzoom, maxzoom, bounds } from /api/terrain/hillshade_info
   let terrainVar       = 'elevation';
   const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
@@ -234,27 +235,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-  const _opEl = document.createElement('div');
-  _opEl.id = 'opacity-ctrl';
-  _opEl.innerHTML = '<label for="layer-opacity">Opacity</label>'
-    + '<input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="0.85">';
-  map.getContainer().appendChild(_opEl);
+  // ===== ACTIVE LAYERS PANEL =====
+  // Lists what's currently on the map (the active data layer + hillshade) with a
+  // per-layer opacity slider. Foundation of the layer-manager model.
+  const _alEl = document.createElement('div');
+  _alEl.id = 'active-layers';
+  map.getContainer().appendChild(_alEl);
 
-  document.getElementById('layer-opacity').addEventListener('input', e => {
-    layerOpacity = parseFloat(e.target.value);
-    _applyDataOpacity();
-  });
+  function _activeDataLayerName() {
+    if (terrainOverlayOn) return (TERRAIN_LABELS[terrainVar]?.[0] || 'Terrain');
+    if (lidarOverlayOn)   return 'LiDAR coverage';
+    if (lcOverlayOn)      return 'Land cover';
+    return (typeof METRIC_LABELS !== 'undefined' && activeMetric && METRIC_LABELS[activeMetric.id])
+      || activeMetric?.id || 'Climate';
+  }
 
-  // Single source of truth for opacity. The slider drives whichever layer is on
-  // top: an active cell overlay, the hillshade, and/or the climate choropleth
-  // (which dims to a faint backdrop when a cell overlay sits over it).
+  function _renderActiveLayers() {
+    const rows = [];
+    rows.push({ key: 'data', name: _activeDataLayerName(), op: layerOpacity });
+    if (hillshadeOn) rows.push({ key: 'hillshade', name: 'Hillshade', op: hillshadeOpacity });
+    _alEl.innerHTML = `<div class="al-title">Layers</div>` + rows.map(r =>
+      `<div class="al-row">
+         <span class="al-name" title="${r.name}">${r.name}</span>
+         <input type="range" class="al-op" data-key="${r.key}" min="0" max="1" step="0.05" value="${r.op}">
+       </div>`).join('');
+    _alEl.querySelectorAll('.al-op').forEach(sl =>
+      sl.addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (e.target.dataset.key === 'hillshade') {
+          hillshadeOpacity = v;
+          try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', v); } catch(_) {}
+        } else {
+          layerOpacity = v;
+          _applyDataOpacity();
+        }
+      }));
+  }
+
+  // Applies opacity to whichever data layer is active + the dimmed climate base.
   function _anyCellOverlayOn() { return lcOverlayOn || lidarOverlayOn || terrainOverlayOn; }
   function _applyDataOpacity() {
     const op = layerOpacity;
     if (terrainOverlayOn) { try { map.setPaintProperty('terrain-fill', 'fill-opacity', op); } catch(_) {} }
     if (lidarOverlayOn)   { try { map.setPaintProperty('lidar-fill',   'fill-opacity', op); } catch(_) {} }
     if (lcOverlayOn)      { _applyLcOpacity(); }
-    if (hillshadeOn)      { try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', op); } catch(_) {} }
+    if (hillshadeOn)      { try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', hillshadeOpacity); } catch(_) {} }
     // climate base: faint backdrop under a cell overlay, else follows the slider
     const cop = _anyCellOverlayOn() ? 0.12 : op;
     try { map.setPaintProperty('grid-fill',  'fill-opacity', cop); } catch(_) {}
@@ -297,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('terrain-var').addEventListener('change', e => {
     terrainVar = e.target.value;
-    if (terrainOverlayOn) loadTerrainVar(terrainVar);
+    if (terrainOverlayOn) { loadTerrainVar(terrainVar); _renderActiveLayers(); }
   });
   // Terrain data may not be present — disable the toggle with a hint until it is.
   (async () => {
@@ -448,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncLcDimming();
     const leg = document.getElementById('lc-legend');
     if (leg) leg.style.display = on ? 'block' : 'none';
+    _renderActiveLayers();
   }
   // ===== END LAND-COVER OVERLAY =====
 
@@ -510,6 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncLidarDimming();
     const leg = document.getElementById('lidar-legend');
     if (leg) leg.style.display = on ? 'block' : 'none';
+    _renderActiveLayers();
   }
   // ===== END LIDAR COVERAGE OVERLAY =====
 
@@ -584,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncTerrainDimming();
     const leg = document.getElementById('terrain-legend');
     if (leg) leg.style.display = on ? 'block' : 'none';
+    _renderActiveLayers();
   }
   // ===== END TERRAIN OVERLAY =====
 
@@ -621,7 +649,9 @@ document.addEventListener('DOMContentLoaded', () => {
     hillshadeOn = on;
     _addHillshadeLayer();
     try { map.setLayoutProperty('terrain-hs-layer', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', hillshadeOpacity); } catch(_) {}
     _applyDataOpacity();
+    _renderActiveLayers();
     // The hillshade only has detail at z >= minzoom; if the user toggles it on
     // from a zoomed-out view they'd see nothing, so fly to its footprint.
     if (on && _hillshadeInfo?.bounds) {
@@ -1325,6 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Silently set default metric to first available (no change-event cascade)
       activeMetric = firstAvailable;
       updateLayerPaint();
+      _renderActiveLayers();
 
       grid.innerHTML = '';
       catalogue.forEach(m => {
@@ -1364,6 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLayerPaint();
     loadLayer();
     _emitStateChange();
+    _renderActiveLayers();
   }
 
   function updateLayerPaint() {
