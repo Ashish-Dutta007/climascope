@@ -271,34 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ===== OVERLAYS GROUP (collapsible) =====
-  const _ovEl = document.createElement('div');
-  _ovEl.id = 'overlay-ctrl';
-  _ovEl.innerHTML = `
-    <button id="overlay-head" type="button">
-      <span>Overlays</span><span id="overlay-caret">▾</span>
-    </button>
-    <div id="overlay-body">
-      <label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
-      <label><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
-      <label><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
-      <select id="terrain-var" class="overlay-select" style="display:none">
-        <option value="elevation">Elevation</option>
-        <option value="slope">Slope</option>
-        <option value="ruggedness">Ruggedness</option>
-        <option value="canopy">Canopy height</option>
-      </select>
-      <div class="overlay-divider"></div>
-      <label><input type="checkbox" id="hillshade-cb"> Hillshade (LiDAR)</label>
-    </div>`;
-  map.getContainer().appendChild(_ovEl);
-  document.getElementById('overlay-head').addEventListener('click', () => {
-    _ovEl.classList.toggle('collapsed');
-    document.getElementById('overlay-caret').textContent =
-      _ovEl.classList.contains('collapsed') ? '▸' : '▾';
-  });
-  // Overlays are mutually exclusive — two feature-state fills on the same cells
-  // would muddy each other, so turning one on clears the other.
+  // ===== CONTEXT LAYERS (markup lives in the sidebar, see index.html) =====
+  // The cell overlays are mutually exclusive — two feature-state fills on the same
+  // cells would muddy each other, so turning one on clears the other.
   document.getElementById('lc-overlay-cb').addEventListener('change', e => {
     if (e.target.checked) { _setLidarOverlay(false); _setTerrainOverlay(false); }
     toggleLcOverlay(e.target.checked);

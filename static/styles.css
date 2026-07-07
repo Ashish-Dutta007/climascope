@@ -644,47 +644,18 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 }
 
 /* ===========================
-   OVERLAYS GROUP + LEGENDS
+   CONTEXT LAYERS (sidebar) + LEGENDS
 =========================== */
-#overlay-ctrl {
-  position: absolute;
-  bottom: 94px;
-  left: 8px;
-  background: rgba(17,24,39,0.88);
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  z-index: 2;
-  min-width: 128px;
-}
-#overlay-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-  padding: 4px 8px;
-  background: transparent;
-  border: none;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .3px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  user-select: none;
-}
-#overlay-caret { opacity: .55; font-size: 10px; }
 #overlay-body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 0 8px 6px;
+  gap: 5px;
 }
-#overlay-ctrl.collapsed #overlay-body { display: none; }
 #overlay-body label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 7px;
+  font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
   user-select: none;
@@ -712,7 +683,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 }
 #lc-legend, #lidar-legend, #terrain-legend {
   position: absolute;
-  bottom: 172px;
+  bottom: 96px;
   left: 8px;
   background: rgba(17,24,39,.95);
   color: var(--text-primary);

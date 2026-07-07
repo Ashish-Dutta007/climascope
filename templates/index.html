@@ -115,6 +115,25 @@
       <div class="divider"></div>
 
       <div class="section">
+        <div class="section-label">Context Layers</div>
+        <div id="overlay-body">
+          <label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
+          <label><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
+          <label><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
+          <select id="terrain-var" class="overlay-select" style="display:none">
+            <option value="elevation">Elevation</option>
+            <option value="slope">Slope</option>
+            <option value="ruggedness">Ruggedness</option>
+            <option value="canopy">Canopy height</option>
+          </select>
+          <div class="overlay-divider"></div>
+          <label><input type="checkbox" id="hillshade-cb"> Hillshade (LiDAR)</label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section">
         <button id="load" class="primary-btn">↻&nbsp;&nbsp;Refresh Layer</button>
       </div>
 
