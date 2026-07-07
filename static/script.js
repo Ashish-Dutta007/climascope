@@ -152,14 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return expr;
   }
 
-  // LiDAR coverage tiers: 1=point cloud, 2=terrain (DTM/DSM), 3=both
-  const LIDAR_TIERS = [
-    { tier: 3, color: '#0e7490', label: 'Terrain + point cloud' },
-    { tier: 2, color: '#22d3ee', label: 'Terrain (DTM/DSM)' },
-    { tier: 1, color: '#a5f3fc', label: 'Point cloud only' },
-  ];
-  const LIDAR_FILL_COLOR = ['match', ['coalesce', ['feature-state', 'lcov'], 0],
-    3, '#0e7490', 2, '#22d3ee', 1, '#a5f3fc', 'rgba(0,0,0,0)'];
+  // LiDAR coverage coloured by acquisition phase (legend/colours come from the API)
+  function buildLidarFillColor(legend) {
+    const expr = ['match', ['coalesce', ['feature-state', 'lphase'], 0]];
+    (legend || []).forEach(p => expr.push(p.code, p.color));
+    expr.push('rgba(0,0,0,0)');
+    return expr;
+  }
 
   // Terrain: sequential ramps per variable, driven by feature-state 'tval'
   const TERRAIN_RAMPS = {
@@ -452,9 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== LIDAR COVERAGE OVERLAY =====
   function _applyLidarStates() {
     if (!_lidarCov) return;
-    const { ids, tiers } = _lidarCov;
+    const { ids, phases } = _lidarCov;
     for (let i = 0; i < ids.length; i++) {
-      map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: ids[i] }, { lcov: tiers[i] });
+      map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: ids[i] }, { lphase: phases[i] });
     }
   }
 
@@ -466,11 +465,11 @@ document.addEventListener('DOMContentLoaded', () => {
       map.getContainer().appendChild(leg);
     }
     const s = _lidarCov?.summary;
-    const pct = s ? Math.round(100 * s.any / s.total) : 0;
-    const rows = LIDAR_TIERS.map(t =>
-      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${t.color}"></span>${t.label}</div>`
+    const pct = (s && s.total) ? Math.round(100 * s.any / s.total) : 0;
+    const rows = (_lidarCov?.legend || []).map(p =>
+      `<div class="lc-legend-row"><span class="lc-swatch" style="background:${p.color}"></span>${p.label}</div>`
     ).join('');
-    leg.innerHTML = `<div class="legend-title">LiDAR coverage `
+    leg.innerHTML = `<div class="legend-title">LiDAR by phase `
       + `<span style="opacity:.35;font-weight:400">${pct}% of grid</span></div>${rows}`;
   }
 
@@ -489,6 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cb) cb.checked = false;
         return;
       }
+      try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend)); } catch(_) {}
       _applyLidarStates();
       _renderLidarLegend();
     }
@@ -871,7 +871,9 @@ document.addEventListener('DOMContentLoaded', () => {
     map.addLayer({
       id: 'lidar-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
       layout: { visibility: lidarOverlayOn ? 'visible' : 'none' },
-      paint: { 'fill-antialias': false, 'fill-color': LIDAR_FILL_COLOR, 'fill-opacity': 0.8 }
+      paint: { 'fill-antialias': false,
+               'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend) : 'rgba(0,0,0,0)',
+               'fill-opacity': 0.85 }
     });
 
     // Terrain overlay — continuous LiDAR-derived values (see TERRAIN OVERLAY)
@@ -1092,10 +1094,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map.getLayer('lidar-fill'))
       map.addLayer({ id:'lidar-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
         layout:{ visibility: lidarOverlayOn ? 'visible' : 'none' },
-        paint:{ 'fill-antialias': false, 'fill-color': LIDAR_FILL_COLOR, 'fill-opacity': 0.8 } });
+        paint:{ 'fill-antialias': false,
+                'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend) : 'rgba(0,0,0,0)',
+                'fill-opacity': 0.85 } });
     else
       map.setLayoutProperty('lidar-fill', 'visibility', lidarOverlayOn ? 'visible' : 'none');
     if (lidarOverlayOn) {
+      if (_lidarCov) { try { map.setPaintProperty('lidar-fill', 'fill-color', buildLidarFillColor(_lidarCov.legend)); } catch(_) {} }
       _applyLidarStates();            // feature-states dropped on basemap switch
       _syncLidarDimming();
     }
@@ -1810,8 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
   exportBtn.querySelector('#btn-export').addEventListener('click', exportCurrentView);
 
   // ----- context-aware popups (localized to the active overlay) -----
-  const _LIDAR_TIER_LABEL = { 3: 'Terrain + point cloud', 2: 'Terrain (DTM/DSM)', 1: 'Point cloud' };
-  let _lcById = null, _lcCodeName = null, _lidarTierById = null;
+  let _lcById = null, _lcCodeName = null, _lidarPhaseById = null, _lidarPhaseName = null;
   function _buildLcLookup() {
     if (!_lcDominant) return;
     _lcById = new Map(); _lcCodeName = new Map(_lcDominant.classes.map(c => [c.lc_code, c.lc_name]));
@@ -1819,8 +1823,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function _buildLidarLookup() {
     if (!_lidarCov) return;
-    _lidarTierById = new Map();
-    _lidarCov.ids.forEach((id, i) => _lidarTierById.set(id, _lidarCov.tiers[i]));
+    _lidarPhaseById = new Map();
+    _lidarCov.ids.forEach((id, i) => _lidarPhaseById.set(id, _lidarCov.phases[i]));
+    _lidarPhaseName = new Map((_lidarCov.legend || []).map(p => [p.code, p.label]));
   }
   function _activeContext() {
     if (terrainOverlayOn) return 'terrain';
@@ -1842,9 +1847,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return v == null ? `${lab}: no data` : `${lab}: <strong>${v} ${un}</strong>`;
     }
     if (ctx === 'lidar') {
-      if (!_lidarTierById) _buildLidarLookup();
-      const t = _lidarTierById?.get(id);
-      return t ? `LiDAR: <strong>${_LIDAR_TIER_LABEL[t]}</strong>` : 'No LiDAR here';
+      if (!_lidarPhaseById) _buildLidarLookup();
+      const p = _lidarPhaseById?.get(id);
+      return p ? `<strong>${_lidarPhaseName.get(p) || 'LiDAR'}</strong>` : 'No LiDAR here';
     }
     if (ctx === 'landcover') {
       if (!_lcById) _buildLcLookup();

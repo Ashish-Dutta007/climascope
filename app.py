@@ -903,35 +903,44 @@ def landcover_dominant():
 
 _lidar_cov = None
 
+# LiDAR acquisition phases -> colour, ordered newest -> oldest (warm -> cool ramp
+# reads as data vintage). Code is 1-based index; used for the coverage overlay.
+LIDAR_PHASES = [
+    ("NLP 2025",       "#f97316"),
+    ("NLP Phase 6",    "#fb923c"),
+    ("NLP Phase 5",    "#fbbf24"),
+    ("NLP Phase 4",    "#a3e635"),
+    ("NLP Phase 3",    "#34d399"),
+    ("NLP Phase 2",    "#22d3ee"),
+    ("NLP Phase 1",    "#60a5fa"),
+    ("Outer Hebrides", "#c084fc"),
+    ("Historic",       "#94a3b8"),
+]
+_PHASE_CODE = {label: i + 1 for i, (label, _) in enumerate(LIDAR_PHASES)}
+
 @app.route("/api/lidar/coverage", methods=["GET"])
 def lidar_coverage():
-    """Per-1km-cell LiDAR availability tier for the coverage overlay.
-    tier: 1=point cloud only, 2=terrain (DTM+DSM), 3=both raster+point cloud.
-    Cells with no LiDAR are omitted (rendered transparent)."""
+    """Per-1km-cell LiDAR coverage coloured by acquisition phase (newest wins).
+    Returns parallel ids/phases arrays + a legend of the phases present."""
     global _lidar_cov
     if _lidar_cov is None:
-        path = _data("data/lidar_coverage.parquet")
-        if not os.path.exists(path):
+        coll = _get_coll_df()
+        if coll.empty:
             return jsonify({"error": "NO_COVERAGE_DATA"}), 404
-        df     = pd.read_parquet(path)
-        raster = df["has_dtm"] & df["has_dsm"]
-        tier   = pd.Series(0, index=df.index)
-        tier[df["has_pc"]]        = 1
-        tier[raster]              = 2
-        tier[raster & df["has_pc"]] = 3
-        sub = df.assign(tier=tier)
-        sub = sub[sub["tier"] > 0]
-        _lidar_cov = {
-            "ids":   sub["id_1km"].astype(int).tolist(),
-            "tiers": sub["tier"].astype(int).tolist(),
-            "summary": {
-                "total":  int(len(df)),
-                "any":    int((tier > 0).sum()),
-                "raster": int(raster.sum()),
-                "pc":     int(df["has_pc"].sum()),
-                "nlp":    int(df["has_nlp"].sum()),
-            },
-        }
+        ids, phases = [], []
+        for cid, ph in coll["phase"].items():
+            code = _PHASE_CODE.get(ph)
+            if code:
+                ids.append(int(cid)); phases.append(code)
+        present = set(coll["phase"].unique())
+        legend = [{"code": _PHASE_CODE[l], "label": l, "color": c}
+                  for l, c in LIDAR_PHASES if l in present]
+        cov = _get_cov_df()
+        summary = {"any": len(ids)}
+        if not cov.empty:
+            summary.update(total=int(len(cov)), raster=int((cov["has_dtm"] & cov["has_dsm"]).sum()),
+                           pc=int(cov["has_pc"].sum()), nlp=int(cov["has_nlp"].sum()))
+        _lidar_cov = {"ids": ids, "phases": phases, "legend": legend, "summary": summary}
     return jsonify(_lidar_cov)
 
 
