@@ -1013,7 +1013,7 @@ def cell_lidar():
     cov = _get_cov_df()
     if not cov.empty and id_ in cov.index:
         r = cov.loc[id_]
-        out.update(has_lidar=bool(r["has_any"]), dtm=bool(r["has_dtm"]),
+        out.update(tile=str(r["tile"]), has_lidar=bool(r["has_any"]), dtm=bool(r["has_dtm"]),
                    dsm=bool(r["has_dsm"]), point_cloud=bool(r["has_pc"]),
                    bluesky=bool(r["has_bluesky"]))
     coll = _get_coll_df()

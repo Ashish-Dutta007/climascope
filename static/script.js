@@ -728,10 +728,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function _escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
+    // OS grid ref (e.g. "NX3545") -> BNG bbox [minE,minN,maxE,maxN], or null.
+    // Handles 1km (4 digits), 10km (2 digits), 100m (6 digits) etc.
+    function osRefToBng(q) {
+      const ref = String(q).toUpperCase().replace(/\s+/g, '');
+      const m = ref.match(/^([A-Z])([A-Z])(\d+)$/);
+      if (!m) return null;
+      let l1 = m[1].charCodeAt(0) - 65, l2 = m[2].charCodeAt(0) - 65;
+      if (l1 === 8 || l2 === 8) return null;         // 'I' is not used
+      if (l1 > 8) l1--; if (l2 > 8) l2--;
+      const e100 = ((l1 - 2) % 5) * 5 + (l2 % 5);
+      const n100 = (19 - Math.floor(l1 / 5) * 5) - Math.floor(l2 / 5);
+      if (e100 < 0 || e100 > 6 || n100 < 0 || n100 > 12) return null;
+      const digits = m[3];
+      if (digits.length % 2) return null;            // must be even (E then N)
+      const half = digits.length / 2, mult = Math.pow(10, 5 - half);
+      const e = e100 * 100000 + parseInt(digits.slice(0, half), 10) * mult;
+      const n = n100 * 100000 + parseInt(digits.slice(half), 10) * mult;
+      return [e, n, e + mult, n + mult];
+    }
+
     // STEP 1 — local councils + catchments (in memory from startup, no network).
     // Councils first, then catchments, max 4 of each.
     function _localHits(q) {
       const lower = q.toLowerCase();
+      const hits = [];
+      const bbox = osRefToBng(q);   // OS tile ref -> show first (most specific)
+      if (bbox) hits.push({ kind: 'tile', name: q.toUpperCase().replace(/\s+/g, ''), bbox });
       const councils = (councilsGJ?.features || [])
         .map(f => f.properties.council_name)
         .filter(name => name && name.toLowerCase().includes(lower))
@@ -741,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .filter(c => c.name && c.name.toLowerCase().includes(lower))
         .slice(0, 4)
         .map(c => ({ kind: 'catchment', name: c.name }));
-      return councils.concat(catchments);
+      return hits.concat(councils, catchments);
     }
 
     // Replicate the left-sidebar dropdown change exactly: set value + fire 'change'
@@ -759,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `<span class="search-type search-tag search-tag-${kind}">${label}</span>`;
       let html = '';
       localHits.forEach(h => {
-        const label = h.kind === 'council' ? 'Council' : 'Catchment';
+        const label = h.kind === 'tile' ? 'Tile' : h.kind === 'council' ? 'Council' : 'Catchment';
         html += `<div class="search-result">${_escHtml(h.name)}${tag(h.kind, label)}</div>`;
       });
       placeHits.forEach(g => {
@@ -774,7 +797,13 @@ document.addEventListener('DOMContentLoaded', () => {
           clearTimeout(_debounce);
           if (idx < localHits.length) {
             const h = localHits[idx];
-            _selectSidebar(h.kind === 'council' ? 'council' : 'catchment', h.name);
+            if (h.kind === 'tile') {
+              const [e0, n0, e1, n1] = h.bbox;
+              const sw = bngToWgs84(e0, n0), ne = bngToWgs84(e1, n1);
+              map.fitBounds([[sw[0], sw[1]], [ne[0], ne[1]]], { padding: 180, maxZoom: 13, duration: 900 });
+            } else {
+              _selectSidebar(h.kind === 'council' ? 'council' : 'catchment', h.name);
+            }
             input.value = h.name;
           } else {
             const g = placeHits[idx - localHits.length];
@@ -1877,11 +1906,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong>${d}</strong>`;
   }
 
+  // cache cell_lidar per id so the header tile + body share one request
+  const _cellInfoCache = {};
+  function _getCellInfo(id) {
+    if (!_cellInfoCache[id])
+      _cellInfoCache[id] = fetch(`/api/cell_lidar?id_1km=${id}`).then(r => r.json()).catch(() => ({}));
+    return _cellInfoCache[id];
+  }
+  function _loadCellTile(id) {
+    _getCellInfo(id).then(d => {
+      const el = document.getElementById(`tile-${id}`);
+      if (el && d.tile) el.textContent = d.tile;
+    });
+  }
+
   function _openCellClick(id, lngLat, climateVal, col, month, isBase) {
     const ctx = _activeContext();
     const header = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">`
       + `<div style="width:10px;height:10px;border-radius:2px;background:${col};flex-shrink:0"></div>`
-      + `<strong style="font-size:13px">Cell ${id}</strong></div>`;
+      + `<strong style="font-size:13px">Cell ${id}</strong>`
+      + `<span id="tile-${id}" class="popup-tile"></span></div>`;
     if (ctx === 'climate') {
       const un = METRIC_UNITS[activeMetric.id] || '';
       const valDisplay = climateVal == null ? 'N/A'
@@ -1894,12 +1938,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
           <canvas id="ts-${id}" width="260" height="110"></canvas>
         </div>`).addTo(map);
-      setTimeout(() => { loadTS(id); loadWetness(id); }, 0);
+      setTimeout(() => { loadTS(id); loadWetness(id); _loadCellTile(id); }, 0);
     } else {
       new maplibregl.Popup({ maxWidth: '300px' }).setLngLat(lngLat).setHTML(
         `<div style="min-width:210px">${header}<div id="ctxbody-${id}" style="font-size:12px;opacity:.85;line-height:1.6">loading…</div></div>`
       ).addTo(map);
-      setTimeout(() => _fillCtxBody(id, ctx), 0);
+      setTimeout(() => { _fillCtxBody(id, ctx); _loadCellTile(id); }, 0);
     }
   }
 
@@ -1920,7 +1964,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const d = await fetch(`/api/cell_lidar?id_1km=${id}`).then(r => r.json());
+      const d = await _getCellInfo(id);
       if (ctx === 'terrain') {
         const t = d.terrain;
         if (!t || t.elevation == null) { el.textContent = 'No terrain data for this cell'; return; }
