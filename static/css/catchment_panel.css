@@ -41,7 +41,7 @@
   font-size: 11px;
   cursor: pointer;
   z-index: 5;
-  display: none;
+  display: flex;              /* always show the handle so the panel is reachable */
   align-items: center;
   justify-content: center;
   transition: color .15s, background .15s;
@@ -50,10 +50,6 @@
 #rp-toggle:hover {
   background: var(--bg-panel);
   color: var(--text-primary);
-}
-
-body.dashboard-mode #rp-toggle {
-  display: flex;
 }
 
 .rp-tabbar {
