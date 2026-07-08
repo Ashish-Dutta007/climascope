@@ -42,9 +42,9 @@
     if (!el) return;
     var mLabel  = MONTH_NAMES[_state.month] || 'Month ' + _state.month;
     var mbLabel = _state.member === 'mean' ? 'Ensemble mean' : 'Member ' + _state.member;
-    el.innerHTML =
-      '<span class="status-dot"></span>Broadcasting: ' +
-      mLabel + ' · ' + mbLabel + ' · ' + _state.region.name;
+    el.innerHTML = '<span class="status-dot"></span>';
+    el.appendChild(document.createTextNode(
+      'Broadcasting: ' + mLabel + ' · ' + mbLabel + ' · ' + _state.region.name));
   }
 
   function highlight() {

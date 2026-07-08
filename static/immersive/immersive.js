@@ -411,10 +411,13 @@
   // 12-month seasonal chart: baseline (1990-2019) vs 2050-2079, ensemble mean,
   // read only from _regionMonthly. Hand-rolled inline SVG, no library.
   function buildChartSVG(base, fut, unit, selIdx, W, H) {
+    // Compact fallback for degenerate cells (small dev windows): below ~340px the
+    // full margins would exceed the cell (negative plot width) — draw lines only.
+    var compact = W < 340 || H < 260;
     var f  = Math.max(22, Math.min(38, W / 27));  // axis font, sized for distance
     var cf = Math.max(18, f - 7);                 // caption font
-    var L = Math.round(f * 4.4), R = Math.round(f * 0.9);
-    var T = Math.round(f * 1.3), B = Math.round(f * 3.2);
+    var L = compact ? 12 : Math.round(f * 4.4), R = compact ? 12 : Math.round(f * 0.9);
+    var T = compact ? 12 : Math.round(f * 1.3), B = compact ? 12 : Math.round(f * 3.2);
     var pw = W - L - R, ph = H - T - B;
     var frame = '<rect x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph +
                 '" fill="none" stroke="rgba(150,170,210,0.32)" stroke-width="1.5"/>';
@@ -423,7 +426,7 @@
 
     // 4 month ticks only (Jan / Apr / Jul / Oct); all 12 data points still plotted.
     var monthY = (H - B) + f + 6, months = '';
-    [0, 3, 6, 9].forEach(function (i) {
+    if (!compact) [0, 3, 6, 9].forEach(function (i) {
       months += '<text x="' + xAt(i).toFixed(1) + '" y="' + monthY.toFixed(1) +
         '" text-anchor="middle" font-size="' + f.toFixed(0) + '" font-weight="600"' +
         ' fill="rgba(205,217,242,0.78)">' + MONTH_NAMES[i + 1] + '</text>';
@@ -460,6 +463,7 @@
       var y = yAt(tv);
       grid += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + (L + pw) + '" y2="' + y.toFixed(1) +
         '" stroke="rgba(150,170,210,0.15)" stroke-width="1.5"/>';
+      if (compact) return;
       var lbl = (Math.abs(hi - lo) >= 10 ? Math.round(tv) : tv.toFixed(1));
       grid += '<text x="' + (L - 14) + '" y="' + (y + f * 0.34).toFixed(1) + '" text-anchor="end" font-size="' +
         f.toFixed(0) + '" fill="rgba(205,217,242,0.82)">' + lbl + (k === 0 ? ' ' + unit : '') + '</text>';
@@ -468,7 +472,7 @@
     var mx0 = xAt(selIdx).toFixed(1);
     var marker = '<line x1="' + mx0 + '" y1="' + T + '" x2="' + mx0 + '" y2="' + (T + ph) +
       '" stroke="rgba(255,255,255,0.5)" stroke-width="4"/>';
-    var dotR = Math.round(f * 0.36) + 2;
+    var dotR = compact ? 5 : Math.round(f * 0.36) + 2;
     function dot(series, color) {
       var v = series ? series[selIdx] : null;
       if (v == null || !isFinite(v)) return '';
@@ -477,27 +481,30 @@
     }
 
     // One caption line below the month labels, clear of the plot.
-    var charW = cf * 0.6, sw = Math.round(cf * 1.3), gap = charW * 0.8;
-    var parts = [
-      { sw: CHART_BASE_COLOR }, { t: '1990-2019', c: '#cdd9f2' },
-      { t: 'vs', c: 'rgba(205,217,242,0.6)' },
-      { sw: CHART_FUTURE_COLOR }, { t: '2050-2079', c: '#cdd9f2' },
-      { t: '· ensemble mean', c: 'rgba(205,217,242,0.6)' },
-    ];
-    var totalW = 0;
-    parts.forEach(function (p) { totalW += (p.sw ? sw : p.t.length * charW) + gap; });
-    var cx = Math.max(L, (W - totalW) / 2), cy = H - Math.round(f * 0.5), caption = '';
-    parts.forEach(function (p) {
-      if (p.sw) {
-        caption += '<line x1="' + cx + '" y1="' + (cy - cf * 0.3) + '" x2="' + (cx + sw) + '" y2="' + (cy - cf * 0.3) +
-          '" stroke="' + p.sw + '" stroke-width="6" stroke-linecap="round"/>';
-        cx += sw + gap;
-      } else {
-        caption += '<text x="' + cx.toFixed(1) + '" y="' + cy + '" font-size="' + cf.toFixed(0) +
-          '" fill="' + p.c + '">' + p.t + '</text>';
-        cx += p.t.length * charW + gap;
-      }
-    });
+    var caption = '';
+    if (!compact) {
+      var charW = cf * 0.6, sw = Math.round(cf * 1.3), gap = charW * 0.8;
+      var parts = [
+        { sw: CHART_BASE_COLOR }, { t: '1990-2019', c: '#cdd9f2' },
+        { t: 'vs', c: 'rgba(205,217,242,0.6)' },
+        { sw: CHART_FUTURE_COLOR }, { t: '2050-2079', c: '#cdd9f2' },
+        { t: '· ensemble mean', c: 'rgba(205,217,242,0.6)' },
+      ];
+      var totalW = 0;
+      parts.forEach(function (p) { totalW += (p.sw ? sw : p.t.length * charW) + gap; });
+      var cx = Math.max(L, (W - totalW) / 2), cy = H - Math.round(f * 0.5);
+      parts.forEach(function (p) {
+        if (p.sw) {
+          caption += '<line x1="' + cx + '" y1="' + (cy - cf * 0.3) + '" x2="' + (cx + sw) + '" y2="' + (cy - cf * 0.3) +
+            '" stroke="' + p.sw + '" stroke-width="6" stroke-linecap="round"/>';
+          cx += sw + gap;
+        } else {
+          caption += '<text x="' + cx.toFixed(1) + '" y="' + cy + '" font-size="' + cf.toFixed(0) +
+            '" fill="' + p.c + '">' + p.t + '</text>';
+          cx += p.t.length * charW + gap;
+        }
+      });
+    }
 
     return '<svg width="100%" height="100%" viewBox="0 0 ' + W + ' ' + H + '">' +
       grid + frame + marker +

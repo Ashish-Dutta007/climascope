@@ -26,7 +26,6 @@ OUTPUT_DIR  = os.environ.get("OUTPUT_DIR",  _data("data/outputs"))
 PRECOMP_DIR = os.environ.get("PRECOMP_DIR", _data("data/precomputed"))
 COG_DIR      = os.environ.get("COG_DIR",      _data("data/cogs"))
 MBTILES_FILE = os.environ.get("MBTILES_FILE", _data("data/tiles/grid.mbtiles"))
-POTREE_DIR   = os.environ.get("POTREE_DIR",   _data("data/potree"))
 WEB_EPSG    = 4326
 AREA_LIMIT_M2 = 200_000_000
 
@@ -336,13 +335,6 @@ def immersive_control():
     resp.headers["Cache-Control"] = "no-store"
     return resp
 
-@app.route("/immersive/lidar")
-def immersive_lidar():
-    from flask import render_template, make_response
-    resp = make_response(render_template("immersive_lidar.html"))
-    resp.headers["Cache-Control"] = "no-store"
-    return resp
-
 METRIC_CATALOGUE = [
     {
         "id": "CWBPT", "short": "CWB PT",
@@ -498,26 +490,6 @@ def serve_cog(filepath):
         return jsonify({"error": "not found"}), 404
     from flask import send_file as _send_file
     return _send_file(full_path, conditional=True)
-
-
-@app.route("/potree/<path:filepath>")
-def serve_potree(filepath):
-    """Potree octree data (cloud.js + data/r/*) for the immersive LiDAR wall.
-
-    POTREE_DIR entries may be symlinks to point-cloud builds elsewhere on the
-    filesystem, so resolve the base but not the requested path itself.
-    """
-    base = os.path.abspath(POTREE_DIR)
-    full_path = os.path.normpath(os.path.join(base, filepath))
-    if not full_path.startswith(base + os.sep):
-        return jsonify({"error": "invalid path"}), 400
-    if not os.path.isfile(full_path):
-        return jsonify({"error": "not found"}), 404
-    from flask import send_file as _send_file
-    resp = _send_file(full_path, conditional=True)
-    # Octree nodes are immutable once built — let the browser cache them.
-    resp.headers["Cache-Control"] = "public, max-age=86400"
-    return resp
 
 
 @app.route("/api/cog_url")
