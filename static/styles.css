@@ -727,6 +727,39 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   padding: 2px 4px;
   cursor: pointer;
 }
+.hillshade-export {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 1px 0 0 23px;
+}
+.hillshade-export.hidden { display: none; }
+.overlay-export-btn {
+  width: 100%;
+  padding: 5px 8px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.overlay-export-btn:hover:not(:disabled) {
+  color: var(--accent-light);
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+.overlay-export-btn:disabled { opacity: .5; }
+.overlay-export-status {
+  min-height: 12px;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+.overlay-export-status.error { color: #fca5a5; }
 #lc-legend, #lidar-legend, #terrain-legend {
   position: absolute;
   bottom: 96px;

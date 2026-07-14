@@ -357,6 +357,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hillshade raster layer — independent base terrain (renders under the data).
   document.getElementById('hillshade-cb').addEventListener('change', e => toggleHillshade(e.target.checked));
+  const _hillshadeExportWrap = document.getElementById('hillshade-export');
+  const _hillshadeExportBtn = document.getElementById('hillshade-export-btn');
+  const _hillshadeExportStatus = document.getElementById('hillshade-export-status');
+
+  function _aoiOverlapsHillshade() {
+    if (!aoiGeoJSON?.geometry || !_hillshadeInfo?.bounds) return false;
+    const coords = aoiGeoJSON.geometry.type === 'Polygon'
+      ? aoiGeoJSON.geometry.coordinates.flat()
+      : aoiGeoJSON.geometry.type === 'MultiPolygon'
+        ? aoiGeoJSON.geometry.coordinates.flat(2)
+        : [];
+    if (!coords.length) return false;
+    const xs = coords.map(c => c[0]), ys = coords.map(c => c[1]);
+    const [w, s, e, n] = _hillshadeInfo.bounds.split(',').map(Number);
+    return Math.max(...xs) >= w && Math.min(...xs) <= e
+      && Math.max(...ys) >= s && Math.min(...ys) <= n;
+  }
+
+  function _updateHillshadeExportControl() {
+    const show = Boolean(_hillshadeInfo?.export_available && _aoiOverlapsHillshade());
+    _hillshadeExportWrap?.classList.toggle('hidden', !show);
+    if (!show && _hillshadeExportStatus) {
+      _hillshadeExportStatus.textContent = '';
+      _hillshadeExportStatus.classList.remove('error');
+    }
+    if (_hillshadeExportBtn && show) {
+      const maxArea = Number(_hillshadeInfo.export_max_area_km2 || 100);
+      _hillshadeExportBtn.title = `Clipped georeferenced GeoTIFF · maximum ${maxArea.toLocaleString()} km²`;
+    }
+  }
+
+  async function _downloadHillshadeAoi() {
+    if (!aoiGeoJSON?.geometry || !_hillshadeExportBtn) return;
+    _hillshadeExportBtn.disabled = true;
+    _hillshadeExportBtn.textContent = 'Preparing GeoTIFF…';
+    if (_hillshadeExportStatus) {
+      _hillshadeExportStatus.textContent = 'Full detail · tightly limited export';
+      _hillshadeExportStatus.classList.remove('error');
+    }
+    try {
+      const resp = await fetch('/api/terrain/hillshade_export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ geometry: aoiGeoJSON.geometry }),
+      });
+      if (!resp.ok) {
+        const detail = await resp.json().catch(() => ({}));
+        throw new Error(detail.error || `Export failed (${resp.status})`);
+      }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'climascope_hillshade_aoi.tif';
+      link.click();
+      URL.revokeObjectURL(url);
+      if (_hillshadeExportStatus) _hillshadeExportStatus.textContent = 'GeoTIFF downloaded';
+    } catch (error) {
+      if (_hillshadeExportStatus) {
+        _hillshadeExportStatus.textContent = error.message;
+        _hillshadeExportStatus.classList.add('error');
+      }
+    } finally {
+      _hillshadeExportBtn.disabled = false;
+      _hillshadeExportBtn.textContent = '↓ Export AOI GeoTIFF';
+    }
+  }
+  _hillshadeExportBtn?.addEventListener('click', _downloadHillshadeAoi);
+
   (async () => {
     const cb = document.getElementById('hillshade-cb');
     const lbl = cb?.closest('label');
@@ -367,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lbl) { lbl.style.opacity = '.45'; lbl.title = 'Hillshade not available yet'; }
       } else {
         _hillshadeInfo = info;   // { minzoom, maxzoom, bounds:"w,s,e,n" }
+        _updateHillshadeExportControl();
       }
     } catch(_) { if (cb) cb.disabled = true; }
   })();
@@ -1877,6 +1947,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setData(SRC.grid, emptyFC());
     setData(SRC.aoi, emptyFC());
     aoiGeoJSON = null;
+    _updateHillshadeExportControl();
     currentGJ  = null;
     _lastLayerState = { geojson: null, dataMin: null, dataMax: null };
     updateLegend(null);
@@ -1907,6 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('climascope:aoi:ready', async e => {
     const feature = e.detail?.feature;
     if (!feature?.geometry) return;
+    _updateHillshadeExportControl();
     await _paintAoiFeature(feature);
     const _geom   = feature.geometry;
     const _coords = _geom?.type === 'Polygon'      ? _geom.coordinates.flat()
@@ -1924,6 +1996,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('climascope:aoi:clear', () => {
     aoiGeoJSON = null;
+    _updateHillshadeExportControl();
     _drawActive = false;
     if (map.hasControl(draw)) {
       try { draw.deleteAll(); draw.changeMode('simple_select'); } catch(_) {}

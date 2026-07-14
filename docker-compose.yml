@@ -8,5 +8,6 @@ services:
     environment:
       OS_NAMES_API_KEY: ${OS_NAMES_API_KEY:-}
       AOI_AREA_LIMIT_M2: ${AOI_AREA_LIMIT_M2:-30000000000}
+      HILLSHADE_EXPORT_AREA_LIMIT_M2: ${HILLSHADE_EXPORT_AREA_LIMIT_M2:-100000000}
     shm_size: '256m'
     restart: unless-stopped

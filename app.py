@@ -10,7 +10,7 @@ import geopandas as gpd
 import pandas as pd
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
-from shapely.geometry import shape, Point
+from shapely.geometry import shape, Point, mapping
 from shapely.ops import transform as shp_transform
 from pyproj import Transformer
 from shapely.geometry import box
@@ -32,6 +32,9 @@ AREA_LIMIT_M2 = 200_000_000
 # Drawn analyses/exports may be much larger than an interactive bbox.  Highland,
 # Scotland's largest council, is ~26,022 km²; allow ~15% hand-drawing tolerance.
 AOI_AREA_LIMIT_M2 = int(os.environ.get("AOI_AREA_LIMIT_M2", 30_000_000_000))
+HILLSHADE_EXPORT_AREA_LIMIT_M2 = int(os.environ.get("HILLSHADE_EXPORT_AREA_LIMIT_M2", 100_000_000))
+HILLSHADE_EXPORT_MAX_PIXELS = int(os.environ.get("HILLSHADE_EXPORT_MAX_PIXELS", 1_500_000))
+HILLSHADE_EXPORT_MAX_DIMENSION = int(os.environ.get("HILLSHADE_EXPORT_MAX_DIMENSION", 1_600))
 MAX_AOI_COORDINATES = int(os.environ.get("MAX_AOI_COORDINATES", 50_000))
 MAX_AOI_CELL_IDS = int(os.environ.get("MAX_AOI_CELL_IDS", 35_000))
 MAX_REQUEST_CELL_IDS = int(os.environ.get("MAX_REQUEST_CELL_IDS", 100_000))
@@ -2216,6 +2219,7 @@ def serve_tile(z, x, y):
 
 
 HILLSHADE_MBTILES = os.environ.get("HILLSHADE_MBTILES", _data("data/tiles/terrain_hillshade.mbtiles"))
+HILLSHADE_COG = os.environ.get("HILLSHADE_COG", _data("data/terrain_hillshade_cog.tif"))
 
 # 1x1 fully transparent PNG — returned for tiles with no data so MapLibre's image
 # decoder never sees an empty (204) body, which it logs as "could not be decoded".
@@ -2250,10 +2254,113 @@ def hillshade_info():
         with sqlite3.connect(HILLSHADE_MBTILES) as conn:
             zs = [r[0] for r in conn.execute('SELECT DISTINCT zoom_level FROM tiles')]
             meta = dict(conn.execute('SELECT name, value FROM metadata').fetchall())
-        return jsonify({"available": bool(zs), "minzoom": min(zs), "maxzoom": max(zs),
-                        "bounds": meta.get("bounds")})
+        return jsonify({
+            "available": bool(zs),
+            "minzoom": min(zs),
+            "maxzoom": max(zs),
+            "bounds": meta.get("bounds"),
+            "export_available": os.path.exists(HILLSHADE_COG),
+            "export_max_area_km2": HILLSHADE_EXPORT_AREA_LIMIT_M2 / 1e6,
+        })
     except Exception:
         return jsonify({"available": False})
+
+
+@app.route('/api/terrain/hillshade_export', methods=['POST'])
+def hillshade_export():
+    """Return a tightly bounded, AOI-clipped, georeferenced hillshade GeoTIFF."""
+    if not os.path.exists(HILLSHADE_COG):
+        return jsonify({"error": "hillshade export is not available"}), 503
+
+    body = _json_object()
+    geom_gj = body.get("geometry")
+    if not geom_gj:
+        return jsonify({"error": "geometry required"}), 400
+    geom, _geom_bng, area_m2 = _validated_aoi(geom_gj)
+    if area_m2 > HILLSHADE_EXPORT_AREA_LIMIT_M2:
+        raise InvalidSelection(
+            f"hillshade export area is {area_m2 / 1e6:,.1f} km²; maximum is "
+            f"{HILLSHADE_EXPORT_AREA_LIMIT_M2 / 1e6:,.0f} km²"
+        )
+    limited = _rate_limited("hillshade_export", 2)
+    if limited:
+        return limited
+
+    # Imported here so the main climate APIs remain available if a deployment
+    # is temporarily missing the optional raster export dependency.
+    try:
+        import rasterio
+        from rasterio.errors import WindowError
+        from rasterio.features import geometry_window
+        from rasterio.io import MemoryFile
+        from rasterio.mask import mask as raster_mask
+    except ImportError:
+        app.logger.exception("rasterio is required for hillshade exports")
+        return jsonify({"error": "hillshade export is not configured"}), 503
+
+    try:
+        with rasterio.open(HILLSHADE_COG) as src:
+            to_raster = Transformer.from_crs(WEB_EPSG, src.crs, always_xy=True).transform
+            raster_geom = shp_transform(to_raster, geom)
+            try:
+                window = geometry_window(src, [mapping(raster_geom)])
+            except WindowError:
+                return jsonify({"error": "AOI is outside hillshade coverage"}), 400
+
+            width, height = int(window.width), int(window.height)
+            pixel_count = width * height
+            if (width > HILLSHADE_EXPORT_MAX_DIMENSION or height > HILLSHADE_EXPORT_MAX_DIMENSION):
+                raise InvalidSelection(
+                    "hillshade export bounds are too long or narrow; draw a more compact AOI"
+                )
+            if pixel_count > HILLSHADE_EXPORT_MAX_PIXELS:
+                raise InvalidSelection(
+                    f"hillshade export would contain {pixel_count:,} pixels; maximum is "
+                    f"{HILLSHADE_EXPORT_MAX_PIXELS:,}"
+                )
+
+            clipped, transform = raster_mask(
+                src, [mapping(raster_geom)], crop=True, filled=True, nodata=0
+            )
+            # The source is RGBA. A zero alpha band means the AOI intersects the
+            # rectangular file bounds but contains no actual hillshade pixels.
+            if clipped.shape[0] < 4 or not clipped[3].any():
+                return jsonify({"error": "AOI contains no hillshade data"}), 400
+
+            profile = src.profile.copy()
+            profile.update(
+                driver="GTiff",
+                height=clipped.shape[1],
+                width=clipped.shape[2],
+                transform=transform,
+                compress="DEFLATE",
+                predictor=2,
+                tiled=True,
+                blockxsize=256,
+                blockysize=256,
+            )
+            with MemoryFile() as mem:
+                with mem.open(**profile) as dst:
+                    dst.write(clipped)
+                    dst.colorinterp = src.colorinterp
+                    dst.update_tags(
+                        source="ClimaScope LiDAR-derived hillshade",
+                        attribution="NatureScot / Scottish Government NLP LiDAR",
+                    )
+                payload = mem.read()
+    except InvalidSelection:
+        raise
+    except Exception:
+        app.logger.exception("hillshade export failed")
+        return jsonify({"error": "hillshade export failed"}), 500
+
+    response = Response(
+        payload,
+        mimetype="image/tiff",
+        headers={"Content-Disposition": "attachment; filename=climascope_hillshade_aoi.tif"},
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 _VALID_MEMBERS = {'01','04','05','06','07','08','09','10','11','12','13','15'}

@@ -24,6 +24,10 @@ analysis and export requests default to a 30,000 km² ceiling (approximately the
 largest Scottish council plus drawing tolerance); override it with
 `AOI_AREA_LIMIT_M2` if required.
 
+Hillshade GeoTIFF exports have a separate, intentionally tight 100 km² ceiling,
+plus server-side pixel and dimension caps. Override only the area ceiling with
+`HILLSHADE_EXPORT_AREA_LIMIT_M2` if required.
+
 ## Data layout
 
 The app expects a `data/` folder next to `app.py`:
@@ -39,6 +43,15 @@ app/
 │   ├── grid.parquet
 │   ├── landcover_fractions.parquet
 │   ├── soilwet_fractions.parquet
+│   ├── terrain_hillshade_cog.tif
+│   ├── tiles/terrain_hillshade.mbtiles
 │   ├── councils.gpkg
 │   └── catchment_council_lookup.csv
+```
+
+The MBTiles file drives map display; the COG drives clipped GeoTIFF downloads.
+Regenerate the COG from the MBTiles source on the HPC host with:
+
+```bash
+./build_hillshade_cog.sh
 ```

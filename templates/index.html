@@ -137,6 +137,12 @@
           </select>
           <div class="overlay-divider"></div>
           <label><input type="checkbox" id="hillshade-cb"> Hillshade (LiDAR)</label>
+          <div id="hillshade-export" class="hillshade-export hidden">
+            <button type="button" id="hillshade-export-btn" class="overlay-export-btn">
+              ↓ Export AOI GeoTIFF
+            </button>
+            <span id="hillshade-export-status" class="overlay-export-status" aria-live="polite"></span>
+          </div>
         </div>
       </div>
 
