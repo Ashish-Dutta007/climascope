@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   const $ = id => document.getElementById(id);
+  const _ukCalendarMonth = () => Number(new Intl.DateTimeFormat('en-GB', {
+    month: 'numeric', timeZone: 'Europe/London'
+  }).format(new Date()));
+  const _defaultMonth = _ukCalendarMonth();
   const _html = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]);
@@ -20,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
           : 'national';
     return {
       metric:        activeMetric.id,
-      month:         parseInt($('month')?.value || 7),
+      month:         parseInt($('month')?.value || _defaultMonth),
       period:        $('period')?.value || '2050-2079',
       scope,
       member:        activeMember || 'mean',
@@ -37,7 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dashPiePanel)       dashPiePanel.onMapStateChange(state);
   }
 
-  const MONTH_NAMES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
   const SWATCH = {
     diverging:       'linear-gradient(to right,#d73027,#f7f7f7,#4575b4)',
     sequential_warm: 'linear-gradient(to right,#ffffcc,#41b6c4,#0c2c84)',
@@ -1476,11 +1481,29 @@ document.addEventListener('DOMContentLoaded', () => {
       slider.setAttribute('aria-valuetext', month);
     }
   }
+  let _calendarMonth = Number($('month')?.dataset.calendarDefault || _defaultMonth);
+  let _monthWasManuallySelected = false;
   $('month').addEventListener('input', () => {
+    _monthWasManuallySelected = true;
     updateMonthLabel($('month'), $('monthLabel'));
     loadLayer(true);
     _emitStateChange();
   });
+  // A long-open dashboard follows the calendar only while the user has left
+  // Month on its automatic default. A deliberate selection is never replaced.
+  setInterval(() => {
+    const nextMonth = _ukCalendarMonth();
+    if (nextMonth === _calendarMonth) return;
+    const slider = $('month');
+    const stillAutomatic = !_monthWasManuallySelected || Number(slider?.value) === _calendarMonth;
+    _calendarMonth = nextMonth;
+    if (!slider || !stillAutomatic) return;
+    slider.value = String(nextMonth);
+    slider.dataset.calendarDefault = String(nextMonth);
+    updateMonthLabel(slider, $('monthLabel'));
+    loadLayer(true);
+    _emitStateChange();
+  }, 60_000);
 
   $('period').addEventListener('change', () => {
     const isObserved = $('period').value === '1990-2019';
@@ -2217,7 +2240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const id = f.id;  // promoted from id_1km via promoteId
       const value = _vtValues ? _vtValues[String(id)] : null;
       const col = value != null ? valueToColor(+value) : '#888888';
-      _openCellClick(id, e.lngLat, value, col, parseInt($('month')?.value || 7), ($('period')?.value || '') === '1990-2019');
+      _openCellClick(id, e.lngLat, value, col, parseInt($('month')?.value || _defaultMonth), ($('period')?.value || '') === '1990-2019');
     });
 
     map.on('mousemove', 'grid-fill', _onCellHover);

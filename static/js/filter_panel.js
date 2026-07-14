@@ -90,37 +90,49 @@ class FilterPanel {
 
   _build() {
     this.el.innerHTML = `
+      <div class="fp-spatial" id="fp-spatial">
+        <div class="fp-section-heading">
+          <span class="fp-step">1</span>
+          <div class="fp-section-copy">
+            <strong>Choose an area</strong>
+            <span>Draw on the map or upload a boundary</span>
+          </div>
+          <button type="button" class="fp-clear-btn fp-sp-clear" id="fp-sp-clear" disabled>Clear</button>
+        </div>
+        <div class="fp-spatial-btns">
+          <button type="button" class="fp-sp-btn fp-sp-primary" id="fp-draw-btn" title="Draw a polygon on the map">◻ Draw on map</button>
+          <button type="button" class="fp-sp-btn" id="fp-upload-btn" title="Upload GeoJSON or a zipped Shapefile">⬆ Upload boundary</button>
+          <input type="file" id="fp-file-input" accept=".geojson,.json,.zip" hidden/>
+        </div>
+        <div id="fp-sp-status" class="fp-sp-status hidden"></div>
+      </div>
       <div class="fp-header">
+        <div class="fp-section-heading fp-rules-heading">
+          <span class="fp-step">2</span>
+          <div class="fp-section-copy">
+            <strong>Refine cells</strong>
+            <span>Optional rules within the selected scope</span>
+          </div>
+        </div>
         <div class="fp-logic-row">
           <span class="fp-label">Match</span>
           <div class="fp-toggle" id="fp-logic-toggle">
-            <button class="fp-toggle-btn active" data-logic="AND" title="Match cells where ALL rules are satisfied">AND</button>
-            <button class="fp-toggle-btn"        data-logic="OR"  title="Match cells where ANY rule is satisfied">OR</button>
+            <button type="button" class="fp-toggle-btn active" data-logic="AND" title="Match cells where ALL rules are satisfied">AND</button>
+            <button type="button" class="fp-toggle-btn" data-logic="OR" title="Match cells where ANY rule is satisfied">OR</button>
           </div>
-          <button class="fp-clear-btn" id="fp-clear-btn">Clear</button>
+          <button type="button" class="fp-clear-btn" id="fp-clear-btn">Clear rules</button>
         </div>
         <div class="fp-scope-row">
           <span class="fp-label">Filtering:</span>
           <span class="fp-scope-badge" id="fp-scope-badge">All Scotland</span>
         </div>
       </div>
-      <div class="fp-spatial" id="fp-spatial">
-        <div class="fp-spatial-top">
-          <span class="fp-label">AOI</span>
-          <div class="fp-spatial-btns">
-            <button class="fp-sp-btn" id="fp-draw-btn" title="Draw polygon on map">◻ Draw</button>
-            <label  class="fp-sp-btn" for="fp-file-input" title="Upload GeoJSON or Shapefile (.zip)">⬆ Upload<input type="file" id="fp-file-input" accept=".geojson,.json,.zip" style="display:none"/></label>
-            <button class="fp-sp-btn fp-sp-clear" id="fp-sp-clear" disabled>✕ Clear</button>
-          </div>
-        </div>
-        <div id="fp-sp-status" class="fp-sp-status hidden"></div>
-      </div>
       <div class="fp-rules" id="fp-rules"></div>
       <div class="fp-add-row">
-        <button class="fp-add-btn" id="fp-add-btn">+ Add rule</button>
+        <button type="button" class="fp-add-btn" id="fp-add-btn">+ Add rule</button>
       </div>
       <div class="fp-footer">
-        <button class="fp-apply-btn" id="fp-apply-btn">Apply filter</button>
+        <button type="button" class="fp-apply-btn" id="fp-apply-btn">Apply filter</button>
         <div class="fp-cells-row">
           <div class="fp-result" id="fp-result"></div>
           <div id="fp-export-btns" class="fp-export-btns"></div>
@@ -138,6 +150,8 @@ class FilterPanel {
       <div id="fp-jobs-box" class="fp-jobs-box"></div>`;
 
     this.el.querySelector('#fp-draw-btn').addEventListener('click', () => this._startDraw());
+    this.el.querySelector('#fp-upload-btn').addEventListener('click', () =>
+      this.el.querySelector('#fp-file-input').click());
     this.el.querySelector('#fp-file-input').addEventListener('change', e => {
       if (e.target.files[0]) this._handleUpload(e.target.files[0]);
       e.target.value = '';
@@ -407,7 +421,7 @@ class FilterPanel {
       type:        'climate',
       metric:      s.metric || 'CWBPT',
       period:      s.period || '2050-2079',
-      month:       s.month  || 7,
+      month:       s.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1,
       operator:    'lt',
       value:       '',
       valueB:      '',

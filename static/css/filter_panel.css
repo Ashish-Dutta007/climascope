@@ -11,10 +11,53 @@
 
 /* ── Header ── */
 .fp-header {
-  padding: 10px 12px 8px;
+  padding: 9px 12px 8px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
+
+.fp-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.fp-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 7px;
+  background: rgba(59,130,246,.18);
+  border: 1px solid rgba(96,165,250,.32);
+  color: var(--accent-light);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fp-section-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fp-section-copy strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fp-section-copy span {
+  color: rgba(255,255,255,.38);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.fp-rules-heading { margin-bottom: 8px; }
 
 .fp-logic-row {
   display: flex;
@@ -76,6 +119,7 @@
   border-color: var(--border-strong);
   color: rgba(255,255,255,.7);
 }
+.fp-clear-btn:disabled { opacity: .35; }
 
 .fp-scope-row {
   display: flex;
@@ -100,28 +144,28 @@
 
 /* ── Spatial constraint (AOI) ── */
 .fp-spatial {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border-subtle);
+  margin: 10px 10px 8px;
+  padding: 10px;
+  background: linear-gradient(145deg, rgba(59,130,246,.11), rgba(59,130,246,.035));
+  border: 1px solid rgba(96,165,250,.24);
+  border-radius: 9px;
   flex-shrink: 0;
 }
 
-.fp-spatial-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .fp-spatial-btns {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 9px;
 }
 
 .fp-sp-btn {
-  padding: 3px 8px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 8px;
   font-size: 10px;
-  font-weight: 500;
-  background: rgba(255,255,255,.05);
+  font-weight: 600;
+  background: rgba(255,255,255,.06);
   border: 1px solid var(--border-default);
   color: rgba(255,255,255,.5);
   border-radius: 4px;
@@ -130,6 +174,11 @@
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
+}
+.fp-sp-btn.fp-sp-primary {
+  color: #dbeafe;
+  background: rgba(59,130,246,.2);
+  border-color: rgba(96,165,250,.45);
 }
 .fp-sp-btn:hover:not(:disabled) {
   background: rgba(255,255,255,.09);
@@ -140,7 +189,7 @@
   border-color: var(--accent);
   color: var(--accent-light);
 }
-.fp-sp-btn.fp-sp-clear:hover:not(:disabled) {
+.fp-sp-clear:hover:not(:disabled) {
   background: rgba(220,60,50,.1);
   border-color: rgba(220,60,50,.3);
   color: #ff6b6b;

@@ -109,12 +109,14 @@
 
       </div>
 
-      <div class="section">
-        <label class="section-label" for="month">
-          Month&nbsp;<span id="monthLabel" class="month-badge" aria-live="polite">Jul</span>
-        </label>
-        <input type="range" id="month" min="1" max="12" value="7"
-               aria-label="Climate month" aria-valuetext="July"/>
+      <div class="section month-section">
+        <div class="month-header">
+          <label class="section-label" for="month">Month</label>
+          <span id="monthLabel" class="month-badge" aria-live="polite">{{ default_month_name }}</span>
+        </div>
+        <input type="range" id="month" min="1" max="12" value="{{ default_month }}"
+               data-calendar-default="{{ default_month }}"
+               aria-label="Climate month" aria-valuetext="{{ default_month_name }}"/>
         <div class="month-ticks">
           <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
           <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>

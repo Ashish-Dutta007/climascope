@@ -152,6 +152,20 @@ select:hover { border-color: var(--border-default); }
 select:focus { outline:none; border-color: var(--accent); }
 
 /* Month slider */
+.month-section {
+  padding: 10px 11px 9px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+.month-header .section-label { margin-bottom: 0; }
 input[type=range] {
   width:100%; height:3px; -webkit-appearance:none; appearance:none;
   background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer;
@@ -166,9 +180,13 @@ input[type=range]::-webkit-slider-thumb {
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 .month-badge {
   color: var(--accent-light); background: rgba(96,165,250,.12);
-  padding:1px 6px; border-radius:4px; font-size:10px;
-  font-weight:600; text-transform:none; letter-spacing:0;
+  min-width: 72px; padding:3px 8px; border-radius:6px; font-size:12px;
+  font-weight:650; text-align:center; text-transform:none; letter-spacing:0;
+  border: 1px solid rgba(96,165,250,.2);
 }
+.month-section #month { height: 4px; margin: 7px 0 7px; }
+.month-section #month::-webkit-slider-thumb { width: 16px; height: 16px; }
+.month-section #month::-moz-range-thumb { width: 16px; height: 16px; }
 .month-ticks {
   display:flex; justify-content:space-between;
   font-size:8px; color:rgba(255,255,255,.2); padding:0 1px;

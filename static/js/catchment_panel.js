@@ -105,7 +105,7 @@ class CatchmentPanel {
   onMapStateChange(newState) {
     const scope     = newState.scope  || 'national';
     const rawMetric = newState.metric || 'CWBPT';
-    const month     = newState.month  || 7;
+    const month     = newState.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
     const period    = newState.period || '2050-2079';
     const metric    = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
     this._aoiCells  = newState.aoiCells || null;
@@ -136,7 +136,7 @@ class CatchmentPanel {
     const state      = this.getMapState();
     const scope      = state.scope  || 'national';
     const rawMetric  = state.metric || 'CWBPT';
-    const month      = state.month  || 7;
+    const month      = state.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
     const period     = state.period || '2050-2079';
     const metric     = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
     const aoiCells   = this._aoiCells || state.aoiCells || null;
@@ -193,7 +193,7 @@ class CatchmentPanel {
     const state      = this.getMapState();
     const scope      = state.scope  || 'national';
     const rawMetric  = state.metric || 'CWBPT';
-    const month      = state.month  || 7;
+    const month      = state.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
     const metric     = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
     const aoiCells   = this._aoiCells || state.aoiCells || null;
 

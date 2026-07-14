@@ -3,6 +3,7 @@ from collections import deque
 from urllib.parse import quote as _url_quote, urlencode as _urlencode
 from urllib.request import Request as _UrlRequest, urlopen as _urlopen
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, request, send_from_directory, Response
 
@@ -28,6 +29,7 @@ PRECOMP_DIR = os.environ.get("PRECOMP_DIR", _data("data/precomputed"))
 COG_DIR      = os.environ.get("COG_DIR",      _data("data/cogs"))
 MBTILES_FILE = os.environ.get("MBTILES_FILE", _data("data/tiles/grid.mbtiles"))
 WEB_EPSG    = 4326
+UK_TIMEZONE = ZoneInfo("Europe/London")
 AREA_LIMIT_M2 = 200_000_000
 # Drawn analyses/exports may be much larger than an interactive bbox.  Highland,
 # Scotland's largest council, is ~26,022 km²; allow ~15% hand-drawing tolerance.
@@ -503,10 +505,19 @@ def _asset_v(rel_path: str) -> str:
 
 app.jinja_env.globals["av"] = _asset_v
 
+def _current_month() -> int:
+    """Calendar month in the app's UK operating timezone."""
+    return datetime.now(UK_TIMEZONE).month
+
 @app.route("/")
 def index():
     from flask import render_template, make_response
-    resp = make_response(render_template("index.html"))
+    month = _current_month()
+    resp = make_response(render_template(
+        "index.html",
+        default_month=month,
+        default_month_name=datetime(2000, month, 1).strftime("%B"),
+    ))
     resp.headers["Cache-Control"] = "no-store"
     return resp
 
@@ -651,7 +662,7 @@ def layers():
 def national_features():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=7)
+    month  = request.args.get("month", type=int, default=_current_month())
     member = request.args.get("member")
 
     df = slice_facts(metric, period, month, member)
@@ -711,7 +722,7 @@ def _national_catchment_json(metric: str, period: str, month: int) -> str:
 def national_features_catchment():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=7)
+    month  = request.args.get("month", type=int, default=_current_month())
     return Response(_national_catchment_json(metric, period, month), mimetype="application/json")
 
 
@@ -731,7 +742,7 @@ def serve_cog(filepath):
 def cog_url():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month",  type=int, default=7)
+    month  = request.args.get("month",  type=int, default=_current_month())
     metric, period, month_s, _ = _validated_climate_selection(metric, period, month, None)
     month = int(month_s)
     path   = f"Metric={metric}/Period={period}/Month={month}.tif"
@@ -808,7 +819,7 @@ def council_features(council_name):
 
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=7)
+    month  = request.args.get("month", type=int, default=_current_month())
     member = request.args.get("member")
     lc_q   = request.args.get("lc")
     lct    = request.args.get("lcthresh", type=float, default=0.0)
@@ -882,7 +893,7 @@ def catchment_features(name):
 
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=7)
+    month  = request.args.get("month", type=int, default=_current_month())
     member = request.args.get("member")
 
     df = slice_facts(metric, period, month, member)
@@ -963,7 +974,7 @@ def jobs():
     aoi, aoi_bng, aoi_area_m2 = _validated_aoi(geom_gj, props)
 
     metric, period, month_s, member = _validated_climate_selection(
-        metric, period, month if month is not None else 7, member
+        metric, period, month if month is not None else _current_month(), member
     )
     month_val = int(month_s)
     df = slice_facts(metric, period, month_val, member)
@@ -1511,7 +1522,7 @@ def wetness():
 def features():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=7)
+    month  = request.args.get("month", type=int, default=_current_month())
     member = request.args.get("member")
     bbox_q = request.args.get("bbox")
     lc_q   = request.args.get("lc")
@@ -1973,7 +1984,7 @@ def catchment():
         variable = body.get('variable', 'Land Use')
         metric   = body.get('metric',   'CWBPT')
         try:
-            month = int(body.get('month', 7))
+            month = int(body.get('month', _current_month()))
         except (TypeError, ValueError):
             return jsonify({'error': 'month must be 1-12'}), 400
         period   = body.get('period', '2050-2079')
@@ -2057,7 +2068,7 @@ def catchment():
     # ── GET (existing behaviour) ─────────────────────────────────────────
     variable = request.args.get('variable', 'Land Use')
     metric   = request.args.get('metric', 'CWBPT')
-    month    = request.args.get('month', 7, type=int)
+    month    = request.args.get('month', _current_month(), type=int)
     period   = request.args.get('period', '2050-2079')
     scope    = request.args.get('scope', 'national')
 
@@ -2390,7 +2401,7 @@ def get_immersive_values():
     parallelise the reads (~1.2 s warm vs ~2.2 s serial).  flask_compress
     (already active globally) brotli-compresses the ~27 MB JSON to ~7.8 MB.
     """
-    month  = request.args.get('month', '7')
+    month  = request.args.get('month', str(_current_month()))
     member = request.args.get('member', None)
 
     try:
@@ -2457,7 +2468,7 @@ def get_immersive_values():
 def get_values():
     metric = request.args.get('metric', 'CWBPT')
     period = request.args.get('period', '2050-2079')
-    month  = request.args.get('month', '7')
+    month  = request.args.get('month', str(_current_month()))
     member = request.args.get('member', None)
 
     if metric in _INVALID_METRICS and period not in _CWR_VALID_PERIODS:
@@ -2844,7 +2855,7 @@ def aoi_features():
     geom_gj = body.get("geometry")
     metric  = body.get("metric", "CWBPT")
     period  = body.get("period", "2050-2079")
-    month   = body.get("month", 7)
+    month   = body.get("month", _current_month())
     member  = body.get("member", None)
 
     if not geom_gj:
@@ -2929,7 +2940,7 @@ def aoi_export():
     aoi_ids = body.get("aoi_ids", [])
     metric  = body.get("metric", "CWBPT")
     period  = body.get("period", "2050-2079")
-    month   = body.get("month", 7)
+    month   = body.get("month", _current_month())
     fmt     = body.get("fmt", "csv")
     if fmt not in ("csv", "geojson"):
         fmt = "csv"
