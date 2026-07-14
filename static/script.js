@@ -160,6 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return expr;
   }
 
+  const HABITAT_FILL_OPACITY = ['interpolate', ['linear'],
+    ['coalesce', ['feature-state', 'habf'], 0], 0.2, 0.35, 1, 0.85];
+
+  function buildHabitatFillColor(classes) {
+    const expr = ['match', ['coalesce', ['feature-state', 'hab'], -1]];
+    (classes || []).forEach(c => expr.push(c.group_code, c.color));
+    expr.push('rgba(0,0,0,0)');
+    return expr;
+  }
+
   // LiDAR coverage coloured by acquisition phase (legend/colours come from the API).
   // `enabled` (a Set of phase codes) filters which phases render — unchecked ones
   // fall through to transparent.
@@ -208,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeMember     = 'mean';
   let lcOverlayOn      = false;
   let _lcDominant      = null;   // cached /api/landcover/dominant payload
+  let habitatOverlayOn = false;
+  let _habitatDominant = null;   // cached /api/habitat/dominant payload
   let lidarOverlayOn   = false;
   let _lidarCov        = null;   // cached /api/lidar/coverage payload
   let terrainOverlayOn = false;
@@ -281,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function _activeDataLayerName() {
     if (terrainOverlayOn) return (TERRAIN_LABELS[terrainVar]?.[0] || 'Terrain');
     if (lidarOverlayOn)   return 'LiDAR coverage';
+    if (habitatOverlayOn) return 'Habitat · NatureScot 2022';
     if (lcOverlayOn)      return 'Land cover';
     return (typeof METRIC_LABELS !== 'undefined' && activeMetric && METRIC_LABELS[activeMetric.id])
       || activeMetric?.id || 'Climate';
@@ -314,11 +327,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Applies opacity to whichever data layer is active + the dimmed climate base.
-  function _anyCellOverlayOn() { return lcOverlayOn || lidarOverlayOn || terrainOverlayOn; }
+  function _anyCellOverlayOn() { return lcOverlayOn || habitatOverlayOn || lidarOverlayOn || terrainOverlayOn; }
   function _applyDataOpacity() {
     const op = layerOpacity;
     if (terrainOverlayOn) { try { map.setPaintProperty('terrain-fill', 'fill-opacity', op); } catch(_) {} }
     if (lidarOverlayOn)   { try { map.setPaintProperty('lidar-fill',   'fill-opacity', op); } catch(_) {} }
+    if (habitatOverlayOn) { _applyHabitatOpacity(); }
     if (lcOverlayOn)      { _applyLcOpacity(); }
     if (hillshadeOn)      { try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', hillshadeOpacity); } catch(_) {} }
     // climate base: faint backdrop under a cell overlay, else follows the slider
@@ -355,21 +369,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // The cell overlays are mutually exclusive — two feature-state fills on the same
   // cells would muddy each other, so turning one on clears the other.
   document.getElementById('lc-overlay-cb').addEventListener('change', e => {
-    if (e.target.checked) { _setLidarOverlay(false); _setTerrainOverlay(false); }
+    if (e.target.checked) { _setHabitatOverlay(false, false); _setLidarOverlay(false); _setTerrainOverlay(false); }
     toggleLcOverlay(e.target.checked);
   });
+  document.getElementById('habitat-overlay-cb').addEventListener('change', e => {
+    if (e.target.checked) { _setLcOverlay(false); _setLidarOverlay(false); _setTerrainOverlay(false); }
+    toggleHabitatOverlay(e.target.checked);
+  });
   document.getElementById('lidar-overlay-cb').addEventListener('change', e => {
-    if (e.target.checked) { _setLcOverlay(false); _setTerrainOverlay(false); }
+    if (e.target.checked) { _setLcOverlay(false); _setHabitatOverlay(false); _setTerrainOverlay(false); }
     toggleLidarOverlay(e.target.checked);
   });
   document.getElementById('terrain-overlay-cb').addEventListener('change', e => {
-    if (e.target.checked) { _setLcOverlay(false); _setLidarOverlay(false); }
+    if (e.target.checked) { _setLcOverlay(false); _setHabitatOverlay(false); _setLidarOverlay(false); }
     document.getElementById('terrain-var').style.display = e.target.checked ? 'block' : 'none';
     toggleTerrainOverlay(e.target.checked);
   });
   document.getElementById('terrain-var').addEventListener('change', e => {
     terrainVar = e.target.value;
     if (terrainOverlayOn) { loadTerrainVar(terrainVar); _renderActiveLayers(); }
+  });
+  // If the dashboard moves back to a JESS/land-cover composition, do not leave
+  // a mismatched habitat map visible.
+  document.addEventListener('climascope:variable', e => {
+    if (habitatOverlayOn && e.detail?.variable !== 'HABITAT') _setHabitatOverlay(false, false);
   });
   // Terrain data may not be present — disable the toggle with a hint until it is.
   (async () => {
@@ -384,6 +407,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(_) {
       if (cb) cb.disabled = true;
     }
+  })();
+  // Keep this optional data layer honest when the derived parquet is not mounted.
+  (async () => {
+    const cb = document.getElementById('habitat-overlay-cb');
+    const lbl = cb?.closest('label');
+    try {
+      const info = await fetch('/api/habitat').then(r => r.json());
+      if (!info.available) {
+        cb.disabled = true;
+        if (lbl) { lbl.style.opacity = '.45'; lbl.title = 'Habitat data not available'; }
+      }
+    } catch(_) { if (cb) cb.disabled = true; }
   })();
 
   // Hillshade raster layer — independent base terrain (renders under the data).
@@ -474,6 +509,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function _setLcOverlay(on) {
     const cb = document.getElementById('lc-overlay-cb');
     if (cb && cb.checked !== on) { cb.checked = on; toggleLcOverlay(on); }
+  }
+  function _setHabitatOverlay(on, restoreDashboard = true) {
+    const cb = document.getElementById('habitat-overlay-cb');
+    if (cb && cb.checked !== on) { cb.checked = on; toggleHabitatOverlay(on, restoreDashboard); }
   }
   function _setLidarOverlay(on) {
     const cb = document.getElementById('lidar-overlay-cb');
@@ -590,9 +629,100 @@ document.addEventListener('DOMContentLoaded', () => {
     _syncLcDimming();
     const leg = document.getElementById('lc-legend');
     if (leg) leg.style.display = on ? 'block' : 'none';
+    if (on) document.dispatchEvent(new CustomEvent('climascope:variable', { detail: { variable: 'LCM' } }));
     _renderActiveLayers();
   }
   // ===== END LAND-COVER OVERLAY =====
+
+  // ===== NATURESCOT HABITAT 2022 OVERLAY =====
+  function _applyHabitatStates() {
+    if (!_habitatDominant) return;
+    const { ids, codes, fracs } = _habitatDominant;
+    for (let i = 0; i < ids.length; i++) {
+      map.setFeatureState(
+        { source: 'cells-vt', sourceLayer: 'cells', id: ids[i] },
+        { hab: codes[i], habf: fracs[i] }
+      );
+    }
+  }
+
+  function _renderHabitatLegend(scopeIds) {
+    if (!_habitatDominant) return;
+    let leg = document.getElementById('habitat-legend');
+    if (!leg) {
+      leg = document.createElement('div');
+      leg.id = 'habitat-legend';
+      map.getContainer().appendChild(leg);
+    }
+    let present = null;
+    if (scopeIds) {
+      present = new Set();
+      const { ids, codes } = _habitatDominant;
+      for (let i = 0; i < ids.length; i++) if (scopeIds.has(ids[i])) present.add(codes[i]);
+    }
+    const rows = _habitatDominant.classes
+      .filter(c => !present || present.has(c.group_code))
+      .map(c => `<div class="lc-legend-row"><span class="lc-swatch" style="background:${c.color}"></span>${_html(c.group_name)}</div>`)
+      .join('');
+    leg.innerHTML = `<div class="legend-title">Dominant habitat <span style="opacity:.35;font-weight:400">2022 · 1 km</span></div>${rows}`;
+  }
+
+  const HABITAT_SCOPED_OPACITY = ['case', ['boolean', ['feature-state', 'habs'], false], HABITAT_FILL_OPACITY, 0];
+  let _habitatScopeApplied = new Set();
+  let _habitatScopedActive = false;
+
+  function _applyHabitatOpacity() {
+    const base = _habitatScopedActive ? HABITAT_SCOPED_OPACITY : HABITAT_FILL_OPACITY;
+    try { map.setPaintProperty('habitat-fill', 'fill-opacity', ['*', layerOpacity, base]); } catch(_) {}
+  }
+
+  function _updateHabitatScope() {
+    if (!habitatOverlayOn || !map.getLayer('habitat-fill')) return;
+    const fs = id => ({ source: 'cells-vt', sourceLayer: 'cells', id });
+    const ids = _lcScopeIds();
+    if (ids === null) {
+      for (const id of _habitatScopeApplied) map.setFeatureState(fs(id), { habs: false });
+      _habitatScopeApplied = new Set();
+      _habitatScopedActive = false;
+      _applyHabitatOpacity();
+      _renderHabitatLegend(null);
+      return;
+    }
+    for (const id of _habitatScopeApplied) if (!ids.has(id)) map.setFeatureState(fs(id), { habs: false });
+    for (const id of ids) if (!_habitatScopeApplied.has(id)) map.setFeatureState(fs(id), { habs: true });
+    _habitatScopeApplied = ids;
+    _habitatScopedActive = true;
+    _applyHabitatOpacity();
+    _renderHabitatLegend(ids);
+  }
+
+  async function toggleHabitatOverlay(on, restoreDashboard = true) {
+    habitatOverlayOn = on;
+    if (on && !_habitatDominant) {
+      try {
+        const resp = await fetch('/api/habitat/dominant');
+        if (!resp.ok) throw new Error(resp.status);
+        _habitatDominant = await resp.json();
+        if (!_habitatDominant.available) throw new Error('not available');
+      } catch(_) {
+        habitatOverlayOn = false;
+        const cb = document.getElementById('habitat-overlay-cb');
+        if (cb) cb.checked = false;
+        return;
+      }
+      map.setPaintProperty('habitat-fill', 'fill-color', buildHabitatFillColor(_habitatDominant.classes));
+      _applyHabitatStates();
+    }
+    try { map.setLayoutProperty('habitat-fill', 'visibility', on ? 'visible' : 'none'); } catch(_) {}
+    if (on) _updateHabitatScope();
+    _applyDataOpacity();
+    const leg = document.getElementById('habitat-legend');
+    if (leg) leg.style.display = on ? 'block' : 'none';
+    if (on) document.dispatchEvent(new CustomEvent('climascope:variable', { detail: { variable: 'HABITAT' } }));
+    else if (restoreDashboard) document.dispatchEvent(new CustomEvent('climascope:variable', { detail: { variable: 'LCM' } }));
+    _renderActiveLayers();
+  }
+  // ===== END NATURESCOT HABITAT 2022 OVERLAY =====
 
   // ===== LIDAR COVERAGE OVERLAY =====
   function _applyLidarStates() {
@@ -1077,6 +1207,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    map.addLayer({
+      id: 'habitat-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
+      layout: { visibility: habitatOverlayOn ? 'visible' : 'none' },
+      paint: {
+        'fill-antialias': false,
+        'fill-color': _habitatDominant ? buildHabitatFillColor(_habitatDominant.classes) : 'rgba(0,0,0,0)',
+        'fill-opacity': HABITAT_FILL_OPACITY
+      }
+    });
+
     // LiDAR coverage overlay — availability tier per cell (see LIDAR COVERAGE OVERLAY)
     map.addLayer({
       id: 'lidar-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
@@ -1220,6 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _lastLayerState = { geojson: gj, dataMin: dMin, dataMax: dMax };
       updateLegend(gj);
       _updateLcScope();
+      _updateHabitatScope();
     } catch(err) { console.error('_paintAoiFeature failed:', err); }
     finally { showLoading(false); }
   }
@@ -1302,6 +1443,21 @@ document.addEventListener('DOMContentLoaded', () => {
       _lcScopeApplied = new Set();    // scope flags were dropped too — reapply from scratch
       _updateLcScope();
       _syncLcDimming();
+    }
+
+    if (!map.getLayer('habitat-fill'))
+      map.addLayer({ id:'habitat-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
+        layout:{ visibility: habitatOverlayOn ? 'visible' : 'none' },
+        paint:{ 'fill-antialias': false,
+                'fill-color': _habitatDominant ? buildHabitatFillColor(_habitatDominant.classes) : 'rgba(0,0,0,0)',
+                'fill-opacity': HABITAT_FILL_OPACITY } });
+    else
+      map.setLayoutProperty('habitat-fill', 'visibility', habitatOverlayOn ? 'visible' : 'none');
+    if (habitatOverlayOn) {
+      _applyHabitatStates();
+      _habitatScopeApplied = new Set();
+      _updateHabitatScope();
+      _applyDataOpacity();
     }
 
     if (!map.getLayer('lidar-fill'))
@@ -1787,6 +1943,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _lastLayerState = { geojson: gj, dataMin: cMin, dataMax: cMax };
         updateLegend(gj);
         _updateLcScope();
+        _updateHabitatScope();
       } catch(e) {
         console.error('loadLayer catchment:', e);
       } finally {
@@ -1811,6 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setLayoutProperty('grid-line',  'visibility', 'none');
       await loadValues(metric, period, month);
       _updateLcScope();
+      _updateHabitatScope();
       return;
     }
 
@@ -1852,6 +2010,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _lastLayerState = { geojson: gj, dataMin: _cMin, dataMax: _cMax };
       updateLegend(gj);
       _updateLcScope();
+      _updateHabitatScope();
     } catch(e) {
       console.error('loadLayer:', e);
     } finally {
@@ -2063,6 +2222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setData(SRC.aoi, emptyFC());
     map.getCanvas().style.cursor = '';
     _updateLcScope();
+    _updateHabitatScope();
     _fitActiveScope();
     loadLayer();
     _emitStateChange();
@@ -2119,7 +2279,8 @@ document.addEventListener('DOMContentLoaded', () => {
   exportBtn.querySelector('#btn-export').addEventListener('click', exportCurrentView);
 
   // ----- context-aware popups (localized to the active overlay) -----
-  let _lcById = null, _lcCodeName = null, _lidarPhaseById = null, _lidarPhaseName = null;
+  let _lcById = null, _lcCodeName = null, _habitatById = null, _habitatCodeName = null,
+      _lidarPhaseById = null, _lidarPhaseName = null;
   function _buildLcLookup() {
     if (!_lcDominant) return;
     _lcById = new Map(); _lcCodeName = new Map(_lcDominant.classes.map(c => [c.lc_code, c.lc_name]));
@@ -2131,9 +2292,17 @@ document.addEventListener('DOMContentLoaded', () => {
     _lidarCov.ids.forEach((id, i) => _lidarPhaseById.set(id, _lidarCov.phases[i]));
     _lidarPhaseName = new Map((_lidarCov.legend || []).map(p => [p.code, p.label]));
   }
+  function _buildHabitatLookup() {
+    if (!_habitatDominant) return;
+    _habitatById = new Map();
+    _habitatCodeName = new Map(_habitatDominant.classes.map(c => [c.group_code, c.group_name]));
+    _habitatDominant.ids.forEach((id, i) =>
+      _habitatById.set(id, { code: _habitatDominant.codes[i], frac: _habitatDominant.fracs[i] }));
+  }
   function _activeContext() {
     if (terrainOverlayOn) return 'terrain';
     if (lidarOverlayOn)   return 'lidar';
+    if (habitatOverlayOn) return 'habitat';
     if (lcOverlayOn)      return 'landcover';
     return 'climate';
   }
@@ -2160,6 +2329,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = _lcById?.get(id);
       const name = r ? _lcCodeName.get(r.code) : null;
       return name ? `<strong>${_html(name)}</strong> (${Math.round(r.frac * 100)}%)` : 'No land-cover data';
+    }
+    if (ctx === 'habitat') {
+      if (!_habitatById) _buildHabitatLookup();
+      const r = _habitatById?.get(id);
+      const name = r ? _habitatCodeName.get(r.code) : null;
+      return name ? `<strong>${_html(name)}</strong> (${Math.round(r.frac * 100)}%)` : 'No habitat data';
     }
     if (climateVal == null) return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: N/A`;
     const un = METRIC_UNITS[activeMetric.id] || '';
@@ -2210,6 +2385,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function _fillCtxBody(id, ctx) {
     const el = document.getElementById(`ctxbody-${id}`); if (!el) return;
+    if (ctx === 'habitat') {
+      if (!_habitatById) _buildHabitatLookup();
+      const r = _habitatById?.get(id);
+      if (!r) { el.textContent = 'No habitat data'; return; }
+      el.innerHTML = `<strong style="color:#a3c95b">Dominant:</strong> ${_html(_habitatCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
+      try {
+        const comp = await fetch('/api/landuse_composition', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aoi_ids: [id], variable: 'HABITAT' }) }).then(r => r.json());
+        const rows = Object.entries(comp).sort((a, b) => b[1] - a[1]).slice(0, 6)
+          .map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${_html(k)}</span><span style="opacity:.65">${v.toFixed(0)}%</span></div>`).join('');
+        if (rows) el.innerHTML += `<div style="margin-top:6px">${rows}</div>`;
+        el.innerHTML += `<div style="margin-top:7px;font-size:10px;opacity:.5">NatureScot HLCM 2022 · 20 m grouped to 1 km</div>`;
+      } catch {}
+      return;
+    }
     if (ctx === 'landcover') {
       if (!_lcById) _buildLcLookup();
       const r = _lcById?.get(id);

@@ -11,10 +11,11 @@ const _DP_PALETTE = [
 
 const _DP_VAR_LABELS = {
   'LCM':           'Land cover',
-  'Land Use':      'Land use',
-  'Farm Type':     'Farm type',
-  'LCA':           'LCA',
-  'Peat Condition':'Peat condition',
+  'HABITAT':       'Habitat 2022',
+  'Land Use':      'Land use · catchment-derived',
+  'Farm Type':     'Farm type · catchment-derived',
+  'LCA':           'LCA · catchment-derived',
+  'Peat Condition':'Peat condition · catchment-derived',
 };
 
 class DashboardPie {
@@ -26,10 +27,12 @@ class DashboardPie {
     this._lastVariable  = 'LCM';
     this.variable       = 'LCM';
     this._lcItems       = null;
+    this._habitatItems  = null;
     this._pendingKey    = null;
     this._aoiCells      = null;
     this._build();
     this._loadLcItems();
+    this._loadHabitatItems();
 
     document.addEventListener('climascope:variable', e => {
       const v = e.detail?.variable || 'LCM';
@@ -55,8 +58,11 @@ class DashboardPie {
   _build() {
     this.el.innerHTML = `
       <div class="dp-header">
-        <span class="dp-title" id="dp-title">Land cover &mdash;&nbsp;</span>
-        <span class="dp-scope-name" id="dp-scope-name">Scotland</span>
+        <div class="dp-heading">
+          <div><span class="dp-title" id="dp-title">Land cover : </span>
+          <span class="dp-scope-name" id="dp-scope-name">Scotland</span></div>
+          <span class="dp-source" id="dp-source">Exact 1 km cell fractions</span>
+        </div>
       </div>
       <div class="dp-body" id="dp-body">
         <canvas id="dp-canvas"></canvas>
@@ -67,6 +73,13 @@ class DashboardPie {
   async _loadLcItems() {
     try {
       this._lcItems = await fetch('/api/landcover').then(r => r.json());
+    } catch {}
+  }
+
+  async _loadHabitatItems() {
+    try {
+      const data = await fetch('/api/habitat').then(r => r.json());
+      this._habitatItems = data.classes || [];
     } catch {}
   }
 
@@ -124,23 +137,40 @@ class DashboardPie {
       titleEl.textContent = label + ' : ';
     }
 
+    const sourceEl = this.el.querySelector('#dp-source');
+    if (sourceEl) {
+      sourceEl.textContent = this.variable === 'HABITAT'
+        ? 'NatureScot HLCM 2022 · exact 20 m fractions grouped to 1 km'
+        : this.variable === 'LCM'
+          ? 'Exact 1 km cell fractions'
+          : scope === 'aoi'
+            ? 'JESS catchment totals · overlap-weighted AOI estimate'
+            : 'JESS catchment totals';
+    }
+
     const emptyEl = this.el.querySelector('#dp-empty');
+    const canvas = this.el.querySelector('#dp-canvas');
     const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
 
     if (!entries.length) {
       if (emptyEl) emptyEl.style.display = 'flex';
+      if (canvas) canvas.style.display = 'none';
       return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
+    if (canvas) canvas.style.display = 'block';
 
     const labels = entries.map(([k]) => k);
     const values = entries.map(([, v]) => v);
     const colors = labels.map((name, i) => {
+      if (this.variable === 'HABITAT') {
+        const habitat = this._habitatItems?.find(it => it.group_name === name);
+        if (habitat?.color) return habitat.color;
+      }
       const idx = this._lcItems ? this._lcItems.findIndex(it => it.lc_name === name) : -1;
       return _DP_PALETTE[idx >= 0 ? idx % _DP_PALETTE.length : i % _DP_PALETTE.length];
     });
 
-    const canvas = this.el.querySelector('#dp-canvas');
     if (!canvas) return;
 
     if (this._chart) {

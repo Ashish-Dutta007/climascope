@@ -222,6 +222,13 @@
   color: var(--accent-light);
 }
 
+.kp-source-note {
+  margin-top: 5px;
+  color: rgba(226,232,244,.36);
+  font-size: 9px;
+  line-height: 1.25;
+}
+
 .kp-meta {
   display: flex;
   gap: 6px;

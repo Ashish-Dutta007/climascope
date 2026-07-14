@@ -177,6 +177,27 @@ LC_FRACTIONS = os.environ.get("LC_FRACTIONS", "./data/landcover_fractions.parque
 _lc = None
 _lc_classes = None
 
+HABITAT_FRACTIONS = os.environ.get(
+    "HABITAT_FRACTIONS", _data("data/habitat_fractions.parquet")
+)
+_habitat = None
+_habitat_classes = None
+
+# Compact, colour-safe presentation groups derived from NatureScot HLCM 2022's
+# 28 EUNIS level-2 classes. The parquet retains the source class on every row;
+# these groups keep the map legend and dashboard readable.
+HABITAT_GROUP_COLORS = {
+    1: "#3b82f6",  # water
+    2: "#7c3aed",  # wetlands
+    3: "#a3c95b",  # grasslands
+    4: "#b77963",  # scrub and tall vegetation
+    5: "#1f7a4d",  # woodland
+    6: "#8b8175",  # rock, scree and bare ground
+    7: "#e58b3a",  # arable
+    8: "#52525b",  # built-up
+    9: "#e879c5",  # coastal dunes and shores
+}
+
 _councils_gdf   = None
 _catchments_gdf = None
 
@@ -194,6 +215,41 @@ def get_lc():
             .to_dict(orient="records")
         )
     return _lc, _lc_classes
+
+
+def get_habitat():
+    """Load exact 1 km habitat fractions, grouped for presentation."""
+    global _habitat, _habitat_classes
+    if _habitat is None:
+        df = pd.read_parquet(HABITAT_FRACTIONS)
+        required = {"id_1km", "group_code", "group_name", "frac", "area_frac"}
+        if not required.issubset(df.columns):
+            raise ValueError("habitat fractions have an unexpected schema")
+        df = df[["id_1km", "group_code", "group_name", "frac", "area_frac"]].copy()
+        df["id_1km"] = df["id_1km"].astype(int)
+        df["group_code"] = df["group_code"].astype(int)
+        df["frac"] = df["frac"].astype(float).clip(0, 1)
+        df["area_frac"] = df["area_frac"].astype(float).clip(0, 1)
+        _habitat = (
+            df.groupby(
+                ["id_1km", "group_code", "group_name"], as_index=False
+            )[["frac", "area_frac"]]
+            .sum()
+        )
+        _habitat_classes = [
+            {
+                "group_code": int(code),
+                "group_name": str(name),
+                "color": HABITAT_GROUP_COLORS.get(int(code), "#94a3b8"),
+            }
+            for code, name in (
+                _habitat[["group_code", "group_name"]]
+                .drop_duplicates()
+                .sort_values("group_code")
+                .itertuples(index=False, name=None)
+            )
+        ]
+    return _habitat, _habitat_classes
 
 def get_soilwet():
     global _soilwet
@@ -1152,6 +1208,38 @@ def landcover_dominant():
     return jsonify(_lc_dominant)
 
 
+_habitat_dominant = None
+
+
+@app.route("/api/habitat", methods=["GET"])
+def habitat_classes():
+    """Presentation classes and availability for NatureScot Habitat 2022."""
+    if not os.path.isfile(HABITAT_FRACTIONS):
+        return jsonify({"available": False, "classes": []})
+    _, classes = get_habitat()
+    return jsonify({"available": True, "classes": classes})
+
+
+@app.route("/api/habitat/dominant", methods=["GET"])
+def habitat_dominant():
+    """Dominant grouped habitat per 1 km cell, as compact parallel arrays."""
+    global _habitat_dominant
+    if not os.path.isfile(HABITAT_FRACTIONS):
+        return jsonify({"available": False, "classes": [], "ids": [], "codes": [], "fracs": []})
+    if _habitat_dominant is None:
+        habitat, classes = get_habitat()
+        dom = habitat.loc[habitat.groupby("id_1km")["frac"].idxmax()]
+        _habitat_dominant = {
+            "available": True,
+            "source": "NatureScot HLCM 2022 (20 m, grouped to 1 km)",
+            "classes": classes,
+            "ids": dom["id_1km"].astype(int).tolist(),
+            "codes": dom["group_code"].astype(int).tolist(),
+            "fracs": dom["frac"].round(4).tolist(),
+        }
+    return jsonify(_habitat_dominant)
+
+
 _lidar_cov = None
 
 # LiDAR acquisition phases -> (parquet key, display label, colour), ordered
@@ -1303,6 +1391,23 @@ def cell_lidar():
 
 @lru_cache(maxsize=256)
 def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
+    if variable == 'HABITAT':
+        if not os.path.isfile(HABITAT_FRACTIONS):
+            return {}
+        habitat, _ = get_habitat()
+        scope_ids = _scope_cells(scope)
+        sub = habitat[habitat["id_1km"].isin(scope_ids)] if scope_ids is not None else habitat
+        if sub.empty:
+            return {}
+        totals = sub.groupby("group_name", sort=False)["area_frac"].sum()
+        grand = float(totals.sum())
+        if grand == 0:
+            return {}
+        return {
+            str(name): round(float(val / grand * 100), 2)
+            for name, val in totals.sort_values(ascending=False).items()
+        }
+
     if not variable or variable == 'LCM':
         lc, _ = get_lc()
         scope_ids = _scope_cells(scope)
@@ -1380,6 +1485,22 @@ def landuse_composition():
         if not aoi_ids:
             return jsonify({'error': 'aoi_ids required'}), 400
         aoi_set = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
+
+        if variable == 'HABITAT':
+            if not os.path.isfile(HABITAT_FRACTIONS):
+                return jsonify({})
+            habitat, _ = get_habitat()
+            sub = habitat[habitat['id_1km'].isin(aoi_set)]
+            if sub.empty:
+                return jsonify({})
+            totals = sub.groupby('group_name', sort=False)['area_frac'].sum()
+            grand = float(totals.sum())
+            if grand == 0:
+                return jsonify({})
+            return jsonify({
+                str(name): round(float(val / grand * 100), 2)
+                for name, val in totals.sort_values(ascending=False).items()
+            })
 
         if not variable or variable == 'LCM':
             lc, _ = get_lc()

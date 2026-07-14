@@ -128,9 +128,10 @@
       <div class="section">
         <div class="section-label">Context Layers</div>
         <div id="overlay-body">
-          <label><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
-          <label><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
-          <label><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
+          <label title="Dominant land-cover fraction in each 1 km cell"><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
+          <label title="NatureScot HLCM 2022 habitat, aggregated from 20 m to the 1 km grid"><input type="checkbox" id="habitat-overlay-cb"> Habitat · NatureScot 2022</label>
+          <label title="Where LiDAR is available, coloured by acquisition phase"><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
+          <label title="LiDAR-derived elevation, slope, ruggedness or canopy height"><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
           <select id="terrain-var" class="overlay-select" style="display:none">
             <option value="elevation">Elevation</option>
             <option value="slope">Slope</option>
