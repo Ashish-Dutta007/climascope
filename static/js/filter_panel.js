@@ -63,6 +63,7 @@ class FilterPanel {
     this._aoiCells     = null;
     this._aoiActive    = false;
     this._drawPending  = false;
+    this._aoiRevision  = 0;
     this._lastMapState = null;
     this._build();
     this._loadLcItems();
@@ -239,9 +240,11 @@ class FilterPanel {
   }
 
   async _setAoi(feature, name) {
+    const revision = ++this._aoiRevision;
     this._aoiGeoJSON = feature;
     this._setSpStatus('Computing cells…', 'hint');
     const ids = await this._resolveAoiCells(feature);
+    if (revision !== this._aoiRevision) return;
     if (ids !== null) {
       this._aoiCells  = ids;
       this._aoiActive = true;
@@ -272,6 +275,7 @@ class FilterPanel {
   }
 
   _clearAoi() {
+    this._aoiRevision += 1;
     this._aoiGeoJSON  = null;
     this._aoiCells    = null;
     this._aoiActive   = false;

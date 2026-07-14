@@ -218,8 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
   let _terrainApplied  = false;  // whether feature-states are currently set
 
-  // Whole-of-Scotland framing incl. Orkney & Shetland — reused on load and on "All Scotland" reset
-  const SCOTLAND_VIEW = { center: [-4.0, 57.9], zoom: 5.5 };
+  // Whole-of-Scotland framing including the island groups. Bounds adapt better
+  // than a fixed zoom across desktop, laptop, and mobile map sizes.
+  const SCOTLAND_BOUNDS = [[-8.2, 54.4], [-0.4, 61.05]];
+  const SCOTLAND_FIT_OPTIONS = { padding: 34, maxZoom: 5.35 };
 
   const map = new maplibregl.Map({
     container: 'map',
@@ -237,9 +239,33 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       layers: [{ id:'carto', type:'raster', source:'carto' }]
     },
-    center: SCOTLAND_VIEW.center,
-    zoom: SCOTLAND_VIEW.zoom
+    bounds: SCOTLAND_BOUNDS,
+    fitBoundsOptions: { ...SCOTLAND_FIT_OPTIONS, duration: 0 }
   });
+
+  function _fitScotland(duration = 700) {
+    map.fitBounds(SCOTLAND_BOUNDS, { ...SCOTLAND_FIT_OPTIONS, duration });
+  }
+
+  function _fitActiveScope(duration = 700) {
+    if (activeCatchment) {
+      const selected = catchmentsData.find(c => c.name === activeCatchment);
+      if (selected?.bbox) {
+        const b = selected.bbox;
+        map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40, duration });
+        return;
+      }
+    }
+    if (activeCouncil && councilsGJ) {
+      const feature = councilsGJ.features.find(f => f.properties.council_name === activeCouncil);
+      const bounds = feature ? geomBbox(feature.geometry) : null;
+      if (bounds) {
+        map.fitBounds(bounds, { padding: 40, duration });
+        return;
+      }
+    }
+    _fitScotland(duration);
+  }
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
@@ -1627,6 +1653,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!activeCouncil) {
       setData(SRC.council, emptyFC());
+      _fitActiveScope();
+      if (_clearAoiForScopeChange()) return;
       loadLayer();
       _emitStateChange();
       return;
@@ -1641,6 +1669,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    if (_clearAoiForScopeChange()) return;
     loadLayer();
     _emitStateChange();
   });
@@ -1674,6 +1703,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!activeCatchment) {
       setData(SRC.catchment, emptyFC());
+      _fitActiveScope();
+      if (_clearAoiForScopeChange()) return;
       loadLayer();
       _emitStateChange();
       return;
@@ -1690,9 +1721,21 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(gj => setData(SRC.catchment, gj))
       .catch(() => setData(SRC.catchment, emptyFC()));
 
+    if (_clearAoiForScopeChange()) return;
     loadLayer();
     _emitStateChange();
   });
+
+  function _clearAoiForScopeChange() {
+    if (!aoiGeoJSON && !filterPanel?._aoiGeoJSON) return false;
+    if (filterPanel?._clearAoi) {
+      filterPanel._clearAoi();
+    } else {
+      aoiGeoJSON = null;
+      document.dispatchEvent(new CustomEvent('climascope:aoi:clear'));
+    }
+    return true;
+  }
 
 
   async function loadLayer(debounce = false) {
@@ -1709,7 +1752,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const metric = activeMetric.id;
     const period = $('period').value || '2050-2079';
-    const month  = parseInt($('month').value || 5);
+    const month  = parseInt($('month').value || _defaultMonth);
 
     const _mapAvailPeriods = activeMetric.map_available_periods || [];
     const _mapUnavail = activeMetric.map_available === false
@@ -1967,16 +2010,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('climascope:draw:arm', () => {
     _drawActive = true;
-    setData(SRC.grid, emptyFC());
-    setData(SRC.aoi, emptyFC());
-    aoiGeoJSON = null;
-    _updateHillshadeExportControl();
-    currentGJ  = null;
-    _lastLayerState = { geojson: null, dataMin: null, dataMax: null };
-    updateLegend(null);
-    // Hide VT national layers immediately (setData doesn't affect tile sources)
-    try { map.setLayoutProperty('cells-fill', 'visibility', 'none'); } catch(_) {}
-    try { map.setLayoutProperty('cells-line', 'visibility', 'none'); } catch(_) {}
+    // Keep the current scope visible while drawing. If drawing is cancelled,
+    // users return to exactly the map they started from.
     if (!map.hasControl(draw)) map.addControl(draw, 'top-left');
     draw.changeMode('draw_polygon');
     map.getCanvas().style.cursor = 'crosshair';
@@ -2028,6 +2063,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setData(SRC.aoi, emptyFC());
     map.getCanvas().style.cursor = '';
     _updateLcScope();
+    _fitActiveScope();
+    loadLayer();
     _emitStateChange();
   });
 
@@ -2229,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const id = f.properties?.id_1km;
-      const m  = f.properties?.Month ?? +($('month')?.value || 5);
+      const m  = f.properties?.Month ?? +($('month')?.value || _defaultMonth);
       const rawVal = +(f.properties?.Change ?? 0);
       _openCellClick(id, e.lngLat, rawVal, valueToColor(rawVal), m, ($('period')?.value || '') === '1990-2019');
     });
@@ -2359,7 +2396,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if ($('catchment')) $('catchment').value = '';
         setData(SRC.council,   emptyFC());
         setData(SRC.catchment, emptyFC());
-        map.easeTo({ center: SCOTLAND_VIEW.center, zoom: SCOTLAND_VIEW.zoom, duration: 700 });
+        _fitScotland();
+        if (_clearAoiForScopeChange()) return;
         loadLayer();
         _emitStateChange();
       }
