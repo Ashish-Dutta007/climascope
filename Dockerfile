@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && python -c "import rasterio; print('Rasterio export support:', rasterio.__version__)"
 
 COPY . .
 RUN ln -s /data /app/data

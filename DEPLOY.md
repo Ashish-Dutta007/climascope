@@ -55,3 +55,11 @@ Regenerate the COG from the MBTiles source on the HPC host with:
 ```bash
 ./build_hillshade_cog.sh
 ```
+
+If a deployment made before Rasterio was added reports `hillshade export is not
+configured`, force one clean dependency rebuild, then recreate the container:
+
+```bash
+docker compose build --no-cache
+docker compose up -d --force-recreate
+```
