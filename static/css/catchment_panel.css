@@ -3,13 +3,14 @@
   position: relative;
   flex-shrink: 0;
   overflow: visible;
-  z-index: 4;
+  z-index: 6;
 }
 
 #right-panel-inner {
   width: 360px;
   min-width: 360px;
   height: 100%;
+  padding-top: 58px;
   background: var(--bg-sidebar);
   border-left: 1px solid var(--border-subtle);
   display: flex;
@@ -17,7 +18,8 @@
   overflow: hidden;
   color: var(--text-primary);
   font-family: system-ui,-apple-system,sans-serif;
-  transition: width .2s ease, min-width .2s ease;
+  box-shadow: -12px 0 32px rgba(0,0,0,.18);
+  transition: width .22s ease, min-width .22s ease;
 }
 
 #right-panel.rp-collapsed #right-panel-inner {
@@ -25,57 +27,87 @@
   min-width: 0;
 }
 
-#rp-toggle {
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 44px;
-  padding: 0;
-  background: var(--bg-sidebar);
-  border: 1px solid var(--border-default);
-  border-right: none;
-  border-radius: 5px 0 0 5px;
-  color: rgba(255,255,255,.45);
-  font-size: 11px;
-  cursor: pointer;
-  z-index: 5;
-  display: flex;              /* always show the handle so the panel is reachable */
-  align-items: center;
-  justify-content: center;
-  transition: color .15s, background .15s;
-}
-
-#rp-toggle:hover {
-  background: var(--bg-panel);
-  color: var(--text-primary);
-}
-
 .rp-tabbar {
+  position: absolute;
+  top: 12px;
+  right: 54px;
+  width: 244px;
+  height: 40px;
+  z-index: 7;
   display: flex;
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
+  align-items: center;
+  padding: 3px;
+  background: rgba(17,24,39,.94);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: right .22s ease, width .22s ease, border-radius .22s ease;
+}
+
+#right-panel:not(.rp-collapsed) .rp-tabbar {
+  left: 12px;
+  right: 12px;
+  width: auto;
 }
 
 .rp-tab {
   flex: 1;
-  padding: 9px 0;
-  background: none;
+  height: 32px;
+  padding: 0 12px;
+  background: transparent;
   border: none;
-  color: rgba(249,250,251,.45);
-  font-size: 12px;
+  border-radius: 7px;
+  color: rgba(249,250,251,.62);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  letter-spacing: .02em;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color .15s, border-color .15s;
+  transition: color .15s, background .15s, box-shadow .15s;
+}
+
+.rp-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,.06);
 }
 
 .rp-tab.active {
   color: var(--text-primary);
-  border-bottom-color: var(--accent-light);
+  background: var(--accent-subtle);
+  box-shadow: inset 0 0 0 1px rgba(96,165,250,.28);
+}
+
+#right-panel.rp-collapsed .rp-tab.active::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  vertical-align: 1px;
+}
+
+#rp-toggle {
+  width: 34px;
+  height: 32px;
+  flex: 0 0 34px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--border-subtle);
+  background: transparent;
+  color: rgba(255,255,255,.55);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0 7px 7px 0;
+  transition: color .15s, background .15s;
+}
+
+#rp-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,.06);
 }
 
 .rp-pane {
@@ -93,21 +125,53 @@
   #right-panel {
     position: fixed;
     bottom: 0; left: 0; right: 0;
+    height: min(68vh, 620px);
     z-index: 50;
+    pointer-events: none;
+    transition: height .25s ease;
   }
+  #right-panel.rp-collapsed { height: 0; }
   #right-panel-inner {
+    pointer-events: auto;
     width: 100% !important;
     min-width: unset !important;
-    height: 46vh;
+    height: 100%;
+    padding-top: 48px;
     border-left: none;
-    border-top: 2px solid var(--border-default);
-    transform: translateY(0);
-    transition: transform .3s ease;
+    border-top: 1px solid var(--border-default);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -16px 40px rgba(0,0,0,.42);
   }
-  #right-panel.collapsed #right-panel-inner {
-    transform: translateY(calc(100% - 38px));
+  #right-panel.rp-collapsed #right-panel-inner {
+    width: 100% !important;
+    min-width: 100% !important;
+    visibility: hidden;
   }
-  #rp-toggle { display: none !important; }
+  .rp-tabbar,
+  #right-panel:not(.rp-collapsed) .rp-tabbar {
+    pointer-events: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 48px;
+    padding: 6px 8px;
+    border-radius: 14px 14px 0 0;
+    box-shadow: none;
+  }
+  #right-panel.rp-collapsed .rp-tabbar {
+    position: fixed;
+    top: auto;
+    bottom: 12px;
+    left: auto;
+    right: 12px;
+    width: min(270px, calc(100vw - 24px));
+    height: 44px;
+    padding: 5px;
+    border-radius: 11px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.4);
+  }
 }
 
 

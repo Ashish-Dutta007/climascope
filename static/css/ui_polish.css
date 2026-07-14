@@ -1,0 +1,83 @@
+/* Cross-component finish and accessibility. Loaded last so the four panel
+   styles share one interaction language without duplicating declarations. */
+:root { color-scheme: dark; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+:where(button, select, input, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid #93c5fd !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59,130,246,.2);
+}
+
+input[type="range"]:focus-visible {
+  outline-offset: 5px !important;
+  box-shadow: none;
+}
+
+button:disabled, select:disabled, input:disabled {
+  cursor: not-allowed;
+}
+
+/* Small labels remain secondary, but are readable on the dark surfaces. */
+#app-sub,
+.section-label,
+#active-layers .al-title,
+#legend .legend-title,
+#lc-legend .legend-title,
+#lidar-legend .legend-title,
+#terrain-legend .legend-title,
+.cp-meta,
+.fp-label,
+.kp-label {
+  color: rgba(255,255,255,.52);
+}
+
+.month-ticks { color: rgba(255,255,255,.42); font-size: 9px; }
+.metric-card-units { color: rgba(255,255,255,.5); }
+
+/* Consistent, quiet scrollbars for dense data panels. */
+#sidebar,
+#right-panel-inner,
+.cp-body,
+.fp-rules,
+.kp-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,.28) transparent;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,.25);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(148,163,184,.42); }
+
+@media (hover: none) and (pointer: coarse) {
+  .rp-tab { min-height: 36px; }
+  #rp-toggle { min-width: 40px; }
+}
+
+@media (max-width: 767px) {
+  /* Keep map furniture clear of the collapsed analysis dock. */
+  #legend { bottom: 70px; right: 12px; }
+  #active-layers { right: 8px; min-width: 196px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

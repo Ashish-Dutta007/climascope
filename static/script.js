@@ -243,6 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // per-layer opacity slider. Foundation of the layer-manager model.
   const _alEl = document.createElement('div');
   _alEl.id = 'active-layers';
+  _alEl.setAttribute('role', 'region');
+  _alEl.setAttribute('aria-label', 'Active map layers');
   map.getContainer().appendChild(_alEl);
 
   function _activeDataLayerName() {
@@ -257,14 +259,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const rows = [];
     rows.push({ key: 'data', name: _activeDataLayerName(), op: layerOpacity });
     if (hillshadeOn) rows.push({ key: 'hillshade', name: 'Hillshade', op: hillshadeOpacity });
-    _alEl.innerHTML = `<div class="al-title">Layers</div>` + rows.map(r =>
+    _alEl.innerHTML = `<div class="al-title">Active layers</div>` + rows.map(r =>
       `<div class="al-row">
-         <span class="al-name" title="${r.name}">${r.name}</span>
-         <input type="range" class="al-op" data-key="${r.key}" min="0" max="1" step="0.05" value="${r.op}">
+         <span class="al-name" title="${_html(r.name)}">${_html(r.name)}</span>
+         <input type="range" class="al-op" data-key="${r.key}" min="0" max="1" step="0.05" value="${r.op}"
+                aria-label="${_html(r.name)} opacity" aria-valuetext="${Math.round(r.op * 100)} percent">
+         <span class="al-value" aria-hidden="true">${Math.round(r.op * 100)}%</span>
        </div>`).join('');
     _alEl.querySelectorAll('.al-op').forEach(sl =>
       sl.addEventListener('input', e => {
         const v = parseFloat(e.target.value);
+        e.target.setAttribute('aria-valuetext', `${Math.round(v * 100)} percent`);
+        const valueEl = e.target.closest('.al-row')?.querySelector('.al-value');
+        if (valueEl) valueEl.textContent = `${Math.round(v * 100)}%`;
         if (e.target.dataset.key === 'hillshade') {
           hillshadeOpacity = v;
           try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', v); } catch(_) {}
@@ -291,18 +298,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const _bmEl = document.createElement('div');
   _bmEl.id = 'basemap-toggle';
+  _bmEl.setAttribute('role', 'group');
+  _bmEl.setAttribute('aria-label', 'Basemap');
   _bmEl.innerHTML =
-    '<button class="bm-btn bm-active" data-bm="dark">Dark</button>' +
-    '<button class="bm-btn" data-bm="light">Light</button>' +
-    '<button class="bm-btn" data-bm="satellite">Satellite</button>';
+    '<button type="button" class="bm-btn bm-active" data-bm="dark" aria-pressed="true">Dark</button>' +
+    '<button type="button" class="bm-btn" data-bm="light" aria-pressed="false">Light</button>' +
+    '<button type="button" class="bm-btn" data-bm="satellite" aria-pressed="false">Satellite</button>';
   map.getContainer().appendChild(_bmEl);
 
   document.querySelectorAll('.bm-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const bm = btn.dataset.bm;
       if (bm === currentBasemap) return;
-      document.querySelectorAll('.bm-btn').forEach(b => b.classList.remove('bm-active'));
+      document.querySelectorAll('.bm-btn').forEach(b => {
+        b.classList.remove('bm-active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.classList.add('bm-active');
+      btn.setAttribute('aria-pressed', 'true');
       switchBasemap(bm);
     });
   });
@@ -672,17 +685,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const _srchEl = document.createElement('div');
     _srchEl.id = 'map-search';
     _srchEl.innerHTML =
-      '<input type="text" id="search-input" placeholder="Search a place …">' +
-      '<div id="search-results"></div>';
+      '<input type="search" id="search-input" placeholder="Search a place …" aria-label="Search councils, catchments, places, or OS grid references" role="combobox" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" autocomplete="off">' +
+      '<div id="search-results" role="listbox" aria-label="Search results"></div>';
     map.getContainer().appendChild(_srchEl);
 
     const input   = document.getElementById('search-input');
     const results = document.getElementById('search-results');
     let _debounce = null;
+    let _activeSearchIndex = -1;
 
     function clearResults() {
       results.innerHTML = '';
       results.classList.remove('open');
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+      _activeSearchIndex = -1;
     }
 
     // BNG (EPSG:27700) easting/northing → WGS84 [lng, lat].
@@ -818,8 +835,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       results.innerHTML = html;
       results.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+      _activeSearchIndex = -1;
 
       results.querySelectorAll('.search-result').forEach((el, idx) => {
+        el.setAttribute('role', 'option');
+        el.setAttribute('aria-selected', 'false');
+        el.id = `search-option-${idx}`;
         el.addEventListener('mousedown', ev => {
           ev.preventDefault();
           clearTimeout(_debounce);
@@ -867,6 +889,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!q) { clearResults(); return; }
       _renderResults(_localHits(q), []);              // STEP 1: instant, local only
       _debounce = setTimeout(() => doSearch(q), 400); // STEP 2: OS Names appended
+    });
+
+    input.addEventListener('keydown', event => {
+      const options = [...results.querySelectorAll('.search-result')];
+      if (event.key === 'Escape') { clearResults(); return; }
+      if (!options.length || !['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'Enter') {
+        if (_activeSearchIndex >= 0) {
+          options[_activeSearchIndex].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        }
+        return;
+      }
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      _activeSearchIndex = (_activeSearchIndex + step + options.length) % options.length;
+      options.forEach((option, idx) => {
+        const active = idx === _activeSearchIndex;
+        option.classList.toggle('active', active);
+        option.setAttribute('aria-selected', String(active));
+      });
+      input.setAttribute('aria-activedescendant', options[_activeSearchIndex].id);
+      options[_activeSearchIndex].scrollIntoView({ block: 'nearest' });
     });
 
     input.addEventListener('blur', () => { setTimeout(clearResults, 200); });
@@ -1024,14 +1068,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]];
   }
 
-  function showLoading(on) { $('loading-bar').classList.toggle('hidden', !on); }
+  function showLoading(on) {
+    $('loading-bar').classList.toggle('hidden', !on);
+    $('map-area').setAttribute('aria-busy', String(on));
+  }
 
   function _showMapUnavailMsg() {
     if (document.getElementById('map-unavail-msg')) return;
     const el = document.createElement('div');
     el.id = 'map-unavail-msg';
     el.innerHTML =
-      '<button class="map-unavail-close" title="Dismiss">×</button>' +
+      '<button type="button" class="map-unavail-close" title="Dismiss" aria-label="Dismiss message">×</button>' +
       '<p class="map-unavail-title">Map view not available for CWR</p>' +
       '<p class="map-unavail-sub">Use the Dashboard or Catchment tab to explore CWR data</p>';
     el.querySelector('.map-unavail-close').addEventListener('click', () => el.remove());
@@ -1253,25 +1300,58 @@ document.addEventListener('DOMContentLoaded', () => {
     currentBasemap = bm;
   }
 
+  function _setRightPanel(collapsed, tab) {
+    const rp = $('right-panel');
+    const inner = $('right-panel-inner');
+    const toggle = $('rp-toggle');
+    if (!rp) return;
+
+    const selected = tab || rp.querySelector('.rp-tab.active')?.dataset.tab || 'coverage';
+    rp.classList.toggle('rp-collapsed', collapsed);
+    if (inner) {
+      inner.setAttribute('aria-hidden', String(collapsed));
+      inner.toggleAttribute('inert', collapsed);
+    }
+
+    rp.querySelectorAll('.rp-tab').forEach(btn => {
+      const active = btn.dataset.tab === selected;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', String(active));
+      btn.setAttribute('aria-expanded', String(active && !collapsed));
+      btn.tabIndex = active ? 0 : -1;
+    });
+    const coveragePane = $('coverage-panel');
+    const filterPane = $('filter-panel');
+    if (coveragePane) coveragePane.classList.toggle('hidden', selected !== 'coverage');
+    if (filterPane) filterPane.classList.toggle('hidden', selected !== 'filter');
+
+    if (toggle) {
+      toggle.textContent = collapsed ? '‹' : '›';
+      toggle.setAttribute('aria-expanded', String(!collapsed));
+      toggle.setAttribute('aria-label', collapsed ? 'Expand analysis panel' : 'Collapse analysis panel');
+      toggle.title = collapsed ? 'Expand panel' : 'Collapse panel';
+    }
+    setTimeout(() => map.resize(), 240);
+  }
+
   function initMode(m, skipLoad = false) {
     mode = m;
     $('mode-explore').classList.toggle('active',   m === 'explore');
     $('mode-dashboard').classList.toggle('active', m === 'dashboard');
+    $('mode-explore').setAttribute('aria-pressed', String(m === 'explore'));
+    $('mode-dashboard').setAttribute('aria-pressed', String(m === 'dashboard'));
 
     document.body.classList.toggle('dashboard-mode', m === 'dashboard');
 
     try { map.setLayoutProperty('grid-fill', 'visibility', 'visible'); } catch(_) {}
     try { map.setLayoutProperty('grid-line', 'visibility', 'visible'); } catch(_) {}
 
-    const rp       = $('right-panel');
-    const rpToggle = $('rp-toggle');
     if (m === 'dashboard') {
-      rp?.classList.add('rp-collapsed');
-      if (rpToggle) rpToggle.textContent = '▶';
+      _setRightPanel(true);
       _initDashboard();
     }
     // explore: leave the right panel as-is (collapsed by default; the user
-    // opens Coverage/Filter via the ▶ handle) — reclaims the space up front.
+    // opens Coverage/Filter from the persistent dock) — reclaims space up front.
     setTimeout(() => map.resize(), 220);
     if (!skipLoad) loadLayer();
   }
@@ -1299,14 +1379,32 @@ document.addEventListener('DOMContentLoaded', () => {
   if (_rpToggle) {
     _rpToggle.addEventListener('click', () => {
       const rp = $('right-panel');
-      const collapsed = rp.classList.toggle('rp-collapsed');
-      _rpToggle.textContent = collapsed ? '▶' : '◀';
-      setTimeout(() => map.resize(), 220);
+      _setRightPanel(!rp.classList.contains('rp-collapsed'));
     });
   }
+  document.querySelectorAll('.rp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rp = $('right-panel');
+      const isOpenActive = !rp.classList.contains('rp-collapsed') && btn.classList.contains('active');
+      _setRightPanel(isOpenActive, btn.dataset.tab);
+    });
+    btn.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll('.rp-tab')];
+      const step = event.key === 'ArrowRight' ? 1 : -1;
+      const next = tabs[(tabs.indexOf(btn) + step + tabs.length) % tabs.length];
+      _setRightPanel(false, next.dataset.tab);
+      next.focus();
+    });
+  });
 
   function updateMonthLabel(slider, labelEl) {
-    if (slider && labelEl) labelEl.textContent = MONTH_NAMES[+slider.value] || slider.value;
+    if (slider && labelEl) {
+      const month = MONTH_NAMES[+slider.value] || slider.value;
+      labelEl.textContent = month;
+      slider.setAttribute('aria-valuetext', month);
+    }
   }
   $('month').addEventListener('input', () => {
     updateMonthLabel($('month'), $('monthLabel'));
@@ -1354,22 +1452,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const avail         = m.available !== false;
         const catchmentOnly = avail && m.map_available === false;
         const mapPeriods    = m.map_available_periods || [];
-        const card  = document.createElement('div');
+        const card  = document.createElement('button');
+        card.type = 'button';
         card.className = 'metric-card' + (m.id === activeMetric.id ? ' active' : '') + (avail ? '' : ' metric-card--unavailable');
         card.dataset.id = m.id;
-        card.title = '';
+        card.disabled = !avail;
+        card.setAttribute('aria-pressed', String(m.id === activeMetric.id));
+        card.setAttribute('aria-label', `${m.label || m.short}${avail ? `, ${m.units}` : ', data pending'}`);
         let badgeHtml = '';
         if (catchmentOnly) {
           badgeHtml = mapPeriods.length > 0
-            ? `<br><span class="metric-catchment-only">Map: ${mapPeriods.join(', ')} only</span>`
+            ? `<br><span class="metric-catchment-only">Map: ${mapPeriods.map(_html).join(', ')} only</span>`
             : '<br><span class="metric-catchment-only">Catchment only</span>';
         }
         const unitsHtml = avail
-          ? m.units + badgeHtml
+          ? _html(m.units) + badgeHtml
           : '<span class="metric-unavail">pending</span>';
         card.innerHTML =
           '<div class="metric-card-swatch" style="background:'+(SWATCH[m.colorscale]||SWATCH.diverging)+'"></div>'+
-          '<div class="metric-card-short">'+m.short+'</div>'+
+          '<div class="metric-card-short">'+_html(m.short)+'</div>'+
           '<div class="metric-card-units">'+unitsHtml+'</div>';
         if (avail) card.addEventListener('click', () => selectMetric(m, card));
         grid.appendChild(card);
@@ -1382,8 +1483,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectMetric(m, cardEl) {
     activeMetric = m;
-    document.querySelectorAll('.metric-card').forEach(c=>c.classList.remove('active'));
+    document.querySelectorAll('.metric-card').forEach(c => {
+      c.classList.remove('active');
+      c.setAttribute('aria-pressed', 'false');
+    });
     cardEl.classList.add('active');
+    cardEl.setAttribute('aria-pressed', 'true');
     updateLayerPaint();
     loadLayer();
     _emitStateChange();
@@ -2143,18 +2248,6 @@ document.addEventListener('DOMContentLoaded', () => {
       el.textContent = parts.length ? parts.join(' · ') : `Cell ${id}`;
     } catch { el.textContent = `Cell ${id}`; }
   }
-
-  document.querySelectorAll('.rp-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.rp-tab').forEach(b =>
-        b.classList.toggle('active', b.dataset.tab === tab));
-      const coveragePane = document.getElementById('coverage-panel');
-      const filterPane   = document.getElementById('filter-panel');
-      if (coveragePane) coveragePane.classList.toggle('hidden', tab !== 'coverage');
-      if (filterPane)   filterPane.classList.toggle('hidden',   tab !== 'filter');
-    });
-  });
 
   const cpEl = document.getElementById('coverage-panel');
   if (cpEl && typeof CoveragePanel !== 'undefined') {

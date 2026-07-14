@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>ClimaScope</title>
@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/static/css/catchment_panel.css?v={{ av('css/catchment_panel.css') }}" />
   <link rel="stylesheet" href="/static/css/filter_panel.css?v={{ av('css/filter_panel.css') }}" />
   <link rel="stylesheet" href="/static/css/dashboard.css?v={{ av('css/dashboard.css') }}" />
+  <link rel="stylesheet" href="/static/css/ui_polish.css?v={{ av('css/ui_polish.css') }}" />
 </head>
 <body>
 <div id="app">
@@ -39,28 +40,28 @@
     </div>
 
     <div id="mode-bar">
-      <button id="mode-explore"   class="mode-btn active">Explore</button>
-      <button id="mode-dashboard" class="mode-btn">Dashboard</button>
+      <button type="button" id="mode-explore" class="mode-btn active" aria-pressed="true">Explore</button>
+      <button type="button" id="mode-dashboard" class="mode-btn" aria-pressed="false">Dashboard</button>
     </div>
 
     <!-- ===== EXPLORE PANEL ===== -->
     <div id="panel-explore" class="panel">
 
       <div class="section">
-        <div class="section-label">
+        <label class="section-label" for="council">
           Council Area
           <span id="council-status" class="status-badge"></span>
-        </div>
+        </label>
         <div class="select-wrap">
           <select id="council"><option value="">— All Scotland —</option></select>
         </div>
       </div>
 
       <div class="section">
-        <div class="section-label">
+        <label class="section-label" for="catchment">
           Catchment
           <span id="catchment-status" class="status-badge"></span>
-        </div>
+        </label>
         <div class="select-wrap">
           <select id="catchment"><option value="">— All councils —</option></select>
         </div>
@@ -76,7 +77,7 @@
       </div>
 
       <div class="section">
-        <div class="section-label">Period</div>
+        <label class="section-label" for="period">Period</label>
         <div class="select-wrap">
           <select id="period">
             <option value="1990-2019">1990–2019 (observed)</option>
@@ -87,7 +88,7 @@
       </div>
 
       <div class="section">
-        <div class="section-label">Ensemble Member</div>
+        <label class="section-label" for="member">Ensemble Member</label>
         <div class="select-wrap">
           <select id="member">
             <option value="mean">Mean</option>
@@ -109,10 +110,11 @@
       </div>
 
       <div class="section">
-        <div class="section-label">
-          Month&nbsp;<span id="monthLabel" class="month-badge">Jul</span>
-        </div>
-        <input type="range" id="month" min="1" max="12" value="7"/>
+        <label class="section-label" for="month">
+          Month&nbsp;<span id="monthLabel" class="month-badge" aria-live="polite">Jul</span>
+        </label>
+        <input type="range" id="month" min="1" max="12" value="7"
+               aria-label="Climate month" aria-valuetext="July"/>
         <div class="month-ticks">
           <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
           <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
@@ -141,7 +143,7 @@
       <div class="divider"></div>
 
       <div class="section">
-        <button id="load" class="primary-btn">↻&nbsp;&nbsp;Refresh Layer</button>
+        <button type="button" id="load" class="primary-btn">↻&nbsp;&nbsp;Refresh Layer</button>
       </div>
 
     </div>
@@ -160,10 +162,10 @@
   <div id="main-col">
 
     <!-- ===== MAP AREA ===== -->
-    <div id="map-area">
+    <div id="map-area" role="region" aria-label="Climate map">
       <div id="map"></div>
-      <div id="legend"></div>
-      <div id="loading-bar" class="loading-bar hidden"></div>
+      <div id="legend" aria-live="polite"></div>
+      <div id="loading-bar" class="loading-bar hidden" role="progressbar" aria-label="Loading map data"></div>
     </div>
 
     <!-- ===== DASHBOARD BOTTOM PANELS (hidden unless dashboard mode) ===== -->
@@ -174,16 +176,23 @@
 
   </div>
 
-  <!-- ===== RIGHT PANEL (tabbed: Coverage | Filter) — collapsed by default ===== -->
+  <!-- ===== RIGHT PANEL (persistent dock; content collapsed by default) ===== -->
   <div id="right-panel" class="rp-collapsed">
-    <button id="rp-toggle" title="Show coverage / filter">▶</button>
-    <div id="right-panel-inner">
-      <div class="rp-tabbar">
-        <button class="rp-tab active" data-tab="coverage">Coverage</button>
-        <button class="rp-tab"        data-tab="filter">Filter</button>
-      </div>
-      <div id="coverage-panel" class="rp-pane"></div>
-      <div id="filter-panel"   class="rp-pane hidden"></div>
+    <div class="rp-tabbar" role="tablist" aria-label="Analysis panels">
+      <button type="button" id="rp-tab-coverage" class="rp-tab active" data-tab="coverage"
+              role="tab" aria-selected="true" aria-expanded="false"
+              aria-controls="coverage-panel">Coverage</button>
+      <button type="button" id="rp-tab-filter" class="rp-tab" data-tab="filter"
+              role="tab" aria-selected="false" aria-expanded="false"
+              aria-controls="filter-panel">Filter</button>
+      <button type="button" id="rp-toggle" aria-label="Expand analysis panel"
+              aria-expanded="false" aria-controls="right-panel-inner" title="Expand panel">‹</button>
+    </div>
+    <div id="right-panel-inner" aria-hidden="true" inert>
+      <div id="coverage-panel" class="rp-pane" role="tabpanel"
+           aria-labelledby="rp-tab-coverage"></div>
+      <div id="filter-panel" class="rp-pane hidden" role="tabpanel"
+           aria-labelledby="rp-tab-filter"></div>
     </div>
   </div>
 
