@@ -5,5 +5,8 @@ services:
       - "8123:8000"
     volumes:
       - ./data:/data
+    environment:
+      OS_NAMES_API_KEY: ${OS_NAMES_API_KEY:-}
+      AOI_AREA_LIMIT_M2: ${AOI_AREA_LIMIT_M2:-30000000000}
     shm_size: '256m'
     restart: unless-stopped

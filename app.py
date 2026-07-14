@@ -1,9 +1,10 @@
-import os, json, uuid, math, glob as _glob, logging, time, sqlite3, base64
-from urllib.parse import quote as _url_quote
+import os, json, uuid, math, glob as _glob, logging, time, sqlite3, base64, shutil, threading
+from collections import deque
+from urllib.parse import quote as _url_quote, urlencode as _urlencode
+from urllib.request import Request as _UrlRequest, urlopen as _urlopen
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request, send_from_directory, Response
-from flask_cors import CORS
 
 import geopandas as gpd
 import pandas as pd
@@ -11,7 +12,7 @@ import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from shapely.geometry import shape, Point
 from shapely.ops import transform as shp_transform
-from pyproj import Transformer, CRS
+from pyproj import Transformer
 from shapely.geometry import box
 from functools import lru_cache
 from flask_compress import Compress
@@ -28,6 +29,15 @@ COG_DIR      = os.environ.get("COG_DIR",      _data("data/cogs"))
 MBTILES_FILE = os.environ.get("MBTILES_FILE", _data("data/tiles/grid.mbtiles"))
 WEB_EPSG    = 4326
 AREA_LIMIT_M2 = 200_000_000
+# Drawn analyses/exports may be much larger than an interactive bbox.  Highland,
+# Scotland's largest council, is ~26,022 km²; allow ~15% hand-drawing tolerance.
+AOI_AREA_LIMIT_M2 = int(os.environ.get("AOI_AREA_LIMIT_M2", 30_000_000_000))
+MAX_AOI_COORDINATES = int(os.environ.get("MAX_AOI_COORDINATES", 50_000))
+MAX_AOI_CELL_IDS = int(os.environ.get("MAX_AOI_CELL_IDS", 35_000))
+MAX_REQUEST_CELL_IDS = int(os.environ.get("MAX_REQUEST_CELL_IDS", 100_000))
+MAX_FILTER_RULES = int(os.environ.get("MAX_FILTER_RULES", 20))
+OUTPUT_MAX_AGE_SECONDS = int(os.environ.get("OUTPUT_MAX_AGE_SECONDS", 86_400))
+MAX_JSON_BYTES = int(os.environ.get("MAX_JSON_BYTES", 5 * 1024 * 1024))
 
 # ── Metric availability scan (runs once at import under --preload)
 _EXPECTED_PERIODS = ("2020-2049", "2050-2079")
@@ -73,7 +83,85 @@ SOILWET_SUMMARY = os.environ.get(
 _soilwet = None
 
 app = Flask(__name__, static_url_path="/static", static_folder="static")
+app.config["MAX_CONTENT_LENGTH"] = MAX_JSON_BYTES
 Compress(app)
+
+
+class InvalidSelection(ValueError):
+    """A client supplied an unsupported climate data selector."""
+
+
+@app.errorhandler(InvalidSelection)
+def _invalid_selection(exc):
+    return jsonify({"error": str(exc)}), 400
+
+
+@app.errorhandler(413)
+def _request_too_large(_exc):
+    return jsonify({"error": f"request body exceeds {MAX_JSON_BYTES // (1024 * 1024)} MB"}), 413
+
+
+@app.after_request
+def _security_headers(resp):
+    # CSP still permits inline styles because MapLibre and the current UI set
+    # style attributes dynamically. Scripts are version-pinned with SRI in the
+    # templates and inline script execution remains disabled.
+    resp.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        "script-src 'self' https://unpkg.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://unpkg.com; "
+        "img-src 'self' data: blob: https://server.arcgisonline.com; "
+        "connect-src 'self' https://server.arcgisonline.com; "
+        "font-src 'self' data:; worker-src 'self' blob:; "
+        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; "
+        "upgrade-insecure-requests"
+    )
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return resp
+
+
+_RATE_BUCKETS = {}
+_RATE_LOCK = threading.Lock()
+
+
+def _check_process_rate(bucket: str, limit: int, window_seconds: int = 60):
+    """Small per-worker backstop for costly public endpoints.
+
+    The reverse proxy remains the right place for a site-wide/IP-aware limit;
+    this cap is deliberately process-global so it is safe when proxy addresses
+    mask individual clients.
+    """
+    now = time.monotonic()
+    with _RATE_LOCK:
+        calls = _RATE_BUCKETS.setdefault(bucket, deque())
+        while calls and calls[0] <= now - window_seconds:
+            calls.popleft()
+        if len(calls) >= limit:
+            return False, max(1, math.ceil(window_seconds - (now - calls[0])))
+        calls.append(now)
+    return True, None
+
+
+def _rate_limited(bucket: str, limit: int):
+    ok, retry_after = _check_process_rate(bucket, limit)
+    if ok:
+        return None
+    resp = jsonify({"error": "rate limit exceeded; try again shortly"})
+    resp.status_code = 429
+    resp.headers["Retry-After"] = str(retry_after)
+    return resp
+
+
+def _json_object():
+    body = request.get_json(force=True, silent=True)
+    if not isinstance(body, dict):
+        raise InvalidSelection("JSON object required")
+    return body
 
 _grid = None
 _dset = None
@@ -262,8 +350,10 @@ _CELL_CATCHMENT: dict = {
 
 @lru_cache(maxsize=256)
 def slice_facts(metric, period, month, member):
+    metric, period, month_s, member = _validated_climate_selection(metric, period, month, member)
+    month = int(month_s)
     if not member:
-        precomp = os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={month}.parquet")
+        precomp = _precomp_path(metric, period, str(month))
         if os.path.exists(precomp):
             return pd.read_parquet(precomp, columns=["id_1km", "Change"])
     else:
@@ -297,6 +387,102 @@ def get_grid():
         if _grid.crs is None:
             _grid.set_crs(27700, inplace=True)
     return _grid
+
+
+def _coordinate_count(value) -> int:
+    if isinstance(value, (list, tuple)):
+        if value and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in value):
+            return 1
+        return sum(_coordinate_count(v) for v in value)
+    return 0
+
+
+def _validated_aoi(geom_gj, properties=None):
+    """Return (WGS84 geometry, BNG geometry, area_m2) for a bounded AOI."""
+    if not isinstance(geom_gj, dict):
+        raise InvalidSelection("geometry must be a GeoJSON object")
+    if _coordinate_count(geom_gj.get("coordinates")) > MAX_AOI_COORDINATES:
+        raise InvalidSelection(f"geometry exceeds {MAX_AOI_COORDINATES:,} coordinates")
+    try:
+        geom = shape(geom_gj)
+    except Exception as exc:
+        raise InvalidSelection("invalid GeoJSON geometry") from exc
+    if geom.is_empty or not geom.is_valid:
+        raise InvalidSelection("geometry must be non-empty and valid")
+    if any(not math.isfinite(v) for v in geom.bounds):
+        raise InvalidSelection("geometry bounds must be finite")
+
+    to_bng = Transformer.from_crs(WEB_EPSG, 27700, always_xy=True).transform
+    to_web = Transformer.from_crs(27700, WEB_EPSG, always_xy=True).transform
+    props = properties if isinstance(properties, dict) else {}
+    if geom.geom_type == "Point" and "radius" in props:
+        try:
+            radius_m = float(props["radius"])
+        except (TypeError, ValueError) as exc:
+            raise InvalidSelection("radius must be a number") from exc
+        if not math.isfinite(radius_m) or radius_m <= 0:
+            raise InvalidSelection("radius must be greater than zero")
+        geom_bng = shp_transform(to_bng, geom).buffer(radius_m)
+        geom = shp_transform(to_web, geom_bng)
+    elif geom.geom_type in ("Polygon", "MultiPolygon"):
+        geom_bng = shp_transform(to_bng, geom)
+    else:
+        raise InvalidSelection("geometry must be a Polygon, MultiPolygon, or radius Point")
+
+    area_m2 = float(geom_bng.area)
+    if not math.isfinite(area_m2) or area_m2 <= 0:
+        raise InvalidSelection("geometry has no measurable area")
+    if area_m2 > AOI_AREA_LIMIT_M2:
+        raise InvalidSelection(
+            f"drawn area is {area_m2 / 1e6:,.0f} km²; maximum is "
+            f"{AOI_AREA_LIMIT_M2 / 1e6:,.0f} km² (approximately Scotland's largest council)"
+        )
+    return geom, geom_bng, area_m2
+
+
+def _validated_ids(values, *, limit=MAX_REQUEST_CELL_IDS, field="ids") -> frozenset:
+    if not isinstance(values, list):
+        raise InvalidSelection(f"{field} must be a list")
+    if len(values) > limit:
+        raise InvalidSelection(f"{field} exceeds the {limit:,}-cell limit")
+    try:
+        ids = frozenset(int(v) for v in values if not isinstance(v, bool))
+    except (TypeError, ValueError) as exc:
+        raise InvalidSelection(f"{field} must contain integer cell IDs") from exc
+    if len(ids) != len(values):
+        raise InvalidSelection(f"{field} must contain unique integer cell IDs")
+    if any(v < 0 for v in ids):
+        raise InvalidSelection(f"{field} must contain positive cell IDs")
+    return ids
+
+
+def _csv_safe(df: pd.DataFrame) -> pd.DataFrame:
+    """Prevent spreadsheet formula execution in downloaded CSV text fields."""
+    out = df.copy()
+    for col in out.select_dtypes(include=["object", "string"]).columns:
+        out[col] = out[col].map(
+            lambda v: "'" + v if isinstance(v, str) and v.startswith(("=", "+", "-", "@", "\t", "\r")) else v
+        )
+    return out
+
+
+_LAST_OUTPUT_CLEANUP = 0.0
+
+
+def _cleanup_old_outputs():
+    global _LAST_OUTPUT_CLEANUP
+    now = time.time()
+    if now - _LAST_OUTPUT_CLEANUP < 900:
+        return
+    _LAST_OUTPUT_CLEANUP = now
+    try:
+        for entry in os.scandir(OUTPUT_DIR):
+            if entry.is_dir(follow_symlinks=False) and now - entry.stat().st_mtime > OUTPUT_MAX_AGE_SECONDS:
+                shutil.rmtree(entry.path, ignore_errors=True)
+    except FileNotFoundError:
+        pass
+    except OSError:
+        app.logger.exception("old output cleanup failed")
 
 def get_dset():
     global _dset
@@ -334,6 +520,52 @@ def immersive_control():
     resp = make_response(render_template("immersive_control.html"))
     resp.headers["Cache-Control"] = "no-store"
     return resp
+
+
+_OS_NAMES_ENDPOINT = "https://api.os.uk/search/names/v1/find"
+_OS_NAMES_BOUNDS = "0,530000,470000,1220000"
+
+
+@lru_cache(maxsize=512)
+def _os_names_search(query: str) -> tuple:
+    key = os.environ.get("OS_NAMES_API_KEY", "").strip()
+    if not key:
+        return ()
+    url = _OS_NAMES_ENDPOINT + "?" + _urlencode({
+        "query": query, "key": key, "bounds": _OS_NAMES_BOUNDS, "maxresults": 8,
+    })
+    req = _UrlRequest(url, headers={"User-Agent": "ClimaScope/1.0"})
+    with _urlopen(req, timeout=5) as upstream:
+        data = json.load(upstream)
+    results = []
+    for row in data.get("results", []):
+        entry = row.get("GAZETTEER_ENTRY") or {}
+        try:
+            name = str(entry["NAME1"])[:200]
+            east = float(entry["GEOMETRY_X"])
+            north = float(entry["GEOMETRY_Y"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if name and all(math.isfinite(v) for v in (east, north)):
+            results.append({"NAME1": name, "GEOMETRY_X": east, "GEOMETRY_Y": north})
+    return tuple(results)
+
+
+@app.route("/api/search/places")
+def search_places():
+    query = request.args.get("q", "").strip()
+    if not 2 <= len(query) <= 100:
+        return jsonify({"error": "query must be 2-100 characters"}), 400
+    if not os.environ.get("OS_NAMES_API_KEY", "").strip():
+        return jsonify({"results": [], "available": False})
+    limited = _rate_limited("os-names", 30)
+    if limited:
+        return limited
+    try:
+        return jsonify({"results": list(_os_names_search(query)), "available": True})
+    except Exception:
+        app.logger.exception("OS Names lookup failed")
+        return jsonify({"error": "place search temporarily unavailable"}), 502
 
 METRIC_CATALOGUE = [
     {
@@ -416,7 +648,7 @@ def layers():
 def national_features():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=5)
+    month  = request.args.get("month", type=int, default=7)
     member = request.args.get("member")
 
     df = slice_facts(metric, period, month, member)
@@ -476,17 +708,17 @@ def _national_catchment_json(metric: str, period: str, month: int) -> str:
 def national_features_catchment():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
-    month  = request.args.get("month", type=int, default=5)
+    month  = request.args.get("month", type=int, default=7)
     return Response(_national_catchment_json(metric, period, month), mimetype="application/json")
 
 
 @app.route("/cogs/<path:filepath>")
 def serve_cog(filepath):
-    base = os.path.abspath(COG_DIR)
-    full_path = os.path.normpath(os.path.join(base, filepath))
+    base = os.path.realpath(COG_DIR)
+    full_path = os.path.realpath(os.path.join(base, filepath))
     if not full_path.startswith(base + os.sep):
         return jsonify({"error": "invalid path"}), 400
-    if not os.path.exists(full_path):
+    if not os.path.isfile(full_path):
         return jsonify({"error": "not found"}), 404
     from flask import send_file as _send_file
     return _send_file(full_path, conditional=True)
@@ -497,6 +729,8 @@ def cog_url():
     metric = request.args.get("metric", "CWBPT")
     period = request.args.get("period", "2050-2079")
     month  = request.args.get("month",  type=int, default=7)
+    metric, period, month_s, _ = _validated_climate_selection(metric, period, month, None)
+    month = int(month_s)
     path   = f"Metric={metric}/Period={period}/Month={month}.tif"
     full   = os.path.join(COG_DIR, path)
     exists = os.path.exists(full)
@@ -705,7 +939,10 @@ def catchment_geometry(name):
 
 @app.route("/api/jobs", methods=["POST"])
 def jobs():
-    payload = request.get_json(force=True)
+    limited = _rate_limited("jobs", 2)
+    if limited:
+        return limited
+    payload = _json_object()
     aoi_gj = payload.get("aoi_geojson")
     metric = payload.get("metric", "CWBPT")
     period = payload.get("period", "2020-2049")
@@ -715,29 +952,17 @@ def jobs():
 
     if not aoi_gj:
         return jsonify({"error":"AOI_MISSING"}), 400
+    if operation != "zonal_stats":
+        return jsonify({"error": "unsupported operation"}), 400
 
     geom_gj = aoi_gj.get("geometry", aoi_gj)
     props   = aoi_gj.get("properties", {}) if isinstance(aoi_gj, dict) else {}
-    try:
-        geom = shape(geom_gj)
-    except Exception as e:
-        return jsonify({"error":"AOI_INVALID","detail":str(e)}), 400
+    aoi, aoi_bng, aoi_area_m2 = _validated_aoi(geom_gj, props)
 
-    if geom_gj.get("type") == "Point" and "radius" in props:
-        radius_m = float(props["radius"])
-        to_3857 = Transformer.from_crs(CRS.from_epsg(WEB_EPSG), CRS.from_epsg(3857), always_xy=True).transform
-        to_4326 = Transformer.from_crs(CRS.from_epsg(3857),    CRS.from_epsg(WEB_EPSG), always_xy=True).transform
-        center_3857 = shp_transform(to_3857, geom)
-        aoi_3857 = center_3857.buffer(radius_m)
-        aoi = shp_transform(to_4326, aoi_3857)
-    else:
-        aoi = geom
-
-    to_3857 = Transformer.from_crs(WEB_EPSG, 3857, always_xy=True).transform
-    aoi_3857 = shp_transform(to_3857, aoi)
-    aoi_area_m2 = aoi_3857.area
-
-    month_val = int(month) if month is not None else 7
+    metric, period, month_s, member = _validated_climate_selection(
+        metric, period, month if month is not None else 7, member
+    )
+    month_val = int(month_s)
     df = slice_facts(metric, period, month_val, member)
 
     if df.empty:
@@ -749,8 +974,11 @@ def jobs():
     if g.empty:
         return jsonify({"error":"NO_MATCHING_IDS"}), 404
 
-    g = g.to_crs(3857)
-    inter = g.geometry.intersection(aoi_3857)
+    if g.crs is None:
+        g = g.set_crs(27700)
+    elif g.crs.to_epsg() != 27700:
+        g = g.to_crs(27700)
+    inter = g.geometry.intersection(aoi_bng)
     mask = ~inter.is_empty
     if not mask.any():
         return jsonify({"error":"NO_INTERSECTION"}), 404
@@ -784,6 +1012,7 @@ def jobs():
                 .to_dict(orient="records")
             )
 
+    _cleanup_old_outputs()
     job_id = str(uuid.uuid4())[:8]
     out_dir = os.path.join(OUTPUT_DIR, job_id)
     os.makedirs(out_dir, exist_ok=True)
@@ -807,7 +1036,7 @@ def jobs():
         "month":  month_val,
         "Change": gw_csv["Change"].values,
     })
-    stats_df.to_csv(os.path.join(out_dir, f"{job_id}_stats.csv"), index=False)
+    _csv_safe(stats_df).to_csv(os.path.join(out_dir, f"{job_id}_stats.csv"), index=False)
 
     prov = {
         "job_id": job_id,
@@ -875,10 +1104,12 @@ def timeseries():
 
 @app.route("/download/<job_id>/<path:filename>", methods=["GET"])
 def download(job_id, filename):
-    # job_id is a hex token; "." blocks ".." escaping OUTPUT_DIR
-    if "." in job_id:
+    if len(job_id) != 8 or any(ch not in "0123456789abcdef" for ch in job_id.lower()):
         return jsonify({"error":"NOT_FOUND"}), 404
-    folder = os.path.join(OUTPUT_DIR, job_id)
+    base = os.path.realpath(OUTPUT_DIR)
+    folder = os.path.realpath(os.path.join(base, job_id))
+    if not folder.startswith(base + os.sep):
+        return jsonify({"error":"NOT_FOUND"}), 404
     if not os.path.isdir(folder):
         return jsonify({"error":"NOT_FOUND"}), 404
     return send_from_directory(folder, filename, as_attachment=True)
@@ -1129,12 +1360,12 @@ def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
 @app.route("/api/landuse_composition", methods=["GET", "POST"])
 def landuse_composition():
     if request.method == 'POST':
-        body     = request.get_json(force=True, silent=True) or {}
+        body     = _json_object()
         aoi_ids  = body.get('aoi_ids', [])
         variable = body.get('variable', 'LCM')
         if not aoi_ids:
             return jsonify({'error': 'aoi_ids required'}), 400
-        aoi_set = frozenset(int(i) for i in aoi_ids)
+        aoi_set = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
 
         if not variable or variable == 'LCM':
             lc, _ = get_lc()
@@ -1368,6 +1599,8 @@ def _nf(x):
 
 
 def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period_2='2050-2079', aoi_cell_ids=None, member=None):
+    metric, period_1, _, member = _validated_climate_selection(metric, period_1, 1, member)
+    _, period_2, _, _ = _validated_climate_selection(metric, period_2, 1, member)
     metric_type = COVERAGE_METRIC_TYPES[metric]
     is_balance  = metric_type == 'balance'
     thr         = float(threshold)
@@ -1558,7 +1791,7 @@ def _coverage_json_cached(metric, scope_str, threshold, period_1='2020-2049', pe
 @app.route('/api/coverage', methods=['GET', 'POST'])
 def coverage():
     if request.method == 'POST':
-        body     = request.get_json(silent=True) or {}
+        body     = _json_object()
         metric   = str(body.get('metric',    '')).strip()
         thr_s    = str(body.get('threshold',  0))
         cell_ids = body.get('cell_ids')
@@ -1572,6 +1805,7 @@ def coverage():
             return jsonify({'error': f'Unknown metric: {metric!r}. Valid: {list(COVERAGE_METRIC_TYPES)}'}), 400
         if not cell_ids or not isinstance(cell_ids, list):
             return jsonify({'error': 'cell_ids must be a non-empty list'}), 400
+        cell_ids = list(_validated_ids(cell_ids, limit=MAX_AOI_CELL_IDS, field="cell_ids"))
         try:
             threshold = round(float(thr_s), 6)
         except ValueError:
@@ -1581,7 +1815,7 @@ def coverage():
             return jsonify(result)
         except Exception as e:
             app.logger.exception('coverage AOI error')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'coverage analysis failed'}), 500
 
     # GET — named scopes (cached)
     metric   = request.args.get('metric',   '').strip()
@@ -1612,11 +1846,11 @@ def coverage():
         return app.response_class(result_json, mimetype='application/json')
     except KeyError as e:
         return jsonify({'error': f'Council not found: {e}'}), 400
-    except FileNotFoundError as e:
-        return jsonify({'error': str(e)}), 404
-    except Exception as e:
+    except FileNotFoundError:
+        return jsonify({'error': 'requested coverage data is unavailable'}), 404
+    except Exception:
         app.logger.exception('coverage error')
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'coverage analysis failed'}), 500
 
 
 JESS_ROOT = os.environ.get("JESS_ROOT", "data/jess/parquet")
@@ -1731,11 +1965,14 @@ _PERIOD_SCENARIO = {
 @app.route('/api/catchment', methods=['GET', 'POST'])
 def catchment():
     if request.method == 'POST':
-        body     = request.get_json(force=True, silent=True) or {}
+        body     = _json_object()
         aoi_ids  = body.get('aoi_ids', [])
         variable = body.get('variable', 'Land Use')
         metric   = body.get('metric',   'CWBPT')
-        month    = int(body.get('month', 5))
+        try:
+            month = int(body.get('month', 7))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'month must be 1-12'}), 400
         period   = body.get('period', '2050-2079')
 
         valid_variables = ['Land Use', 'Farm Type', 'LCA', 'Peat Condition', 'NA']
@@ -1752,7 +1989,7 @@ def catchment():
         if not aoi_ids:
             return jsonify({'error': 'aoi_ids required'}), 400
 
-        aoi_set = frozenset(int(i) for i in aoi_ids)
+        aoi_set = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
         weights = {}
         for cname, cells in _CATCHMENT_CELLS.items():
             overlap = len(cells & aoi_set)
@@ -1782,7 +2019,7 @@ def catchment():
             db.close()
         except Exception as e:
             app.logger.exception('catchment AOI query failed')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'catchment analysis failed'}), 500
 
         if df.empty:
             return jsonify({'variable': variable, 'metric': metric, 'month': month,
@@ -1817,7 +2054,7 @@ def catchment():
     # ── GET (existing behaviour) ─────────────────────────────────────────
     variable = request.args.get('variable', 'Land Use')
     metric   = request.args.get('metric', 'CWBPT')
-    month    = request.args.get('month', 5, type=int)
+    month    = request.args.get('month', 7, type=int)
     period   = request.args.get('period', '2050-2079')
     scope    = request.args.get('scope', 'national')
 
@@ -1860,7 +2097,7 @@ def catchment():
         })
     except Exception as e:
         app.logger.exception('catchment query failed')
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'catchment analysis failed'}), 500
 
 
 def _prewarm_catchment():
@@ -1883,7 +2120,8 @@ def _prewarm_catchment():
             logging.exception('Catchment prewarm %s failed (non-fatal)', args[0])
     logging.info('Catchment prewarm complete in %.2fs', time.time() - t_total)
 
-_prewarm_catchment()
+if os.environ.get("PREWARM_CATCHMENT", "1").lower() not in ("0", "false", "no"):
+    _prewarm_catchment()
 
 
 # Metrics whose filter column is "Change"; all others use "proj_value"
@@ -1898,11 +2136,15 @@ def _scope_cells(scope: str):
         return None
     if scope.startswith("council:"):
         council = scope[len("council:"):]
-        return _COUNCIL_CELLS.get(council) or frozenset()
+        if council not in _COUNCIL_CELLS:
+            raise InvalidSelection(f"unknown council: {council!r}")
+        return _COUNCIL_CELLS[council]
     if scope.startswith("catchment:"):
         name = scope[len("catchment:"):]
-        return _CATCHMENT_CELLS.get(name) or frozenset()
-    return None
+        if name not in _CATCHMENT_CELLS:
+            raise InvalidSelection(f"unknown catchment: {name!r}")
+        return _CATCHMENT_CELLS[name]
+    raise InvalidSelection("scope must be national, a known council, catchment, or explicit AOI")
 
 _VALID_OPERATORS = {"gt", "lt", "gte", "lte", "between"}
 
@@ -1911,13 +2153,45 @@ def _filter_col(metric: str) -> str:
     return "Change" if metric in _BALANCE_METRICS else "proj_value"
 
 
+_PRECOMP_PERIODS = {"1990-2019", "2020-2049", "2050-2079"}
+
+
+def _validated_climate_selection(metric, period, month, member=None):
+    metric = str(metric)
+    period = str(period)
+    if metric not in COVERAGE_METRIC_TYPES:
+        raise InvalidSelection(f"unknown metric: {metric!r}")
+    if period not in _PRECOMP_PERIODS:
+        raise InvalidSelection(f"unknown period: {period!r}")
+    try:
+        month_int = int(month)
+    except (TypeError, ValueError) as exc:
+        raise InvalidSelection("month must be 1-12") from exc
+    if isinstance(month, bool) or not 1 <= month_int <= 12 or str(month).strip() != str(month_int):
+        raise InvalidSelection("month must be 1-12")
+    if member in (None, "", "mean"):
+        member = None if member in (None, "") else "mean"
+    else:
+        member = str(member)
+        if member not in _VALID_MEMBERS:
+            raise InvalidSelection(f"invalid ensemble member: {member!r}")
+    return metric, period, str(month_int), member
+
+
 def _precomp_path(metric: str, period: str, month: str) -> str:
-    return os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={month}.parquet")
+    metric, period, month, _ = _validated_climate_selection(metric, period, month, None)
+    path = os.path.abspath(os.path.join(
+        PRECOMP_DIR, f"Metric={metric}", f"Period={period}", f"Month={month}.parquet"
+    ))
+    if os.path.commonpath((os.path.abspath(PRECOMP_DIR), path)) != os.path.abspath(PRECOMP_DIR):
+        raise InvalidSelection("invalid climate data path")
+    return path
 
 
 def _resolve_precomp_path(metric: str, period: str, month: str, member: str | None = None) -> str:
     """Return member-specific parquet path if valid and present, else fall back to mean."""
-    if member and member != 'mean' and period != '1990-2019' and member in _VALID_MEMBERS:
+    metric, period, month, member = _validated_climate_selection(metric, period, month, member)
+    if member and member != 'mean' and period != '1990-2019':
         p = os.path.join(PRECOMP_DIR, f"Metric={metric}", f"Period={period}",
                          f"Month={month}", f"Member={member}.parquet")
         if os.path.exists(p):
@@ -2082,6 +2356,8 @@ def get_values():
     if metric in _INVALID_METRICS and period not in _CWR_VALID_PERIODS:
         return jsonify({'error': f'{metric} data not available for period {period!r}'}), 404
 
+    metric, period, month, member = _validated_climate_selection(metric, period, month, member)
+
     if member and member != 'mean':
         if member not in _VALID_MEMBERS:
             return jsonify({'error': f'invalid member {member!r}; valid: {sorted(_VALID_MEMBERS)}'}), 400
@@ -2153,7 +2429,9 @@ def filter_range():
         return jsonify({"error": f"no data for {metric}/{period}/Month={month}"}), 404
 
     col = _filter_col(metric)
-    scope_ids = _scope_cells(scope)
+    # Range endpoint has no AOI ID payload; use the national range while an AOI
+    # is active (the query itself is still restricted by explicit AOI IDs).
+    scope_ids = None if scope == "aoi" else _scope_cells(scope)
     try:
         conn = duckdb.connect(":memory:")
         if scope_ids:
@@ -2172,7 +2450,7 @@ def filter_range():
         conn.close()
     except Exception as e:
         app.logger.exception("filter/range error")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "filter range query failed"}), 500
 
     return jsonify({"metric": metric, "period": period, "month": int(month),
                     "column": col, "min": row[0], "max": row[1]})
@@ -2180,23 +2458,29 @@ def filter_range():
 
 @app.route("/api/filter/query", methods=["POST"])
 def filter_query():
-    body = request.get_json(force=True, silent=True) or {}
+    body = _json_object()
     rules   = body.get("rules", [])
-    logic   = body.get("logic", "AND").upper()
+    logic   = str(body.get("logic", "AND")).upper()
     scope   = body.get("scope", "national")
     aoi_ids = body.get("aoi_ids")  # explicit cell list when scope=='aoi'
     member  = body.get("member", None)
 
     if not rules:
         return jsonify({"error": "rules must be a non-empty list"}), 400
+    if not isinstance(rules, list) or len(rules) > MAX_FILTER_RULES:
+        return jsonify({"error": f"rules must contain at most {MAX_FILTER_RULES} items"}), 400
     if logic not in ("AND", "OR"):
         return jsonify({"error": "logic must be AND or OR"}), 400
+    if not isinstance(scope, str):
+        return jsonify({"error": "scope must be a string"}), 400
 
     lc_path      = _data('data/landcover_fractions.parquet')
     terrain_path = _data('data/terrain_metrics.parquet')
 
     # Validate all rules upfront
     for i, r in enumerate(rules):
+        if not isinstance(r, dict):
+            return jsonify({"error": f"rule[{i}] must be an object"}), 400
         rule_type = r.get("type", "climate")
         if rule_type == "landcover":
             for field in ("lc_class", "threshold"):
@@ -2218,6 +2502,7 @@ def filter_query():
                 return jsonify({"error": f"rule[{i}] unknown metric: {r['metric']!r}"}), 400
             if r["operator"] not in _VALID_OPERATORS:
                 return jsonify({"error": f"rule[{i}] invalid operator: {r['operator']!r}. Valid: {sorted(_VALID_OPERATORS)}"}), 400
+            _validated_climate_selection(r["metric"], r["period"], r["month"], member)
 
     try:
         conn = duckdb.connect(":memory:")
@@ -2290,10 +2575,10 @@ def filter_query():
 
     except Exception as e:
         app.logger.exception("filter/query error")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "filter query failed"}), 500
 
     if scope == 'aoi' and aoi_ids is not None:
-        scope_ids = frozenset(int(i) for i in aoi_ids)
+        scope_ids = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
     else:
         scope_ids = _scope_cells(scope)
     if scope_ids is not None:
@@ -2305,9 +2590,9 @@ def filter_query():
 
 @app.route("/api/filter/export", methods=["POST"])
 def filter_export():
-    body    = request.get_json(force=True, silent=True) or {}
+    body    = _json_object()
     rules   = body.get("rules", [])
-    logic   = body.get("logic", "AND").upper()
+    logic   = str(body.get("logic", "AND")).upper()
     scope   = body.get("scope", "national")
     aoi_ids = body.get("aoi_ids")
     fmt     = body.get("fmt", "csv")
@@ -2317,10 +2602,16 @@ def filter_export():
 
     if not rules:
         return jsonify({"error": "rules must be a non-empty list"}), 400
+    if not isinstance(rules, list) or len(rules) > MAX_FILTER_RULES:
+        return jsonify({"error": f"rules must contain at most {MAX_FILTER_RULES} items"}), 400
     if logic not in ("AND", "OR"):
         return jsonify({"error": "logic must be AND or OR"}), 400
+    if not isinstance(scope, str):
+        return jsonify({"error": "scope must be a string"}), 400
 
     for i, r in enumerate(rules):
+        if not isinstance(r, dict):
+            return jsonify({"error": f"rule[{i}] must be an object"}), 400
         for field in ("metric", "period", "month", "operator", "value"):
             if field not in r:
                 return jsonify({"error": f"rule[{i}] missing field: {field}"}), 400
@@ -2328,6 +2619,9 @@ def filter_export():
             return jsonify({"error": f"rule[{i}] unknown metric: {r['metric']!r}"}), 400
         if r["operator"] not in _VALID_OPERATORS:
             return jsonify({"error": f"rule[{i}] invalid operator: {r['operator']!r}"}), 400
+        _validated_climate_selection(r["metric"], r["period"], r["month"], member)
+        if r["operator"] == "between" and (not isinstance(r["value"], (list, tuple)) or len(r["value"]) != 2):
+            return jsonify({"error": f"rule[{i}] between requires [lo, hi]"}), 400
 
     try:
         conn = duckdb.connect(":memory:")
@@ -2363,10 +2657,10 @@ def filter_export():
         conn.close()
     except Exception as e:
         app.logger.exception("filter/export query error")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "filter export failed"}), 500
 
     if scope == 'aoi' and aoi_ids is not None:
-        scope_ids = frozenset(int(i) for i in aoi_ids)
+        scope_ids = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
     else:
         scope_ids = _scope_cells(scope)
     if scope_ids is not None:
@@ -2404,7 +2698,7 @@ def filter_export():
             headers={"Content-Disposition": "attachment; filename=climascope_filter.geojson"},
         )
     return Response(
-        result.to_csv(index=False),
+        _csv_safe(result).to_csv(index=False),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=climascope_filter.csv"},
     )
@@ -2412,10 +2706,11 @@ def filter_export():
 
 @app.route("/api/filter/bbox", methods=["POST"])
 def filter_bbox():
-    body = request.get_json(force=True, silent=True) or {}
+    body = _json_object()
     ids = body.get("ids", [])
     if not ids:
         return jsonify({"error": "ids required"}), 400
+    ids = _validated_ids(ids, field="ids")
     grid_web, _ = get_grid_web()
     sub = grid_web[grid_web["id_1km"].isin(set(ids))]
     if sub.empty:
@@ -2426,10 +2721,11 @@ def filter_bbox():
 
 @app.route("/api/filter/cells", methods=["POST"])
 def filter_cells():
-    body = request.get_json(force=True, silent=True) or {}
+    body = _json_object()
     ids = body.get("ids", [])
     if not ids:
         return jsonify({"type": "FeatureCollection", "features": []})
+    ids = _validated_ids(ids, limit=MAX_AOI_CELL_IDS, field="ids")
     grid_web, _ = get_grid_web()
     sub = grid_web[grid_web["id_1km"].isin(set(ids))]
     return jsonify(json.loads(sub.to_json()))
@@ -2437,19 +2733,18 @@ def filter_cells():
 
 @app.route("/api/aoi/features", methods=["POST"])
 def aoi_features():
-    body   = request.get_json(force=True, silent=True) or {}
+    body   = _json_object()
     geom_gj = body.get("geometry")
     metric  = body.get("metric", "CWBPT")
     period  = body.get("period", "2050-2079")
-    month   = int(body.get("month", 7))
+    month   = body.get("month", 7)
     member  = body.get("member", None)
 
     if not geom_gj:
         return jsonify({"error": "geometry required"}), 400
-    try:
-        geom = shape(geom_gj)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    geom, _geom_bng, _area_m2 = _validated_aoi(geom_gj)
+    metric, period, month_s, member = _validated_climate_selection(metric, period, month, member)
+    month = int(month_s)
 
     grid_web, sindex = get_grid_web()
     qpoly = box(*geom.bounds)
@@ -2482,14 +2777,11 @@ def aoi_features():
 
 @app.route("/api/aoi/cells", methods=["POST"])
 def aoi_cells():
-    body = request.get_json(force=True, silent=True) or {}
+    body = _json_object()
     geom_gj = body.get("geometry") or body.get("geojson")
     if not geom_gj:
         return jsonify({"error": "geometry required"}), 400
-    try:
-        geom = shape(geom_gj)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    geom, _geom_bng, _area_m2 = _validated_aoi(geom_gj)
 
     grid_web, sindex = get_grid_web()
     qpoly = box(*geom.bounds)
@@ -2526,11 +2818,11 @@ def _enrich_export(result):
 
 @app.route("/api/aoi/export", methods=["POST"])
 def aoi_export():
-    body    = request.get_json(force=True, silent=True) or {}
+    body    = _json_object()
     aoi_ids = body.get("aoi_ids", [])
     metric  = body.get("metric", "CWBPT")
     period  = body.get("period", "2050-2079")
-    month   = int(body.get("month", 7))
+    month   = body.get("month", 7)
     fmt     = body.get("fmt", "csv")
     if fmt not in ("csv", "geojson"):
         fmt = "csv"
@@ -2538,7 +2830,9 @@ def aoi_export():
     if not aoi_ids:
         return jsonify({"error": "aoi_ids required"}), 400
 
-    id_set   = frozenset(int(i) for i in aoi_ids)
+    id_set   = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
+    metric, period, month_s, _ = _validated_climate_selection(metric, period, month, None)
+    month = int(month_s)
     df       = slice_facts(metric, period, month, None)
     sub_df   = df[df["id_1km"].isin(id_set)][["id_1km", "Change"]].copy()
 
@@ -2567,7 +2861,7 @@ def aoi_export():
             headers={"Content-Disposition": "attachment; filename=climascope_aoi.geojson"},
         )
     return Response(
-        result.to_csv(index=False),
+        _csv_safe(result).to_csv(index=False),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=climascope_aoi.csv"},
     )
@@ -2575,4 +2869,4 @@ def aoi_export():
 
 if __name__ == "__main__":
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=False)

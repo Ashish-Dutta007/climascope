@@ -17,6 +17,12 @@ function _kpFmtHa(ha) {
   return ha + ' ha';
 }
 
+function _kpEsc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}
+
 class CatchmentPanel {
   constructor(containerEl, getMapState) {
     this.el           = containerEl;
@@ -242,13 +248,13 @@ class CatchmentPanel {
   _showError(msg) {
     const body = this.el.querySelector('#kp-body');
     this._destroyChart();
-    if (body) body.innerHTML = `<div class="kp-error">${msg}</div>`;
+    if (body) body.innerHTML = `<div class="kp-error">${_kpEsc(msg)}</div>`;
   }
 
   _showNoData(councilName) {
     const body = this.el.querySelector('#kp-body');
     this._destroyChart();
-    if (body) body.innerHTML = `<div class="kp-empty">No catchment data available for <strong>${councilName}</strong> — this council has no rivers in the dataset.</div>`;
+    if (body) body.innerHTML = `<div class="kp-empty">No catchment data available for <strong>${_kpEsc(councilName)}</strong> — this council has no rivers in the dataset.</div>`;
   }
 
   _setMeta(metric, month, period) {
@@ -372,7 +378,7 @@ class CatchmentPanel {
 
       html += `<div class="kp-compare-group">
         <div class="kp-cg-header">
-          <span class="kp-type-name">${type}</span>
+          <span class="kp-type-name">${_kpEsc(type)}</span>
           <span class="kp-type-area">${_kpFmtHa(refRow?.total_ha || 0)}</span>
         </div>`;
 
@@ -400,7 +406,7 @@ class CatchmentPanel {
         html += `<div class="kp-cg-row">
           <span class="kp-cg-period">${label}</span>
           <div class="kp-cg-bar-wrap">
-            <div class="kp-bar" style="width:${barPct}%" title="${tooltip}">${segments}</div>
+            <div class="kp-bar" style="width:${barPct}%" title="${_kpEsc(tooltip)}">${segments}</div>
           </div>
         </div>`;
       });

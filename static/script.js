@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const $ = id => document.getElementById(id);
+  const _html = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
 
   // Coverage panel — mounted after map state is initialised
   let coveragePanel      = null;
@@ -673,11 +676,6 @@ document.addEventListener('DOMContentLoaded', () => {
       '<div id="search-results"></div>';
     map.getContainer().appendChild(_srchEl);
 
-    // ── OS Names API (place search) ──
-    const OS_NAMES_ENDPOINT = 'https://api.os.uk/search/names/v1/find';
-    const OS_NAMES_KEY      = 'My3J0Pob0dAqt6HWbOPpisj8imEDCgNq';   // OS Data Hub project API key
-    const OS_NAMES_BOUNDS   = '0,530000,470000,1220000'; // Scotland extent in BNG/EPSG:27700 (minE,minN,maxE,maxN)
-
     const input   = document.getElementById('search-input');
     const results = document.getElementById('search-results');
     let _debounce = null;
@@ -756,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return [lonW * 180 / Math.PI, latW * 180 / Math.PI];
     }
 
-    function _escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+    function _escHtml(s) { return _html(s); }
 
     // OS grid ref (e.g. "NX3545") -> BNG bbox [minE,minN,maxE,maxN], or null.
     // Handles 1km (4 digits), 10km (2 digits), 100m (6 digits) etc.
@@ -851,16 +849,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const localHits = _localHits(q);
       let placeHits = [];
       try {
-        const url = OS_NAMES_ENDPOINT
-          + `?query=${encodeURIComponent(q)}`
-          + `&key=${OS_NAMES_KEY}`
-          + `&bounds=${OS_NAMES_BOUNDS}`
-          + `&maxresults=8`;
-        const resp = await fetch(url);
+        const resp = await fetch(`/api/search/places?q=${encodeURIComponent(q)}`);
         if (resp.ok) {
           const data = await resp.json();
           placeHits = (data.results || [])
-            .map(r => r.GAZETTEER_ENTRY)
             .filter(g => g && g.GEOMETRY_X != null && g.GEOMETRY_Y != null);
         }
       } catch { /* keep local-only results */ }
@@ -1923,13 +1915,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ctx === 'lidar') {
       if (!_lidarPhaseById) _buildLidarLookup();
       const p = _lidarPhaseById?.get(id);
-      return p ? `<strong>${_lidarPhaseName.get(p) || 'LiDAR'}</strong>` : 'No LiDAR here';
+      return p ? `<strong>${_html(_lidarPhaseName.get(p) || 'LiDAR')}</strong>` : 'No LiDAR here';
     }
     if (ctx === 'landcover') {
       if (!_lcById) _buildLcLookup();
       const r = _lcById?.get(id);
       const name = r ? _lcCodeName.get(r.code) : null;
-      return name ? `<strong>${name}</strong> (${Math.round(r.frac * 100)}%)` : 'No land-cover data';
+      return name ? `<strong>${_html(name)}</strong> (${Math.round(r.frac * 100)}%)` : 'No land-cover data';
     }
     if (climateVal == null) return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: N/A`;
     const un = METRIC_UNITS[activeMetric.id] || '';
@@ -1984,12 +1976,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!_lcById) _buildLcLookup();
       const r = _lcById?.get(id);
       if (!r) { el.textContent = 'No land-cover data'; return; }
-      el.innerHTML = `<strong style="color:#4ade80">Dominant:</strong> ${_lcCodeName.get(r.code)} (${Math.round(r.frac * 100)}%)`;
+      el.innerHTML = `<strong style="color:#4ade80">Dominant:</strong> ${_html(_lcCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
       try {
         const comp = await fetch('/api/landuse_composition', { method: 'POST',
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aoi_ids: [id], variable: 'LCM' }) }).then(r => r.json());
         const rows = Object.entries(comp).sort((a, b) => b[1] - a[1]).slice(0, 6)
-          .map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="opacity:.65">${v.toFixed(0)}%</span></div>`).join('');
+          .map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${_html(k)}</span><span style="opacity:.65">${v.toFixed(0)}%</span></div>`).join('');
         if (rows) el.innerHTML += `<div style="margin-top:6px">${rows}</div>`;
       } catch {}
       return;
@@ -2005,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (!d.has_lidar) { el.textContent = 'No LiDAR coverage here'; return; }
         const avail = []; if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM'); if (d.point_cloud) avail.push('point cloud');
-        el.innerHTML = (d.collections ? `<div><strong style="color:#7dd3fc">Phase:</strong> ${d.collections}</div>` : '')
+        el.innerHTML = (d.collections ? `<div><strong style="color:#7dd3fc">Phase:</strong> ${_html(d.collections)}</div>` : '')
           + `<div style="margin-top:4px"><strong style="color:#7dd3fc">Captured:</strong> ${avail.join(' · ') || '—'}</div>`;
       }
     } catch { el.textContent = 'error'; }
@@ -2126,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM');
         if (d.point_cloud) avail.push('point cloud');
         let s = '<strong style="color:#7dd3fc;opacity:1">LiDAR</strong>';
-        if (d.collections) s += ` · ${d.collections}`;
+        if (d.collections) s += ` · ${_html(d.collections)}`;
         if (avail.length) s += `<br><span style="opacity:.7">${avail.join(' · ')}</span>`;
         parts.push(s);
       }
@@ -2227,6 +2219,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('climascope:filter:cells', async e => {
     const { ids } = e.detail;
     if (!ids || !ids.length) {
+      _filterCellsGJ = null;
+      setData(SRC.filterCells, emptyFC());
+      return;
+    }
+    // Avoid requesting/serialising national-scale GeoJSON merely for outlines.
+    // The vector-tile mask still shows the filtered result at this scale.
+    if (ids.length > 35000) {
       _filterCellsGJ = null;
       setData(SRC.filterCells, emptyFC());
       return;

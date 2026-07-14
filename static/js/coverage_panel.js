@@ -9,6 +9,11 @@ const _CP_MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun',
                     'Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function _cpClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function _cpEsc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}
 
 function _cpFmt(km2) {
   if (km2 === 0) return '0 km²';
@@ -271,7 +276,7 @@ class CoveragePanel {
 
   _showError(msg) {
     const body = this.el.querySelector('#cp-body');
-    if (body) body.innerHTML = `<div class="cp-error">${msg}</div>`;
+    if (body) body.innerHTML = `<div class="cp-error">${_cpEsc(msg)}</div>`;
   }
 
   _setMeta(metric, month, period) {
@@ -394,12 +399,13 @@ class CoveragePanel {
     sorted.forEach(cls => {
       const i  = d.classes.indexOf(cls);
       const md = this._getMonthData(cls, m);
+      const lcName = String(cls.lc_name ?? '');
 
       const barHtml = !md
         ? '<div class="cp-bar-empty"></div>'
         : this.showPeriods
-          ? this._buildPeriodBars(md, type, thr, axisMin, axisMax, cls.lc_name, this.period1, this.period2, units, cls.area_km2, impactOf(cls), maxAbsVal)
-          : this._buildDeltaColorBar(md, type, cls.area_km2, impactOf(cls), maxImpact, maxAbsDelta, cls.lc_name, units, this.period1, this.period2);
+          ? this._buildPeriodBars(md, type, thr, axisMin, axisMax, lcName, this.period1, this.period2, units, cls.area_km2, impactOf(cls), maxAbsVal)
+          : this._buildDeltaColorBar(md, type, cls.area_km2, impactOf(cls), maxImpact, maxAbsDelta, lcName, units, this.period1, this.period2);
 
       const deltaHtml = (!md || md.delta.mean == null)
         ? '<span class="cp-dash">—</span>'
@@ -409,7 +415,7 @@ class CoveragePanel {
         <div class="cp-row-label">
           <div class="cp-lc-dot" style="background:${_CP_LC_PALETTE[i % _CP_LC_PALETTE.length]}"></div>
           <div class="cp-lc-info">
-            <div class="cp-lc-name">${cls.lc_name}</div>
+            <div class="cp-lc-name">${_cpEsc(lcName)}</div>
             <div class="cp-lc-area">${_cpFmt(cls.area_km2)}</div>
           </div>
         </div>
@@ -457,7 +463,7 @@ class CoveragePanel {
     const dv   = md.delta.mean != null ? md.delta.mean.toFixed(1) : '—';
     const sign = md.delta.mean != null && md.delta.mean >= 0 ? '+' : '';
     const ifmt = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v.toFixed(0);
-    const tip  = `${lcName}\nChange: ${sign}${dv} ${units}\nArea: ${_cpFmt(area_km2)}\nTotal impact: ${ifmt(impact)} km²·mm\n${p1Label} → ${p2Label}`;
+    const tip  = `${_cpEsc(lcName)}\nChange: ${sign}${dv} ${units}\nArea: ${_cpFmt(area_km2)}\nTotal impact: ${ifmt(impact)} km²·mm\n${p1Label} → ${p2Label}`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
       <rect x="0" y="4" width="${W}" height="8" rx="2" fill="rgba(255,255,255,.06)"/>
@@ -478,8 +484,7 @@ class CoveragePanel {
     const diff  = v2 - v1;
     const sign  = diff >= 0 ? '+' : '';
     const ifmt  = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v.toFixed(0);
-    const esc   = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    const tip   = `${esc(lcName)}\n${p1Label}: ${v1.toFixed(1)} ${units}\n${p2Label}: ${v2.toFixed(1)} ${units}\nΔ ${sign}${diff.toFixed(1)} ${units}\nArea: ${_cpFmt(areaKm2)}\nTotal impact: ${ifmt(impact)} km²·mm`;
+    const tip   = `${_cpEsc(lcName)}\n${p1Label}: ${v1.toFixed(1)} ${units}\n${p2Label}: ${v2.toFixed(1)} ${units}\nΔ ${sign}${diff.toFixed(1)} ${units}\nArea: ${_cpFmt(areaKm2)}\nTotal impact: ${ifmt(impact)} km²·mm`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
       <rect x="0" y="2"  width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>

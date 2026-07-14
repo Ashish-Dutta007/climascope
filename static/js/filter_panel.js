@@ -28,6 +28,17 @@ const _FP_UNITS = {
 };
 const _FP_MAX_RULES = 5;
 
+function _fpEsc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}
+
+function _fpDownloadUrl(value) {
+  const url = String(value ?? '');
+  return /^\/download\/[0-9a-f]{8}\/[A-Za-z0-9_.-]+$/.test(url) ? url : '#';
+}
+
 // Helper used by upload handler
 function _fpCollectCoords(geom) {
   if (!geom) return [];
@@ -315,18 +326,18 @@ class FilterPanel {
         const label = m ? m.label : state.metric;
         const units = _FP_UNITS[state.metric] || '';
         const mo    = _FP_MO[state.month] || state.month;
-        contextLine = `${label}${units ? ` (${units})` : ''} — Period: ${state.period} · Month: ${mo}<br>`;
+        contextLine = `${_fpEsc(label)}${units ? ` (${_fpEsc(units)})` : ''} — Period: ${_fpEsc(state.period)} · Month: ${_fpEsc(mo)}<br>`;
       }
       card.innerHTML = `
         <strong>AOI analysis · ${ts}</strong><br>
         ${contextLine}Mean: ${s.weighted_mean_change_mm.toFixed(2)} &nbsp;·&nbsp; Min: ${s.min_change_mm.toFixed(1)} &nbsp;·&nbsp; Max: ${s.max_change_mm.toFixed(1)} &nbsp;·&nbsp; Cells: ${s.n_cells ?? '?'}<br>
         <div class="fp-job-links">
-          <a class="fp-job-dl" href="${out.files.csv}"        target="_blank">⬇ CSV</a>
-          <a class="fp-job-dl" href="${out.files.geojson}"    target="_blank">⬇ GeoJSON</a>
-          <a class="fp-job-dl" href="${out.files.provenance}" target="_blank">⬇ Prov</a>
+          <a class="fp-job-dl" href="${_fpDownloadUrl(out.files?.csv)}"        target="_blank" rel="noopener">⬇ CSV</a>
+          <a class="fp-job-dl" href="${_fpDownloadUrl(out.files?.geojson)}"    target="_blank" rel="noopener">⬇ GeoJSON</a>
+          <a class="fp-job-dl" href="${_fpDownloadUrl(out.files?.provenance)}" target="_blank" rel="noopener">⬇ Prov</a>
         </div>`;
     } else {
-      card.innerHTML = `<span class="fp-job-error">Error: ${out.error || JSON.stringify(out)}</span>`;
+      card.innerHTML = `<span class="fp-job-error">Error: ${_fpEsc(out.error || JSON.stringify(out))}</span>`;
     }
     container.prepend(card);
   }
