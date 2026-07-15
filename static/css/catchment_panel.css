@@ -223,25 +223,10 @@
 }
 
 .kp-source-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   margin-top: 5px;
   color: rgba(226,232,244,.58);
   font-size: 10px;
   line-height: 1.25;
-}
-
-.kp-source-badge {
-  flex-shrink: 0;
-  padding: 2px 6px;
-  border: 1px solid rgba(96,165,250,.35);
-  border-radius: 999px;
-  background: rgba(59,130,246,.14);
-  color: var(--accent-light);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .06em;
 }
 
 .kp-meta {

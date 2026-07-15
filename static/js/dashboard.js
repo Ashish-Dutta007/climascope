@@ -139,14 +139,13 @@ class DashboardPie {
 
     const sourceEl = this.el.querySelector('#dp-source');
     if (sourceEl) {
-      sourceEl.classList.toggle('is-jess', !['HABITAT', 'LCM'].includes(this.variable));
       sourceEl.textContent = this.variable === 'HABITAT'
         ? 'Source: NatureScot HLCM 2022 · exact 20 m fractions grouped to 1 km'
         : this.variable === 'LCM'
           ? 'Source: UKCEH LCM · exact 1 km cell fractions'
           : scope === 'aoi'
-            ? 'Source: JESS · catchment totals · overlap-weighted AOI estimate'
-            : 'Source: JESS · catchment-derived totals';
+            ? 'Catchment-derived totals · overlap-weighted AOI estimate'
+            : 'Catchment-derived totals';
     }
 
     const emptyEl = this.el.querySelector('#dp-empty');
