@@ -178,6 +178,21 @@ input[type=range]::-webkit-slider-thumb {
   transition:transform .1s;
 }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
+/* Firefox needs explicit range parts once the page declares a dark colour
+   scheme; otherwise it renders a hollow dark thumb and nearly invisible track. */
+input[type=range]::-moz-range-track {
+  height:3px; border:0; border-radius:2px;
+  background:rgba(255,255,255,.22);
+}
+input[type=range]::-moz-range-progress {
+  height:3px; border-radius:2px;
+  background:var(--accent-light);
+}
+input[type=range]::-moz-range-thumb {
+  width:14px; height:14px; border-radius:50%;
+  background:var(--accent); border:2px solid var(--bg-sidebar);
+  box-shadow:0 0 0 1px rgba(59,130,246,.5); cursor:pointer;
+}
 .month-badge {
   color: var(--accent-light); background: rgba(96,165,250,.12);
   min-width: 72px; padding:3px 8px; border-radius:6px; font-size:12px;
