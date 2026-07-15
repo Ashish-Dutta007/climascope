@@ -135,7 +135,7 @@
           <details class="layer-group" id="layer-group-land">
             <summary>
               <span>Land &amp; habitat</span>
-              <span id="land-layer-current" class="layer-group-status">Optional</span>
+              <span id="land-layer-current" class="layer-group-status">None active</span>
             </summary>
             <div class="layer-group-body">
               <label class="layer-item" data-layer="landcover" title="UKCEH LCM dominant land-cover fraction in each 1 km climate cell">
@@ -152,7 +152,7 @@
           <details class="layer-group" id="layer-group-terrain">
             <summary>
               <span>Terrain &amp; coverage</span>
-              <span id="terrain-layer-current" class="layer-group-status">Optional</span>
+              <span id="terrain-layer-current" class="layer-group-status">None active</span>
             </summary>
             <div class="layer-group-body">
               <label class="layer-item" data-layer="lidar" title="NatureScot and Bluesky LiDAR availability by acquisition phase, summarized on the 1 km grid">
@@ -163,12 +163,17 @@
                 <input type="checkbox" id="terrain-overlay-cb">
                 <span><strong>Terrain</strong><small>LiDAR-derived 1 km means in metres or degrees.</small></span>
               </label>
-              <select id="terrain-var" class="overlay-select" style="display:none" aria-label="Terrain variable">
-                <option value="elevation">Elevation (m)</option>
-                <option value="slope">Slope (degrees)</option>
-                <option value="ruggedness">Ruggedness (m)</option>
-                <option value="canopy">Canopy height (m)</option>
-              </select>
+              <div id="terrain-var-control" class="terrain-subcontrol hidden">
+                <label for="terrain-var">Terrain variable</label>
+                <div class="select-wrap">
+                  <select id="terrain-var" class="overlay-select">
+                    <option value="elevation">Elevation (m)</option>
+                    <option value="slope">Slope (degrees)</option>
+                    <option value="ruggedness">Ruggedness (m)</option>
+                    <option value="canopy">Canopy height (m)</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </details>
 

@@ -63,7 +63,10 @@ class CatchmentPanel {
                      data-var="${v}"${v === 'LCA' ? ' title="Land Capability for Agriculture"' : ''}>${v}</button>`
           ).join('')}
         </div>
-        <div class="kp-source-note">JESS · catchment-derived totals; AOIs use an overlap-weighted estimate</div>
+        <div class="kp-source-note">
+          <span class="kp-source-badge">JESS</span>
+          <span>Catchment-derived totals; AOIs use an overlap-weighted estimate</span>
+        </div>
         <div class="kp-meta">
           <span class="kp-meta-tag" id="kp-metric-echo">—</span>
           <span class="kp-meta-tag" id="kp-month-echo">—</span>

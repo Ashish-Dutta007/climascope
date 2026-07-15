@@ -329,10 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
       input.checked = input.value === currentBasemap;
     });
 
-    const landName = habitatOverlayOn ? 'Habitat' : lcOverlayOn ? 'Land cover' : 'Optional';
+    const landName = habitatOverlayOn ? 'Habitat' : lcOverlayOn ? 'Land cover' : 'None active';
     const terrainName = terrainOverlayOn
       ? (TERRAIN_LABELS[terrainVar]?.[0] || 'Terrain')
-      : lidarOverlayOn ? 'LiDAR coverage' : 'Optional';
+      : lidarOverlayOn ? 'LiDAR coverage' : 'None active';
     const reliefName = `${BASEMAPS[currentBasemap]?.label || 'Basemap'}${hillshadeOn ? ' + hillshade' : ''}`;
     _setCatalogueStatus('climate-layer-current', _activeClimateLayerName(), true);
     _setCatalogueStatus('land-layer-current', landName, lcOverlayOn || habitatOverlayOn);
@@ -431,9 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.checked) { _setLcOverlay(false); _setHabitatOverlay(false); _setTerrainOverlay(false); }
     toggleLidarOverlay(e.target.checked);
   });
+  function _setTerrainSelectorVisible(visible) {
+    document.getElementById('terrain-var-control')?.classList.toggle('hidden', !visible);
+  }
   document.getElementById('terrain-overlay-cb').addEventListener('change', e => {
     if (e.target.checked) { _setLcOverlay(false); _setHabitatOverlay(false); _setLidarOverlay(false); }
-    document.getElementById('terrain-var').style.display = e.target.checked ? 'block' : 'none';
+    _setTerrainSelectorVisible(e.target.checked);
     toggleTerrainOverlay(e.target.checked);
   });
   document.getElementById('terrain-var').addEventListener('change', e => {
@@ -573,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cb = document.getElementById('terrain-overlay-cb');
     if (cb && cb.checked !== on) {
       cb.checked = on;
-      document.getElementById('terrain-var').style.display = on ? 'block' : 'none';
+      _setTerrainSelectorVisible(on);
       toggleTerrainOverlay(on);
     }
   }
@@ -903,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!ok) {
         terrainOverlayOn = false;
         const cb = document.getElementById('terrain-overlay-cb');
-        if (cb) { cb.checked = false; document.getElementById('terrain-var').style.display = 'none'; }
+        if (cb) { cb.checked = false; _setTerrainSelectorVisible(false); }
         return;
       }
     }

@@ -61,7 +61,7 @@ class DashboardPie {
         <div class="dp-heading">
           <div><span class="dp-title" id="dp-title">Land cover : </span>
           <span class="dp-scope-name" id="dp-scope-name">Scotland</span></div>
-          <span class="dp-source" id="dp-source">Exact 1 km cell fractions</span>
+          <span class="dp-source" id="dp-source">Source: UKCEH LCM · exact 1 km cell fractions</span>
         </div>
       </div>
       <div class="dp-body" id="dp-body">
@@ -139,13 +139,14 @@ class DashboardPie {
 
     const sourceEl = this.el.querySelector('#dp-source');
     if (sourceEl) {
+      sourceEl.classList.toggle('is-jess', !['HABITAT', 'LCM'].includes(this.variable));
       sourceEl.textContent = this.variable === 'HABITAT'
-        ? 'NatureScot HLCM 2022 · exact 20 m fractions grouped to 1 km'
+        ? 'Source: NatureScot HLCM 2022 · exact 20 m fractions grouped to 1 km'
         : this.variable === 'LCM'
-          ? 'Exact 1 km cell fractions'
+          ? 'Source: UKCEH LCM · exact 1 km cell fractions'
           : scope === 'aoi'
-            ? 'JESS catchment totals · overlap-weighted AOI estimate'
-            : 'JESS catchment totals';
+            ? 'Source: JESS · catchment totals · overlap-weighted AOI estimate'
+            : 'Source: JESS · catchment-derived totals';
     }
 
     const emptyEl = this.el.querySelector('#dp-empty');
