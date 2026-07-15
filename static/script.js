@@ -843,6 +843,8 @@ document.addEventListener('DOMContentLoaded', () => {
     elevation: ['Elevation', 'm'], slope: ['Slope', '°'],
     ruggedness: ['Ruggedness', 'm'], canopy: ['Canopy height', 'm'],
   };
+  // Render a complete baseline stack even if the catalogue request later fails.
+  _renderActiveLayers();
 
   function _applyTerrainStates(data) {
     for (const id in data) {
