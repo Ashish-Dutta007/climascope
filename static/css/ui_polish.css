@@ -21,6 +21,57 @@ input[type="range"]:focus-visible {
   box-shadow: none;
 }
 
+/* Fully draw range controls instead of relying on each browser's dark native
+   theme. Literal colours are intentional here: Safari has rendered custom
+   properties inconsistently inside range pseudo-elements. */
+input[type="range"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  color-scheme: light;
+  height: 16px;
+  background: transparent !important;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148,163,184,.58) !important;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+  border: 2px solid #bfdbfe !important;
+  border-radius: 50%;
+  background: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(17,24,39,.9) !important;
+}
+input[type="range"]::-moz-range-track {
+  height: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148,163,184,.58) !important;
+}
+input[type="range"]::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: #60a5fa !important;
+}
+input[type="range"]::-moz-range-thumb {
+  appearance: none !important;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #bfdbfe !important;
+  border-radius: 50%;
+  background: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(17,24,39,.9) !important;
+}
+.month-section #month::-webkit-slider-runnable-track,
+.month-section #month::-moz-range-track,
+.month-section #month::-moz-range-progress { height: 4px; }
+
 button:disabled, select:disabled, input:disabled {
   cursor: not-allowed;
 }
@@ -42,6 +93,45 @@ button:disabled, select:disabled, input:disabled {
 
 .month-ticks { color: rgba(255,255,255,.42); font-size: 9px; }
 .metric-card-units { color: rgba(255,255,255,.5); }
+
+/* MapLibre's navigation artwork is embedded as a dark SVG background. Draw
+   high-contrast symbols directly so zoom/compass remain visible regardless of
+   SVG filtering support or the browser's forced-colour treatment. */
+.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon,
+.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon,
+.maplibregl-ctrl-compass .maplibregl-ctrl-icon {
+  position: relative;
+  background-image: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon::before,
+.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon::before,
+.maplibregl-ctrl-compass .maplibregl-ctrl-icon::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #f8fafc;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.75);
+}
+.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon::before {
+  content: '+';
+  padding-bottom: 2px;
+  font-size: 23px;
+  font-weight: 300;
+}
+.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon::before {
+  content: '\2212';
+  padding-bottom: 3px;
+  font-size: 23px;
+  font-weight: 300;
+}
+.maplibregl-ctrl-compass .maplibregl-ctrl-icon::before {
+  content: '\25b2';
+  font-size: 13px;
+}
 
 /* Consistent, quiet scrollbars for dense data panels. */
 #sidebar,
