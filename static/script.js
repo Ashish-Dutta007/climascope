@@ -307,6 +307,39 @@ document.addEventListener('DOMContentLoaded', () => {
       || activeMetric?.short || activeMetric?.id || 'Climate';
   }
 
+  function _setCatalogueStatus(id, text, active) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle('has-active', active);
+  }
+
+  function _syncLayerCatalogueState() {
+    const states = {
+      landcover: lcOverlayOn,
+      habitat: habitatOverlayOn,
+      lidar: lidarOverlayOn,
+      terrain: terrainOverlayOn,
+      hillshade: hillshadeOn,
+    };
+    document.querySelectorAll('.layer-item[data-layer]').forEach(item => {
+      item.classList.toggle('is-active', Boolean(states[item.dataset.layer]));
+    });
+    document.querySelectorAll('input[name="basemap"]').forEach(input => {
+      input.checked = input.value === currentBasemap;
+    });
+
+    const landName = habitatOverlayOn ? 'Habitat' : lcOverlayOn ? 'Land cover' : 'Optional';
+    const terrainName = terrainOverlayOn
+      ? (TERRAIN_LABELS[terrainVar]?.[0] || 'Terrain')
+      : lidarOverlayOn ? 'LiDAR coverage' : 'Optional';
+    const reliefName = `${BASEMAPS[currentBasemap]?.label || 'Basemap'}${hillshadeOn ? ' + hillshade' : ''}`;
+    _setCatalogueStatus('climate-layer-current', _activeClimateLayerName(), true);
+    _setCatalogueStatus('land-layer-current', landName, lcOverlayOn || habitatOverlayOn);
+    _setCatalogueStatus('terrain-layer-current', terrainName, lidarOverlayOn || terrainOverlayOn);
+    _setCatalogueStatus('relief-layer-current', reliefName, true);
+  }
+
   function _renderActiveLayers() {
     const rows = [];
     const contextName = _activeContextLayerName();
@@ -338,9 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
           _applyDataOpacity();
         } else {
           climateOpacity = v;
+          if (_anyCellOverlayOn()) _savedClimateOpacity = v;
           _applyDataOpacity();
         }
       }));
+    _syncLayerCatalogueState();
   }
 
   // Context activation makes the climate underlay explicit and temporarily dims
@@ -372,26 +407,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try { map.setPaintProperty('cells-fill', 'fill-opacity', climateOpacity); } catch(_) {}
   }
 
-  const _bmEl = document.createElement('div');
-  _bmEl.id = 'basemap-toggle';
-  _bmEl.setAttribute('role', 'group');
-  _bmEl.setAttribute('aria-label', 'Basemap');
-  _bmEl.innerHTML =
-    '<button type="button" class="bm-btn bm-active" data-bm="dark" aria-pressed="true">Dark</button>' +
-    '<button type="button" class="bm-btn" data-bm="light" aria-pressed="false">Light</button>' +
-    '<button type="button" class="bm-btn" data-bm="satellite" aria-pressed="false">Satellite</button>';
-  map.getContainer().appendChild(_bmEl);
-
-  document.querySelectorAll('.bm-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const bm = btn.dataset.bm;
+  document.querySelectorAll('input[name="basemap"]').forEach(input => {
+    input.addEventListener('change', () => {
+      const bm = input.value;
       if (bm === currentBasemap) return;
-      document.querySelectorAll('.bm-btn').forEach(b => {
-        b.classList.remove('bm-active');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('bm-active');
-      btn.setAttribute('aria-pressed', 'true');
       switchBasemap(bm);
       _renderActiveLayers();
     });
@@ -1767,8 +1786,13 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'metric-card' + (m.id === activeMetric.id ? ' active' : '') + (avail ? '' : ' metric-card--unavailable');
         card.dataset.id = m.id;
         card.disabled = !avail;
-        card.setAttribute('aria-pressed', String(m.id === activeMetric.id));
+        card.setAttribute('role', 'radio');
+        card.setAttribute('aria-checked', String(m.id === activeMetric.id));
+        card.tabIndex = m.id === activeMetric.id ? 0 : -1;
         card.setAttribute('aria-label', `${m.label || m.short}${avail ? `, ${m.units}` : ', data pending'}`);
+        card.title = avail
+          ? `${m.label || m.short}. Climate data on Scotland's 1 km grid; units: ${m.units}.`
+          : `${m.label || m.short}: data pending`;
         let badgeHtml = '';
         if (catchmentOnly) {
           badgeHtml = mapPeriods.length > 0
@@ -1783,6 +1807,15 @@ document.addEventListener('DOMContentLoaded', () => {
           '<div class="metric-card-short">'+_html(m.short)+'</div>'+
           '<div class="metric-card-units">'+unitsHtml+'</div>';
         if (avail) card.addEventListener('click', () => selectMetric(m, card));
+        if (avail) card.addEventListener('keydown', e => {
+          if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+          e.preventDefault();
+          const choices = [...grid.querySelectorAll('.metric-card:not(:disabled)')];
+          const offset = ['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : -1;
+          const next = choices[(choices.indexOf(card) + offset + choices.length) % choices.length];
+          const nextMetric = catalogue.find(item => item.id === next?.dataset.id);
+          if (next && nextMetric) { selectMetric(nextMetric, next); next.focus(); }
+        });
         grid.appendChild(card);
       });
 
@@ -1795,10 +1828,12 @@ document.addEventListener('DOMContentLoaded', () => {
     activeMetric = m;
     document.querySelectorAll('.metric-card').forEach(c => {
       c.classList.remove('active');
-      c.setAttribute('aria-pressed', 'false');
+      c.setAttribute('aria-checked', 'false');
+      c.tabIndex = -1;
     });
     cardEl.classList.add('active');
-    cardEl.setAttribute('aria-pressed', 'true');
+    cardEl.setAttribute('aria-checked', 'true');
+    cardEl.tabIndex = 0;
     updateLayerPaint();
     loadLayer();
     _emitStateChange();

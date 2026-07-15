@@ -31,6 +31,7 @@ button:disabled, select:disabled, input:disabled {
 #active-layers .al-title,
 #legend .legend-title,
 #lc-legend .legend-title,
+#habitat-legend .legend-title,
 #lidar-legend .legend-title,
 #terrain-legend .legend-title,
 .cp-meta,

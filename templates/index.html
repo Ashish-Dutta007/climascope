@@ -69,83 +69,134 @@
 
       <div class="divider"></div>
 
-      <div class="section">
-        <div class="section-label">Metric</div>
-        <div id="metric-grid" class="metric-grid">
-          <!-- populated by JS from /api/layers -->
-        </div>
-      </div>
+      <div class="section layer-catalogue-section">
+        <div class="section-label">Layers</div>
+        <div id="layer-catalogue" class="layer-catalogue">
+          <details class="layer-group" id="layer-group-climate">
+            <summary>
+              <span>Climate</span>
+              <span id="climate-layer-current" class="layer-group-status">CWB PT</span>
+            </summary>
+            <div class="layer-group-body">
+              <p class="layer-group-description">UKCP18-derived monthly values and projected change on Scotland's 1 km grid.</p>
+              <div id="metric-grid" class="metric-grid" role="radiogroup" aria-label="Climate metric">
+                <!-- populated by JS from /api/layers -->
+              </div>
 
-      <div class="section">
-        <label class="section-label" for="period">Period</label>
-        <div class="select-wrap">
-          <select id="period">
-            <option value="1990-2019">1990–2019 (observed)</option>
-            <option value="2020-2049">2020–2049</option>
-            <option value="2050-2079" selected>2050–2079</option>
-          </select>
-        </div>
-      </div>
+              <div class="layer-parameter-grid">
+                <div>
+                  <label class="section-label" for="period">Period</label>
+                  <div class="select-wrap">
+                    <select id="period">
+                      <option value="1990-2019">1990–2019 (observed)</option>
+                      <option value="2020-2049">2020–2049</option>
+                      <option value="2050-2079" selected>2050–2079</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="section-label" for="member">Ensemble</label>
+                  <div class="select-wrap">
+                    <select id="member">
+                      <option value="mean">Mean</option>
+                      <option value="01">Member 01</option>
+                      <option value="04">Member 04</option>
+                      <option value="05">Member 05</option>
+                      <option value="06">Member 06</option>
+                      <option value="07">Member 07</option>
+                      <option value="08">Member 08</option>
+                      <option value="09">Member 09</option>
+                      <option value="10">Member 10</option>
+                      <option value="11">Member 11</option>
+                      <option value="12">Member 12</option>
+                      <option value="13">Member 13</option>
+                      <option value="15">Member 15</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-      <div class="section">
-        <label class="section-label" for="member">Ensemble Member</label>
-        <div class="select-wrap">
-          <select id="member">
-            <option value="mean">Mean</option>
-            <option value="01">Member 01</option>
-            <option value="04">Member 04</option>
-            <option value="05">Member 05</option>
-            <option value="06">Member 06</option>
-            <option value="07">Member 07</option>
-            <option value="08">Member 08</option>
-            <option value="09">Member 09</option>
-            <option value="10">Member 10</option>
-            <option value="11">Member 11</option>
-            <option value="12">Member 12</option>
-            <option value="13">Member 13</option>
-            <option value="15">Member 15</option>
-          </select>
-        </div>
+              <div class="month-section">
+                <div class="month-header">
+                  <label class="section-label" for="month">Month</label>
+                  <span id="monthLabel" class="month-badge" aria-live="polite">{{ default_month_name }}</span>
+                </div>
+                <input type="range" id="month" min="1" max="12" value="{{ default_month }}"
+                       data-calendar-default="{{ default_month }}"
+                       aria-label="Climate month" aria-valuetext="{{ default_month_name }}"/>
+                <div class="month-ticks">
+                  <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
+                  <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
+                </div>
+              </div>
+            </div>
+          </details>
 
-      </div>
+          <details class="layer-group" id="layer-group-land">
+            <summary>
+              <span>Land &amp; habitat</span>
+              <span id="land-layer-current" class="layer-group-status">Optional</span>
+            </summary>
+            <div class="layer-group-body">
+              <label class="layer-item" data-layer="landcover" title="UKCEH LCM dominant land-cover fraction in each 1 km climate cell">
+                <input type="checkbox" id="lc-overlay-cb">
+                <span><strong>Land cover</strong><small>UKCEH LCM dominant class per 1 km cell.</small></span>
+              </label>
+              <label class="layer-item" data-layer="habitat" title="NatureScot HLCM 2022 habitat, aggregated from 20 m to the 1 km grid">
+                <input type="checkbox" id="habitat-overlay-cb">
+                <span><strong>Habitat</strong><small>NatureScot HLCM 2022, aggregated from 20 m.</small></span>
+              </label>
+            </div>
+          </details>
 
-      <div class="section month-section">
-        <div class="month-header">
-          <label class="section-label" for="month">Month</label>
-          <span id="monthLabel" class="month-badge" aria-live="polite">{{ default_month_name }}</span>
-        </div>
-        <input type="range" id="month" min="1" max="12" value="{{ default_month }}"
-               data-calendar-default="{{ default_month }}"
-               aria-label="Climate month" aria-valuetext="{{ default_month_name }}"/>
-        <div class="month-ticks">
-          <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
-          <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
-        </div>
-      </div>
+          <details class="layer-group" id="layer-group-terrain">
+            <summary>
+              <span>Terrain &amp; coverage</span>
+              <span id="terrain-layer-current" class="layer-group-status">Optional</span>
+            </summary>
+            <div class="layer-group-body">
+              <label class="layer-item" data-layer="lidar" title="NatureScot and Bluesky LiDAR availability by acquisition phase, summarized on the 1 km grid">
+                <input type="checkbox" id="lidar-overlay-cb">
+                <span><strong>LiDAR coverage</strong><small>NatureScot and Bluesky acquisition phase per 1 km cell.</small></span>
+              </label>
+              <label class="layer-item" data-layer="terrain" title="NatureScot and Bluesky LiDAR-derived elevation, slope, ruggedness or canopy height summarized on the 1 km grid">
+                <input type="checkbox" id="terrain-overlay-cb">
+                <span><strong>Terrain</strong><small>LiDAR-derived 1 km means in metres or degrees.</small></span>
+              </label>
+              <select id="terrain-var" class="overlay-select" style="display:none" aria-label="Terrain variable">
+                <option value="elevation">Elevation (m)</option>
+                <option value="slope">Slope (degrees)</option>
+                <option value="ruggedness">Ruggedness (m)</option>
+                <option value="canopy">Canopy height (m)</option>
+              </select>
+            </div>
+          </details>
 
-      <div class="divider"></div>
-
-      <div class="section">
-        <div class="section-label">Context Layers</div>
-        <div id="overlay-body">
-          <label title="Dominant land-cover fraction in each 1 km cell"><input type="checkbox" id="lc-overlay-cb"> Land cover</label>
-          <label title="NatureScot HLCM 2022 habitat, aggregated from 20 m to the 1 km grid"><input type="checkbox" id="habitat-overlay-cb"> Habitat · NatureScot 2022</label>
-          <label title="Where LiDAR is available, coloured by acquisition phase"><input type="checkbox" id="lidar-overlay-cb"> LiDAR coverage</label>
-          <label title="LiDAR-derived elevation, slope, ruggedness or canopy height"><input type="checkbox" id="terrain-overlay-cb"> Terrain</label>
-          <select id="terrain-var" class="overlay-select" style="display:none">
-            <option value="elevation">Elevation</option>
-            <option value="slope">Slope</option>
-            <option value="ruggedness">Ruggedness</option>
-            <option value="canopy">Canopy height</option>
-          </select>
-          <div class="overlay-divider"></div>
-          <label><input type="checkbox" id="hillshade-cb"> Hillshade (LiDAR)</label>
-          <div id="hillshade-export" class="hillshade-export hidden">
-            <button type="button" id="hillshade-export-btn" class="overlay-export-btn">
-              ↓ Export AOI GeoTIFF
-            </button>
-            <span id="hillshade-export-status" class="overlay-export-status" aria-live="polite"></span>
-          </div>
+          <details class="layer-group" id="layer-group-relief">
+            <summary>
+              <span>Basemap &amp; relief</span>
+              <span id="relief-layer-current" class="layer-group-status">Dark</span>
+            </summary>
+            <div class="layer-group-body">
+              <p class="layer-group-description">Esri reference maps or satellite imagery; the basemap is always present.</p>
+              <fieldset class="basemap-options">
+                <legend>Basemap</legend>
+                <label title="Esri World Dark Gray reference tiles"><input type="radio" name="basemap" value="dark" checked> Dark</label>
+                <label title="Esri World Light Gray reference tiles"><input type="radio" name="basemap" value="light"> Light</label>
+                <label title="Esri World Imagery satellite tiles"><input type="radio" name="basemap" value="satellite"> Satellite</label>
+              </fieldset>
+              <label class="layer-item" data-layer="hillshade" title="10 m LiDAR-derived relief where regional hillshade coverage is available">
+                <input type="checkbox" id="hillshade-cb">
+                <span><strong>Hillshade</strong><small>10 m LiDAR relief; available regions only.</small></span>
+              </label>
+              <div id="hillshade-export" class="hillshade-export hidden">
+                <button type="button" id="hillshade-export-btn" class="overlay-export-btn">
+                  ↓ Export AOI GeoTIFF
+                </button>
+                <span id="hillshade-export-status" class="overlay-export-status" aria-live="polite"></span>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
 
