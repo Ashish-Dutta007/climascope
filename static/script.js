@@ -214,7 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let _filterMaskState = { ids: null, mode: 'none' };
   let _filterCellsGJ   = null;   // persisted filter-cells GeoJSON for basemap-switch re-apply
   let _vtValues        = null;   // { id_1km_str: value } — cache for basemap-switch re-apply
-  let layerOpacity     = 0.85;
+  let climateOpacity   = 0.85;
+  let contextOpacity   = 0.85;
+  let basemapOpacity   = 1.0;
+  let _savedClimateOpacity = climateOpacity;
+  let _contextWasActive = false;
   let activeMember     = 'mean';
   let lcOverlayOn      = false;
   let _lcDominant      = null;   // cached /api/landcover/dominant payload
@@ -290,19 +294,26 @@ document.addEventListener('DOMContentLoaded', () => {
   _alEl.setAttribute('aria-label', 'Active map layers');
   map.getContainer().appendChild(_alEl);
 
-  function _activeDataLayerName() {
+  function _activeContextLayerName() {
     if (terrainOverlayOn) return (TERRAIN_LABELS[terrainVar]?.[0] || 'Terrain');
     if (lidarOverlayOn)   return 'LiDAR coverage';
     if (habitatOverlayOn) return 'Habitat · NatureScot 2022';
     if (lcOverlayOn)      return 'Land cover';
+    return null;
+  }
+
+  function _activeClimateLayerName() {
     return (typeof METRIC_LABELS !== 'undefined' && activeMetric && METRIC_LABELS[activeMetric.id])
-      || activeMetric?.id || 'Climate';
+      || activeMetric?.short || activeMetric?.id || 'Climate';
   }
 
   function _renderActiveLayers() {
     const rows = [];
-    rows.push({ key: 'data', name: _activeDataLayerName(), op: layerOpacity });
+    const contextName = _activeContextLayerName();
+    if (contextName) rows.push({ key: 'context', name: contextName, op: contextOpacity });
+    rows.push({ key: 'climate', name: _activeClimateLayerName(), op: climateOpacity });
     if (hillshadeOn) rows.push({ key: 'hillshade', name: 'Hillshade', op: hillshadeOpacity });
+    rows.push({ key: 'basemap', name: `${BASEMAPS[currentBasemap]?.label || 'Basemap'} basemap`, op: basemapOpacity });
     _alEl.innerHTML = `<div class="al-title">Active layers</div>` + rows.map(r =>
       `<div class="al-row">
          <span class="al-name" title="${_html(r.name)}">${_html(r.name)}</span>
@@ -319,26 +330,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.dataset.key === 'hillshade') {
           hillshadeOpacity = v;
           try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', v); } catch(_) {}
+        } else if (e.target.dataset.key === 'basemap') {
+          basemapOpacity = v;
+          _applyBasemapOpacity();
+        } else if (e.target.dataset.key === 'context') {
+          contextOpacity = v;
+          _applyDataOpacity();
         } else {
-          layerOpacity = v;
+          climateOpacity = v;
           _applyDataOpacity();
         }
       }));
   }
 
-  // Applies opacity to whichever data layer is active + the dimmed climate base.
+  // Context activation makes the climate underlay explicit and temporarily dims
+  // it to 12%. Its previous opacity is restored when the context is removed.
   function _anyCellOverlayOn() { return lcOverlayOn || habitatOverlayOn || lidarOverlayOn || terrainOverlayOn; }
+  function _syncClimateUnderlayOpacity() {
+    const contextActive = _anyCellOverlayOn();
+    if (contextActive && !_contextWasActive) {
+      _savedClimateOpacity = climateOpacity;
+      climateOpacity = 0.12;
+    } else if (!contextActive && _contextWasActive) {
+      climateOpacity = _savedClimateOpacity;
+    }
+    _contextWasActive = contextActive;
+  }
+  function _applyBasemapOpacity() {
+    for (const id of ['carto', 'esri-satellite']) {
+      try { if (map.getLayer(id)) map.setPaintProperty(id, 'raster-opacity', basemapOpacity); } catch(_) {}
+    }
+  }
   function _applyDataOpacity() {
-    const op = layerOpacity;
-    if (terrainOverlayOn) { try { map.setPaintProperty('terrain-fill', 'fill-opacity', op); } catch(_) {} }
-    if (lidarOverlayOn)   { try { map.setPaintProperty('lidar-fill',   'fill-opacity', op); } catch(_) {} }
+    _syncClimateUnderlayOpacity();
+    if (terrainOverlayOn) { try { map.setPaintProperty('terrain-fill', 'fill-opacity', contextOpacity); } catch(_) {} }
+    if (lidarOverlayOn)   { try { map.setPaintProperty('lidar-fill',   'fill-opacity', contextOpacity); } catch(_) {} }
     if (habitatOverlayOn) { _applyHabitatOpacity(); }
     if (lcOverlayOn)      { _applyLcOpacity(); }
     if (hillshadeOn)      { try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', hillshadeOpacity); } catch(_) {} }
-    // climate base: faint backdrop under a cell overlay, else follows the slider
-    const cop = _anyCellOverlayOn() ? 0.12 : op;
-    try { map.setPaintProperty('grid-fill',  'fill-opacity', cop); } catch(_) {}
-    try { map.setPaintProperty('cells-fill', 'fill-opacity', cop); } catch(_) {}
+    try { map.setPaintProperty('grid-fill',  'fill-opacity', climateOpacity); } catch(_) {}
+    try { map.setPaintProperty('cells-fill', 'fill-opacity', climateOpacity); } catch(_) {}
   }
 
   const _bmEl = document.createElement('div');
@@ -362,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('bm-active');
       btn.setAttribute('aria-pressed', 'true');
       switchBasemap(bm);
+      _renderActiveLayers();
     });
   });
 
@@ -574,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // scale the whole expression by the slider so the opacity control affects it too.
   function _applyLcOpacity() {
     const base = _lcScopedActive ? LC_SCOPED_OPACITY : LC_FILL_OPACITY;
-    try { map.setPaintProperty('lc-fill', 'fill-opacity', ['*', layerOpacity, base]); } catch(_) {}
+    try { map.setPaintProperty('lc-fill', 'fill-opacity', ['*', contextOpacity, base]); } catch(_) {}
   }
 
   function _lcScopeIds() {
@@ -673,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function _applyHabitatOpacity() {
     const base = _habitatScopedActive ? HABITAT_SCOPED_OPACITY : HABITAT_FILL_OPACITY;
-    try { map.setPaintProperty('habitat-fill', 'fill-opacity', ['*', layerOpacity, base]); } catch(_) {}
+    try { map.setPaintProperty('habitat-fill', 'fill-opacity', ['*', contextOpacity, base]); } catch(_) {}
   }
 
   function _updateHabitatScope() {
@@ -885,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
       map.addLayer({
         id: 'terrain-hs-layer', type: 'raster', source: 'terrain-hs',
         layout: { visibility: hillshadeOn ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.9 },
+        paint: { 'raster-opacity': hillshadeOpacity },
       }, before);
     } else {
       map.setLayoutProperty('terrain-hs-layer', 'visibility', hillshadeOn ? 'visible' : 'none');
@@ -1161,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     map.addSource(SRC.grid, { type: 'geojson', data: emptyFC() });
     map.addLayer({
       id: 'grid-fill', type: 'fill', source: SRC.grid,
-      paint: { 'fill-color': buildFillColor(), 'fill-opacity': layerOpacity }
+      paint: { 'fill-color': buildFillColor(), 'fill-opacity': climateOpacity }
     });
     map.addLayer({
       id: 'grid-line', type: 'line', source: SRC.grid,
@@ -1183,7 +1215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     map.addLayer({
       id: 'cells-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
       layout: { visibility: 'none' },
-      paint: { 'fill-antialias': false, 'fill-color': buildFillColorFromFeatureState(-100, 100), 'fill-opacity': 1.0 }
+      paint: { 'fill-antialias': false, 'fill-color': buildFillColorFromFeatureState(-100, 100), 'fill-opacity': climateOpacity }
     });
     map.addLayer({
       id: 'cells-line', type: 'line', source: 'cells-vt', 'source-layer': 'cells',
@@ -1223,14 +1255,14 @@ document.addEventListener('DOMContentLoaded', () => {
       layout: { visibility: lidarOverlayOn ? 'visible' : 'none' },
       paint: { 'fill-antialias': false,
                'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend, _lidarEnabled) : 'rgba(0,0,0,0)',
-               'fill-opacity': 0.85 }
+               'fill-opacity': contextOpacity }
     });
 
     // Terrain overlay — continuous LiDAR-derived values (see TERRAIN OVERLAY)
     map.addLayer({
       id: 'terrain-fill', type: 'fill', source: 'cells-vt', 'source-layer': 'cells',
       layout: { visibility: 'none' },
-      paint: { 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': 0.9 }
+      paint: { 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': contextOpacity }
     });
 
     // Filter-results outline layer (independent source). Matched cells keep their
@@ -1390,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // layer order: grid, mask, cells-vt, filter-cells, council, aoi
     if (!map.getLayer('grid-fill'))
       map.addLayer({ id:'grid-fill', type:'fill', source:SRC.grid,
-        paint:{ 'fill-color': buildFillColor(_lastLayerState.dataMin, _lastLayerState.dataMax), 'fill-opacity': layerOpacity } });
+        paint:{ 'fill-color': buildFillColor(_lastLayerState.dataMin, _lastLayerState.dataMax), 'fill-opacity': climateOpacity } });
     else
       map.setPaintProperty('grid-fill', 'fill-color', buildFillColor(_lastLayerState.dataMin, _lastLayerState.dataMax));
 
@@ -1411,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map.getLayer('cells-fill')) {
       map.addLayer({ id:'cells-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
         layout:{ visibility: _vtVis },
-        paint:{ 'fill-antialias': false, 'fill-color': buildFillColorFromFeatureState(lastDataRange.min, lastDataRange.max), 'fill-opacity': 1.0 } });
+        paint:{ 'fill-antialias': false, 'fill-color': buildFillColorFromFeatureState(lastDataRange.min, lastDataRange.max), 'fill-opacity': climateOpacity } });
     } else {
       map.setLayoutProperty('cells-fill', 'visibility', _vtVis);
       map.setPaintProperty('cells-fill', 'fill-color', buildFillColorFromFeatureState(lastDataRange.min, lastDataRange.max));
@@ -1465,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
         layout:{ visibility: lidarOverlayOn ? 'visible' : 'none' },
         paint:{ 'fill-antialias': false,
                 'fill-color': _lidarCov ? buildLidarFillColor(_lidarCov.legend, _lidarEnabled) : 'rgba(0,0,0,0)',
-                'fill-opacity': 0.85 } });
+                'fill-opacity': contextOpacity } });
     else
       map.setLayoutProperty('lidar-fill', 'visibility', lidarOverlayOn ? 'visible' : 'none');
     if (lidarOverlayOn) {
@@ -1477,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map.getLayer('terrain-fill'))
       map.addLayer({ id:'terrain-fill', type:'fill', source:'cells-vt', 'source-layer':'cells',
         layout:{ visibility: terrainOverlayOn ? 'visible' : 'none' },
-        paint:{ 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': 0.9 } });
+        paint:{ 'fill-antialias': false, 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': contextOpacity } });
     else
       map.setLayoutProperty('terrain-fill', 'visibility', terrainOverlayOn ? 'visible' : 'none');
     if (terrainOverlayOn) {
@@ -1543,6 +1575,9 @@ document.addEventListener('DOMContentLoaded', () => {
         _filterMaskState.mode !== 'off') {
       _applyFilterMask(_filterMaskState.ids, _filterMaskState.mode);
     }
+    _applyBasemapOpacity();
+    _applyDataOpacity();
+    _renderActiveLayers();
   }
 
   function switchBasemap(bm) {
