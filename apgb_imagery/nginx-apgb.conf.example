@@ -1,0 +1,32 @@
+# This belongs on the HTTPS reverse-proxy host, not inside the ClimaScope Flask
+# container. The upstream address must be an admin-approved private route to
+# retina:8181. Protect imagery access with individual credentials or SSO.
+
+location = /apgb/gwc/service/wmts {
+    auth_basic "Licensed APGB imagery";
+    auth_basic_user_file /etc/nginx/secrets/apgb.htpasswd;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Prefix /apgb;
+    proxy_read_timeout 180s;
+    proxy_pass http://APGB_RETINA_PRIVATE_ADDRESS:8181;
+}
+
+location = /apgb/wms {
+    auth_basic "Licensed APGB imagery";
+    auth_basic_user_file /etc/nginx/secrets/apgb.htpasswd;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Prefix /apgb;
+    proxy_read_timeout 180s;
+    proxy_pass http://APGB_RETINA_PRIVATE_ADDRESS:8181;
+}
+
+# Do not publish the GeoServer administration and REST interfaces.
+location ^~ /apgb/ {
+    return 404;
+}

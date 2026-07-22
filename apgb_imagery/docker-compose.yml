@@ -1,0 +1,60 @@
+name: climascope-apgb
+
+services:
+  mosaic-init:
+    image: alpine:3.22.1
+    command: ["/bin/sh", "/bootstrap/prepare_mosaic.sh"]
+    environment:
+      EXPECTED_MIN_TILES: "4261"
+    volumes:
+      - ${APGB_SOURCE_DIR:-/mnt/shared/datasets/spatial/apgb_getmapping}:/mnt/apgb_source:ro
+      - apgb_mosaic:/opt/apgb_mosaic
+      - ./prepare_mosaic.sh:/bootstrap/prepare_mosaic.sh:ro
+    restart: "no"
+
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.28.4
+    depends_on:
+      mosaic-init:
+        condition: service_completed_successfully
+    ports:
+      - "${APGB_BIND_ADDRESS:-127.0.0.1}:${APGB_GEOSERVER_PORT:-8181}:8080"
+    environment:
+      SKIP_DEMO_DATA: "true"
+      WEBAPP_CONTEXT: apgb
+      PROXY_BASE_URL: ${APGB_PUBLIC_URL:-http://127.0.0.1:8181/apgb}
+      GEOSERVER_ADMIN_USER_FILE: /run/secrets/geoserver_admin_user
+      GEOSERVER_ADMIN_PASSWORD_FILE: /run/secrets/geoserver_admin_password
+      CORS_ENABLED: "false"
+      CHANGE_OWNERSHIP_ON_FOLDERS: /opt /opt/geoserver_data /opt/gwc_cache /opt/apgb_mosaic
+      EXTRA_JAVA_OPTS: >-
+        -Xms${APGB_JAVA_MIN_HEAP:-1g}
+        -Xmx${APGB_JAVA_MAX_HEAP:-4g}
+        -DGEOWEBCACHE_CACHE_DIR=/opt/gwc_cache
+        -Dorg.geotools.coverage.jaiext.enabled=true
+    secrets:
+      - geoserver_admin_user
+      - geoserver_admin_password
+    volumes:
+      - geoserver_data:/opt/geoserver_data
+      - gwc_cache:/opt/gwc_cache
+      - apgb_mosaic:/opt/apgb_mosaic
+      - ${APGB_SOURCE_DIR:-/mnt/shared/datasets/spatial/apgb_getmapping}:/mnt/apgb_source:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/apgb/web/ >/dev/null"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+    restart: unless-stopped
+
+secrets:
+  geoserver_admin_user:
+    file: ./runtime/secrets/geoserver_admin_user
+  geoserver_admin_password:
+    file: ./runtime/secrets/geoserver_admin_password
+
+volumes:
+  geoserver_data:
+  gwc_cache:
+  apgb_mosaic:
