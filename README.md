@@ -14,9 +14,11 @@ LiDAR-derived products. Users can explore national, council, catchment and
 user-defined areas; compare climate periods; apply environmental and terrain
 filters; inspect data availability; and export data for further analysis.
 
-> **Status:** research and internal decision-support prototype. The source code
-> is public for transparency and technical review, but no public hosted service
-> is currently provided. Runtime datasets are not included in this repository.
+**Live application:** <https://climascope.hutton.ac.uk/>
+
+> **Status:** public research and decision-support prototype. The source code is
+> available for transparency and technical review. Runtime datasets are not
+> included in this repository.
 
 ## Main capabilities
 
@@ -191,8 +193,8 @@ environmental decisions.
   formula error was identified in the source RDS. Those future-period map
   combinations are disabled rather than presenting unreliable values; the
   supported catchment workflow remains available where valid data exist.
-- The application has no authentication layer and is intended for controlled
-  internal deployment.
+- The public application has no user accounts; administrative and deployment
+  access must be controlled outside the application.
 - Raw and derived datasets are not included, so the repository cannot run as a
   complete application without an authorised runtime-data bundle.
 - LiDAR and hillshade coverage is regional and varies by acquisition phase and
