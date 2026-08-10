@@ -279,11 +279,23 @@ def get_grid_web():
     if g.crs.to_epsg() != WEB_EPSG:
         g = g.to_crs(WEB_EPSG)
     _grid_web = g[["id_1km", "geometry"]].copy()
+    _grid_web["id_1km"] = _grid_web["id_1km"].astype("int64")
     try:
         _grid_sindex = _grid_web.sindex
     except Exception:
         _grid_sindex = None
     return _grid_web, _grid_sindex
+
+
+def _centroids_wgs84(gdf):
+    """Return geometrically correct WGS84 centroids for grid polygons."""
+    projected = gdf if gdf.crs and gdf.crs.to_epsg() == 27700 else gdf.to_crs(27700)
+    centroids = gpd.GeoSeries(
+        projected.geometry.centroid,
+        index=projected.index,
+        crs=projected.crs,
+    )
+    return centroids.to_crs(WEB_EPSG)
 
 
 def get_councils():
@@ -425,12 +437,16 @@ def slice_facts(metric, period, month, member):
     if not member:
         precomp = _precomp_path(metric, period, str(month))
         if os.path.exists(precomp):
-            return pd.read_parquet(precomp, columns=["id_1km", "Change"])
+            result = pd.read_parquet(precomp, columns=["id_1km", "Change"])
+            result["id_1km"] = result["id_1km"].astype("int64")
+            return result
     else:
         # Prefer precomputed member parquet when available
         member_precomp = _resolve_precomp_path(metric, period, str(month), member)
         if os.path.exists(member_precomp):
-            return pd.read_parquet(member_precomp, columns=["id_1km", "Change"])
+            result = pd.read_parquet(member_precomp, columns=["id_1km", "Change"])
+            result["id_1km"] = result["id_1km"].astype("int64")
+            return result
 
     dset = get_dset()
     filt = (ds.field("Metric")==metric) & (ds.field("Period")==period) & (ds.field("Month")==month)
@@ -448,12 +464,14 @@ def slice_facts(metric, period, month, member):
     if df.empty: return df
     if not member:
         df = df.groupby("id_1km", as_index=False)["Change"].mean()
+    df["id_1km"] = df["id_1km"].astype("int64")
     return df
 
 def get_grid():
     global _grid
     if _grid is None:
         _grid = gpd.read_parquet(GRID_FILE)
+        _grid["id_1km"] = _grid["id_1km"].astype("int64")
         if _grid.crs is None:
             _grid.set_crs(27700, inplace=True)
     return _grid
@@ -1106,9 +1124,9 @@ def jobs():
     cell_ids_set = set(int(x) for x in clip_gdf["id_1km"].values)
     gw_csv = grid_web_csv[grid_web_csv["id_1km"].isin(cell_ids_set)].copy()
     gw_csv = gw_csv.merge(clip_gdf[["id_1km", "Change"]], on="id_1km", how="inner")
-    csv_centroids = gw_csv.geometry.centroid
+    csv_centroids = _centroids_wgs84(gw_csv)
     stats_df = pd.DataFrame({
-        "id_1km": gw_csv["id_1km"].values,
+        "id_1km": gw_csv["id_1km"].astype("int64").values,
         "lon":    csv_centroids.x.round(6).values,
         "lat":    csv_centroids.y.round(6).values,
         "period": period,
@@ -3051,10 +3069,11 @@ def aoi_export():
 
     grid_web, _ = get_grid_web()
     sub_grid    = grid_web[grid_web["id_1km"].isin(id_set)].copy()
-    centroids   = sub_grid.geometry.centroid
+    sub_grid["id_1km"] = sub_grid["id_1km"].astype("int64")
+    centroids   = _centroids_wgs84(sub_grid)
 
     result = pd.DataFrame({
-        "id_1km": sub_grid["id_1km"].values,
+        "id_1km": sub_grid["id_1km"].astype("int64").values,
         "lon":    centroids.x.round(6).values,
         "lat":    centroids.y.round(6).values,
         "period": period,
