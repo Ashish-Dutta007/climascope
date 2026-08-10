@@ -115,6 +115,16 @@ def _request_too_large(_exc):
     return jsonify({"error": f"request body exceeds {MAX_JSON_BYTES // (1024 * 1024)} MB"}), 413
 
 
+@app.before_request
+def _block_static_development_artifacts():
+    """Keep ignored editor/backup files out of Flask's public static route."""
+    static_prefix = f"{app.static_url_path}/"
+    if request.path.startswith(static_prefix):
+        filename = os.path.basename(request.path).lower()
+        if ".bak" in filename or filename.endswith(("~", ".old", ".orig", ".swp")):
+            return Response(status=404)
+
+
 @app.after_request
 def _security_headers(resp):
     # CSP still permits inline styles because MapLibre and the current UI set
