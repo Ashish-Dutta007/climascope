@@ -226,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let _currentViewExportBtn = null;
   let aoiGeoJSON      = null;       // drawn / uploaded AOI (kept for map layer)
   let refreshTimer    = null;
+  let _layerLoadRevision = 0;
   let currentBasemap   = 'dark';
   let _lastLayerState  = { geojson: null, dataMin: null, dataMax: null };
   let _filterMaskState = { ids: null, mode: 'none' };
@@ -1432,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('map-unavail-msg')?.remove();
   }
 
-  async function _paintAoiFeature(feature) {
+  async function _paintAoiFeature(feature, revision = ++_layerLoadRevision) {
     _setCurrentViewData(null);
     map.setLayoutProperty('cells-fill', 'visibility', 'none');
     map.setLayoutProperty('cells-line', 'visibility', 'none');
@@ -1452,8 +1453,9 @@ document.addEventListener('DOMContentLoaded', () => {
           ...(state.member && state.member !== 'mean' ? { member: state.member } : {}),
         }),
       });
-      if (!resp.ok) return;
+      if (revision !== _layerLoadRevision || !resp.ok) return;
       const gj = await resp.json();
+      if (revision !== _layerLoadRevision) return;
       _setCurrentViewData(gj);
       setData(SRC.grid, gj);
       const vals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
@@ -1465,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _updateLcScope();
       _updateHabitatScope();
     } catch(err) { console.error('_paintAoiFeature failed:', err); }
-    finally { showLoading(false); }
+    finally { if (revision === _layerLoadRevision) showLoading(false); }
   }
 
   function reapplyLayer() {
@@ -2023,12 +2025,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const revision = ++_layerLoadRevision;
     // A new selection must never leave the previous scope available to the
     // export control while its replacement is loading (or after an error).
     _setCurrentViewData(null);
 
     if (aoiGeoJSON?.geometry) {
-      await _paintAoiFeature(aoiGeoJSON);
+      await _paintAoiFeature(aoiGeoJSON, revision);
       return;
     }
 
@@ -2052,12 +2055,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = `/api/catchments/${encodeURIComponent(activeCatchment)}/features`
                   + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${_catchMemberP}`;
         const resp = await fetch(url);
+        if (revision !== _layerLoadRevision) return;
         if (!resp.ok) {
           setData(SRC.grid, emptyFC());
           updateLegend(null);
           return;
         }
         const gj = await resp.json();
+        if (revision !== _layerLoadRevision) return;
         _setCurrentViewData(gj);
         setData(SRC.grid, gj);
         const vals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
@@ -2073,7 +2078,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch(e) {
         console.error('loadLayer catchment:', e);
       } finally {
-        showLoading(false);
+        if (revision === _layerLoadRevision) showLoading(false);
       }
       return;
     }
@@ -2092,7 +2097,8 @@ document.addEventListener('DOMContentLoaded', () => {
       map.setLayoutProperty('cells-line', 'visibility', 'visible');
       map.setLayoutProperty('grid-fill',  'visibility', 'none');
       map.setLayoutProperty('grid-line',  'visibility', 'none');
-      await loadValues(metric, period, month);
+      await loadValues(metric, period, month, revision);
+      if (revision !== _layerLoadRevision) return;
       _updateLcScope();
       _updateHabitatScope();
       return;
@@ -2117,6 +2123,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const url  = `/api/councils/${encodeURIComponent(activeCouncil)}/features`
                  + `?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${_councilMemberP}`;
       const resp = await fetch(url);
+      if (revision !== _layerLoadRevision) return;
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         console.warn('features error:', err.detail || err.error);
@@ -2125,6 +2132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const gj = await resp.json();
+      if (revision !== _layerLoadRevision) return;
       _setCurrentViewData(gj);
       setData(SRC.grid, gj);
       const _cVals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
@@ -2140,20 +2148,22 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {
       console.error('loadLayer:', e);
     } finally {
-      showLoading(false);
+      if (revision === _layerLoadRevision) showLoading(false);
     }
   }
 
   $('load').onclick = () => loadLayer();
 
-  async function loadValues(metric, period, month) {
+  async function loadValues(metric, period, month, revision) {
     showLoading(true);
     try {
       const memberParam = (activeMember && activeMember !== 'mean') ? `&member=${activeMember}` : '';
       const url  = `/api/values?metric=${metric}&period=${encodeURIComponent(period)}&month=${month}${memberParam}`;
       const resp = await fetch(url);
+      if (revision !== _layerLoadRevision) return;
       if (!resp.ok) { updateLegend(null); return; }
       const data = await resp.json();
+      if (revision !== _layerLoadRevision) return;
       _vtValues  = data;
 
       const vals = Object.values(data).filter(v => v != null && isFinite(v));
@@ -2177,7 +2187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {
       console.error('loadValues:', e);
     } finally {
-      showLoading(false);
+      if (revision === _layerLoadRevision) showLoading(false);
     }
   }
 
