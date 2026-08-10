@@ -283,6 +283,10 @@
       },
       center:             [-4.2, 57.0],
       zoom:               6,
+      // Tileset has no tiles below z5 (MBTiles floor). In small windows the
+      // All-Scotland fit would land below that and load nothing — clamp the
+      // camera so cells always resolve. On the wall the fit is ~z6.5; no-op.
+      minZoom:            5,
       scrollZoom:         false,
       boxZoom:            false,
       dragRotate:         false,
