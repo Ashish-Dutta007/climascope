@@ -47,6 +47,34 @@ function _fpCollectCoords(geom) {
   return [];
 }
 
+function _fpBoundaryFeature(gj) {
+  if (gj?.type === 'FeatureCollection') {
+    if (!gj.features?.length) throw new Error('No features found');
+    const polygons = [];
+    for (const item of gj.features) {
+      const geom = item?.geometry;
+      if (geom?.type === 'Polygon') polygons.push(geom.coordinates);
+      else if (geom?.type === 'MultiPolygon') polygons.push(...geom.coordinates);
+      else throw new Error(`Unsupported boundary geometry: ${geom?.type || 'missing'}`);
+    }
+    return {
+      type: 'Feature',
+      properties: { source_feature_count: gj.features.length },
+      geometry: polygons.length === 1
+        ? { type: 'Polygon', coordinates: polygons[0] }
+        : { type: 'MultiPolygon', coordinates: polygons },
+    };
+  }
+  if (gj?.type === 'Feature') {
+    if (!['Polygon', 'MultiPolygon'].includes(gj.geometry?.type))
+      throw new Error(`Unsupported boundary geometry: ${gj.geometry?.type || 'missing'}`);
+    return gj;
+  }
+  if (['Polygon', 'MultiPolygon'].includes(gj?.type))
+    return { type: 'Feature', geometry: gj, properties: {} };
+  throw new Error('Unsupported format — need Polygon/MultiPolygon');
+}
+
 class FilterPanel {
   constructor(containerEl, getMapState) {
     this.el           = containerEl;
@@ -221,12 +249,7 @@ class FilterPanel {
         const text = await file.text();
         gj = JSON.parse(text);
       }
-      let feature;
-      if (gj.type === 'FeatureCollection')                         feature = gj.features[0];
-      else if (gj.type === 'Feature')                              feature = gj;
-      else if (['Polygon','MultiPolygon'].includes(gj.type))       feature = { type:'Feature', geometry:gj, properties:{} };
-      else throw new Error('Unsupported format — need Polygon/MultiPolygon');
-      if (!feature) throw new Error('No features found');
+      const feature = _fpBoundaryFeature(gj);
 
       const coords = _fpCollectCoords(feature.geometry);
       let bbox = null;
@@ -235,7 +258,9 @@ class FilterPanel {
         bbox = [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)];
       }
       document.dispatchEvent(new CustomEvent('climascope:aoi:update', { detail: { geojson: feature, bbox } }));
-      this._setAoi(feature, file.name);
+      const count = Number(feature.properties?.source_feature_count || 1);
+      const label = count > 1 ? `${file.name} (${count} features)` : file.name;
+      this._setAoi(feature, label);
     } catch(e) {
       this._setSpStatus('✗ ' + e.message, 'error');
     }
