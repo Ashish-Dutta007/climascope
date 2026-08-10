@@ -37,6 +37,8 @@
         <div id="app-title">ClimaScope</div>
         <div id="app-sub">D5-2 Climate Prototype</div>
       </div>
+      <button type="button" id="sidebar-close" class="mobile-sidebar-button"
+              aria-label="Close controls" title="Close controls">×</button>
     </div>
 
     <div id="mode-bar">
@@ -222,12 +224,16 @@
     </div>
     <div id="sidebar-footer">Contains OS data © Crown copyright</div>
   </div>
+  <div id="sidebar-scrim" aria-hidden="true"></div>
 
   <!-- ===== MAIN COLUMN (map + dashboard bottom) ===== -->
   <div id="main-col">
 
     <!-- ===== MAP AREA ===== -->
     <div id="map-area" role="region" aria-label="Climate map">
+      <button type="button" id="sidebar-open" class="mobile-sidebar-button"
+              aria-label="Open controls" aria-controls="sidebar" aria-expanded="false"
+              title="Open controls">☰ <span>Controls</span></button>
       <div id="map"></div>
       <div id="legend" aria-live="polite"></div>
       <div id="loading-bar" class="loading-bar hidden" role="progressbar" aria-label="Loading map data"></div>

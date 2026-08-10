@@ -8,6 +8,28 @@ document.addEventListener('DOMContentLoaded', () => {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]);
 
+  const _mobileSidebarQuery = window.matchMedia('(max-width: 767px)');
+  const _appShell = $('app');
+  const _sidebarOpenBtn = $('sidebar-open');
+  const _sidebarCloseBtn = $('sidebar-close');
+  function _setMobileSidebar(collapsed, moveFocus = false) {
+    if (!_appShell) return;
+    const isMobile = _mobileSidebarQuery.matches;
+    _appShell.classList.toggle('sidebar-collapsed', isMobile && collapsed);
+    _sidebarOpenBtn?.setAttribute('aria-expanded', String(isMobile && !collapsed));
+    if (moveFocus && isMobile) (collapsed ? _sidebarOpenBtn : _sidebarCloseBtn)?.focus();
+  }
+  _sidebarOpenBtn?.addEventListener('click', () => _setMobileSidebar(false, true));
+  _sidebarCloseBtn?.addEventListener('click', () => _setMobileSidebar(true, true));
+  $('sidebar-scrim')?.addEventListener('click', () => _setMobileSidebar(true));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _mobileSidebarQuery.matches && !_appShell?.classList.contains('sidebar-collapsed'))
+      _setMobileSidebar(true, true);
+  });
+  const _syncMobileSidebar = () => _setMobileSidebar(_mobileSidebarQuery.matches);
+  _mobileSidebarQuery.addEventListener?.('change', _syncMobileSidebar);
+  _syncMobileSidebar();
+
   /* Download a blob as a file.
      The anchor must be attached to the document — Firefox ignores click() on a
      detached element, so downloads silently did nothing there. The object URL

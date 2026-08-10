@@ -91,8 +91,38 @@ button:disabled, select:disabled, input:disabled {
   color: rgba(255,255,255,.52);
 }
 
-.month-ticks { color: rgba(255,255,255,.42); font-size: 9px; }
+.month-ticks { color: rgba(255,255,255,.55); font-size: 9px; }
 .metric-card-units { color: rgba(255,255,255,.5); }
+
+/* Hints and inactive controls use one readable secondary level instead of
+   many one-off alpha values that fall below normal-text contrast. */
+.section-note,
+.layer-group-description,
+.layer-group-status,
+#legend .legend-subtitle,
+#legend .legend-labels,
+#legend .legend-stats,
+#terrain-legend .legend-subtitle,
+#terrain-legend .legend-labels,
+.upload-sub,
+.fp-section-copy span,
+.fp-sp-status,
+.fp-export-label,
+.fp-rule-hint:not(.fp-hint-partial),
+.fp-result,
+.fp-mask-hint,
+.cp-loading,
+.cp-sparse-msg,
+.kp-source-note,
+.kp-loading,
+.dp-empty { color: rgba(255,255,255,.55); }
+
+.fp-toggle-btn,
+.fp-clear-btn,
+.fp-export-btn,
+.fp-add-btn {
+  color: rgba(255,255,255,.65);
+}
 
 /* MapLibre's navigation artwork is embedded as a dark SVG background. Draw
    high-contrast symbols directly so zoom/compass remain visible regardless of
@@ -160,6 +190,7 @@ button:disabled, select:disabled, input:disabled {
 
 @media (max-width: 767px) {
   /* Keep map furniture clear of the collapsed analysis dock. */
+  #map-search { top: 56px; width: min(240px, calc(100vw - 20px)); }
   #legend { bottom: 70px; right: 12px; }
   #active-layers { right: 8px; min-width: 196px; }
 }
