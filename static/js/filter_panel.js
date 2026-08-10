@@ -22,7 +22,7 @@ const _FP_OPERATORS = [
 
 const _FP_MO = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const _FP_UNITS = {
-  CWBPM: 'mm', CWBPT: 'mm', CWRPM: 'mm', CWRPT: 'mm',
+  CWBPM: 'mm', CWBPT: 'mm', CWRPM: 'ratio', CWRPT: 'ratio',
   ETPM_sum: 'mm', ETPT_sum: 'mm', Prec_sum: 'mm',
   Tmax_mean: '°C', Tmin_mean: '°C',
 };
@@ -378,9 +378,13 @@ class FilterPanel {
         const mo    = _FP_MO[state.month] || state.month;
         contextLine = `${_fpEsc(label)}${units ? ` (${_fpEsc(units)})` : ''} — Period: ${_fpEsc(state.period)} · Month: ${_fpEsc(mo)}<br>`;
       }
+      const statsUnits = _fpEsc(out.stats?.units || _FP_UNITS[state?.metric] || '');
+      const mean = s.weighted_mean_change ?? s.weighted_mean_change_mm;
+      const min  = s.min_change ?? s.min_change_mm;
+      const max  = s.max_change ?? s.max_change_mm;
       card.innerHTML = `
         <strong>AOI analysis · ${ts}</strong><br>
-        ${contextLine}Mean: ${s.weighted_mean_change_mm.toFixed(2)} &nbsp;·&nbsp; Min: ${s.min_change_mm.toFixed(1)} &nbsp;·&nbsp; Max: ${s.max_change_mm.toFixed(1)} &nbsp;·&nbsp; Cells: ${s.n_cells ?? '?'}<br>
+        ${contextLine}Mean: ${mean.toFixed(2)} ${statsUnits} &nbsp;·&nbsp; Min: ${min.toFixed(1)} ${statsUnits} &nbsp;·&nbsp; Max: ${max.toFixed(1)} ${statsUnits} &nbsp;·&nbsp; Cells: ${s.n_cells ?? '?'}<br>
         <div class="fp-job-links">
           <a class="fp-job-dl" href="${_fpDownloadUrl(out.files?.csv)}"        target="_blank" rel="noopener">⬇ CSV</a>
           <a class="fp-job-dl" href="${_fpDownloadUrl(out.files?.geojson)}"    target="_blank" rel="noopener">⬇ GeoJSON</a>

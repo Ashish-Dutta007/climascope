@@ -2199,6 +2199,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = METRIC_LABELS[activeMetric.id] || display.short || activeMetric.short || activeMetric.id;
     const period     = $('period')?.value || '';
     const isBaseline = period === '1990-2019';
+    const scopeLabel = aoiGeoJSON ? 'AOI 1 km cells'
+      : activeCouncil ? `${activeCouncil} 1 km cells`
+      : activeCatchment ? `${activeCatchment.split(' : ')[0]} 1 km cells`
+      : 'Scotland 1 km cells';
+    const memberLabel = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
+    const valueContext = isBaseline
+      ? 'Observed values (1990–2019 baseline)'
+      : `${memberLabel} · Change from 1990–2019 baseline`;
+    const subtitle = `${scopeLabel} · ${valueContext}`;
     let minVal = null, maxVal = null, mean = null, cellCount = null;
 
     if (stats) {
@@ -2217,10 +2226,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (minVal === null) {
-      const _isNat = !activeCouncil && !activeCatchment;
-      const _memberLabel = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
       legend.innerHTML = `<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
-        <div class="legend-subtitle">${_isNat ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : `${_memberLabel} : Change from 1990-2019 baseline`}</div>`;
+        <div class="legend-subtitle">${subtitle}</div>`;
       return;
     }
 
@@ -2256,9 +2263,6 @@ document.addEventListener('DOMContentLoaded', () => {
       labelsHtml  = `<span>${minVal.toFixed(1)}</span><span>${maxVal.toFixed(1)}</span>`;
     }
 
-    const isNational = !activeCouncil && !activeCatchment;
-    const _memberLabel = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
-    const subtitle = isNational ? 'Individual 1km cells' : isBaseline ? 'Observed values (1990-2019 baseline)' : `${_memberLabel} : Change from 1990-2019 baseline`;
     legend.innerHTML = `
       <div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
       <div class="legend-subtitle">${subtitle}</div>
@@ -2476,8 +2480,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (climateVal == null) return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: N/A`;
     const un = METRIC_UNITS[activeMetric.id] || '';
+    const period = $('period')?.value || '';
+    const member = activeMember && activeMember !== 'mean' ? `member ${activeMember}` : 'ensemble mean';
+    const context = isBase ? 'observed 1990–2019' : `${period}, ${member}`;
     const d = isBase ? `${(+climateVal).toFixed(1)} ${un}` : `${+climateVal >= 0 ? '+' : ''}${(+climateVal).toFixed(1)} ${un}`;
-    return `${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong>${d}</strong>`;
+    return `${METRIC_LABELS[activeMetric.id] || activeMetric.id} (${context}): <strong>${d}</strong>`;
   }
 
   // cache cell_lidar per id so the header tile + body share one request
@@ -2502,12 +2509,15 @@ document.addEventListener('DOMContentLoaded', () => {
       + `<span id="tile-${id}" class="popup-tile"></span></div>`;
     if (ctx === 'climate') {
       const un = METRIC_UNITS[activeMetric.id] || '';
+      const period = $('period')?.value || '';
+      const member = activeMember && activeMember !== 'mean' ? `Member ${activeMember}` : 'Ensemble mean';
+      const context = isBase ? 'Observed 1990–2019' : `${period} · ${member}`;
       const valDisplay = climateVal == null ? 'N/A'
         : isBase ? `${(+climateVal).toFixed(2)} ${un} (observed)`
                  : `${+climateVal >= 0 ? '+' : ''}${(+climateVal).toFixed(2)} ${un} (change)`;
       new maplibregl.Popup({ maxWidth: '320px' }).setLngLat(lngLat).setHTML(`
         <div style="min-width:270px">${header}
-          <div style="font-size:11px;opacity:.6;margin-bottom:6px">${MONTH_NAMES[month] || month} &nbsp;·&nbsp;
+          <div style="font-size:11px;opacity:.6;margin-bottom:6px">${MONTH_NAMES[month] || month} &nbsp;·&nbsp; ${context}<br>
             ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong></div>
           <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
           <canvas id="ts-${id}" width="260" height="110"></canvas>

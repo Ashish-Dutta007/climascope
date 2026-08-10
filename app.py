@@ -1140,6 +1140,11 @@ def jobs():
         },
         "stats": {
             "n_cells": int(mask.sum()),
+            "units": COVERAGE_METRIC_UNITS[metric],
+            "weighted_mean_change": wmean,
+            "min_change": wmin,
+            "max_change": wmax,
+            # Backward-compatible names retained for existing API consumers.
             "weighted_mean_change_mm": wmean,
             "min_change_mm": wmin,
             "max_change_mm": wmax,
@@ -1770,7 +1775,11 @@ COVERAGE_METRIC_TYPES = {
     'Tmax_mean': 'temperature', 'Tmin_mean': 'temperature',
 }
 
-COVERAGE_METRIC_UNITS = {'balance': 'mm', 'volume': 'mm', 'temperature': '°C'}
+COVERAGE_METRIC_UNITS = {
+    'CWBPT': 'mm', 'CWBPM': 'mm', 'CWRPT': 'ratio', 'CWRPM': 'ratio',
+    'Prec_sum': 'mm', 'ETPT_sum': 'mm', 'ETPM_sum': 'mm',
+    'Tmax_mean': '°C', 'Tmin_mean': '°C',
+}
 
 LC_CANONICAL = [
     (1,  'Broadleaved woodland'),
@@ -1973,7 +1982,7 @@ def _compute_coverage(metric, scope_str, threshold, period_1='2020-2049', period
     return {
         'scope':    scope_info,
         'metric':   {'id': metric, 'type': metric_type,
-                     'units': COVERAGE_METRIC_UNITS[metric_type]},
+                     'units': COVERAGE_METRIC_UNITS[metric]},
         'threshold': threshold,
         'period_1':  period_1,
         'period_2':  period_2,
@@ -1997,8 +2006,10 @@ def coverage():
         period_1 = str(body.get('period_1', '2020-2049')).strip()
         period_2 = str(body.get('period_2', '2050-2079')).strip()
         member   = body.get('member', None)
-        if member and member not in _VALID_MEMBERS:
+        if member in ('', 'mean'):
             member = None
+        elif member and member not in _VALID_MEMBERS:
+            return jsonify({'error': f'invalid ensemble member: {member!r}'}), 400
 
         if metric not in COVERAGE_METRIC_TYPES:
             return jsonify({'error': f'Unknown metric: {metric!r}. Valid: {list(COVERAGE_METRIC_TYPES)}'}), 400
@@ -2025,8 +2036,10 @@ def coverage():
     period_1 = request.args.get('period_1', '2020-2049').strip()
     period_2 = request.args.get('period_2', '2050-2079').strip()
     member   = request.args.get('member', None)
-    if member and member not in _VALID_MEMBERS:
+    if member in ('', 'mean'):
         member = None
+    elif member and member not in _VALID_MEMBERS:
+        return jsonify({'error': f'invalid ensemble member: {member!r}'}), 400
 
     if metric not in COVERAGE_METRIC_TYPES:
         return jsonify({'error': f'Unknown metric: {metric!r}. Valid: {list(COVERAGE_METRIC_TYPES)}'}), 400

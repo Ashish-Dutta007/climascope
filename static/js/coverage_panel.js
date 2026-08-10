@@ -463,7 +463,8 @@ class CoveragePanel {
     const dv   = md.delta.mean != null ? md.delta.mean.toFixed(1) : '—';
     const sign = md.delta.mean != null && md.delta.mean >= 0 ? '+' : '';
     const ifmt = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v.toFixed(0);
-    const tip  = `${_cpEsc(lcName)}\nChange: ${sign}${dv} ${units}\nArea: ${_cpFmt(area_km2)}\nTotal impact: ${ifmt(impact)} km²·mm\n${p1Label} → ${p2Label}`;
+    const impactUnits = units ? `km²·${units}` : 'km²';
+    const tip  = `${_cpEsc(lcName)}\nChange: ${sign}${dv} ${units}\nArea: ${_cpFmt(area_km2)}\nTotal impact: ${ifmt(impact)} ${impactUnits}\n${p1Label} → ${p2Label}`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
       <rect x="0" y="4" width="${W}" height="8" rx="2" fill="rgba(255,255,255,.06)"/>
@@ -484,7 +485,8 @@ class CoveragePanel {
     const diff  = v2 - v1;
     const sign  = diff >= 0 ? '+' : '';
     const ifmt  = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v.toFixed(0);
-    const tip   = `${_cpEsc(lcName)}\n${p1Label}: ${v1.toFixed(1)} ${units}\n${p2Label}: ${v2.toFixed(1)} ${units}\nΔ ${sign}${diff.toFixed(1)} ${units}\nArea: ${_cpFmt(areaKm2)}\nTotal impact: ${ifmt(impact)} km²·mm`;
+    const impactUnits = units ? `km²·${units}` : 'km²';
+    const tip   = `${_cpEsc(lcName)}\n${p1Label}: ${v1.toFixed(1)} ${units}\n${p2Label}: ${v2.toFixed(1)} ${units}\nΔ ${sign}${diff.toFixed(1)} ${units}\nArea: ${_cpFmt(areaKm2)}\nTotal impact: ${ifmt(impact)} ${impactUnits}`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
       <rect x="0" y="2"  width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>
