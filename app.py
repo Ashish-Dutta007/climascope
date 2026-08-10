@@ -2595,7 +2595,7 @@ def hillshade_export():
                     dst.colorinterp = src.colorinterp
                     dst.update_tags(
                         source="ClimaScope LiDAR-derived hillshade",
-                        attribution="NatureScot / Scottish Government NLP LiDAR",
+                        attribution="Scottish Government LiDAR",
                     )
                 payload = mem.read()
     except InvalidSelection:

@@ -994,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // requests tiles that don't exist (avoids 204/decode spam + 429s)
         minzoom: _hillshadeInfo?.minzoom ?? 10,
         maxzoom: _hillshadeInfo?.maxzoom ?? 14,
-        attribution: 'Terrain © NatureScot / Scottish Government (NLP LiDAR)',
+        attribution: 'Terrain © Scottish Government LiDAR',
       };
       const b = _hillshadeInfo?.bounds;
       if (b) { const p = b.split(',').map(Number); if (p.length === 4) src.bounds = p; }

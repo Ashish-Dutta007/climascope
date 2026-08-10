@@ -88,9 +88,8 @@ dictionary before formal reuse or citation.
 - **UKCEH Land Cover Map:** fractional land-cover information at 1 km.
 - **SEPA:** river-catchment boundaries.
 - **Scottish local-authority boundaries:** council selection and summaries.
-- **NatureScot / Scottish Government National LiDAR Programme:** LiDAR coverage
-  and derived terrain products where available.
-- **Bluesky LiDAR:** licensed coverage and derived products where available.
+- **Scottish Government:** LiDAR coverage and derived terrain products from the
+  national LiDAR programme where available.
 - **James Hutton Institute:** project-derived catchment summaries and analytical
   datasets.
 
