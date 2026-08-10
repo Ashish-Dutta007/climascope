@@ -253,6 +253,9 @@ class FilterPanel {
       this._setSpStatus(`✓ ${name} · ${ids.length.toLocaleString()} cells`, 'ok');
       this._updateScopeBadge();
       this._updateExportControls();
+      // Scope string stays 'aoi' when redrawing, so onMapStateChange won't fire;
+      // refresh terrain ranges here so they track the new area.
+      this._refreshTerrainRanges();
       document.dispatchEvent(new CustomEvent('climascope:aoi:ready', { detail: { feature } }));
     } else {
       this._aoiCells  = null;
@@ -289,6 +292,7 @@ class FilterPanel {
     this._setSpStatus('', null);
     this._updateScopeBadge();
     this._updateExportControls();
+    this._refreshTerrainRanges();
   }
 
   _setSpStatus(msg, type) {
@@ -474,13 +478,17 @@ class FilterPanel {
             `<span class="fp-between-sep">–</span>` +
             `<input class="fp-val" type="number" step="any" data-key="valueB" placeholder="hi" value="${r.valueB}">`
           : `<input class="fp-val fp-val-single" type="number" step="any" data-key="value" value="${r.value}">`;
+        const tRangeText = (r.rangeMin != null && r.rangeMax != null)
+          ? `data range: ${r.rangeMin.toFixed(1)} – ${r.rangeMax.toFixed(1)}`
+          : 'LiDAR-derived, 1km cell mean';
+        const tHintId = r.rangeMin == null ? `id="fp-rh-${i}"` : '';
         bodyHtml = `
           <div class="fp-rule-bot">
             <select class="fp-sel" data-key="terrain_var" style="flex:1">${tvOpts}</select>
             <select class="fp-sel fp-op-sel" data-key="operator">${opOpts}</select>
           </div>
           <div class="fp-rule-bot">${valHtml}</div>
-          <div class="fp-rule-hint">LiDAR-derived, 1km cell mean</div>`;
+          <div class="fp-rule-hint" ${tHintId} title="LiDAR-derived, 1km cell mean. Data range across cells in the current scope that have LiDAR terrain data.">${tRangeText}</div>`;
       } else if (isLC) {
         const lcOpts = this._lcItems.map(it =>
           `<option value="${it.lc_name}"${it.lc_name === r.lc_class ? ' selected' : ''}>${it.lc_name}</option>`
@@ -548,12 +556,20 @@ class FilterPanel {
           this.rules[i][key] = key === 'month' ? parseInt(e.target.value) : e.target.value;
           this.rules[i]._userEdited = true;
           if (key === 'type') {
+            this.rules[i].rangeMin = null;
+            this.rules[i].rangeMax = null;
             if (e.target.value === 'terrain') {
               const rr = this.rules[i];
               rr.terrain_var = rr.terrain_var || 'elevation';
               rr.operator = rr.operator || 'gt';
             }
             this._renderRules();
+            this._fetchRange(i);
+          } else if (key === 'terrain_var') {
+            this.rules[i].rangeMin = null;
+            this.rules[i].rangeMax = null;
+            this._renderRules();
+            this._fetchTerrainRange(i);
           } else if (['metric', 'period', 'month'].includes(key)) {
             this.rules[i].rangeMin = null;
             this.rules[i].rangeMax = null;
@@ -579,6 +595,8 @@ class FilterPanel {
   async _fetchRange(idx) {
     const r = this.rules[idx];
     if (!r) return;
+    if (r.type === 'terrain') return this._fetchTerrainRange(idx);
+    if (r.type === 'landcover') return;
     const { metric, period, month } = r;
     const state  = this.getMapState();
     const scope  = state.scope;
@@ -597,6 +615,69 @@ class FilterPanel {
       const span = this.el.querySelector(`#fp-rh-${idx}`);
       if (span) {
         span.textContent = `data range: ${data.min.toFixed(1)} – ${data.max.toFixed(1)}`;
+        span.removeAttribute('id');
+      }
+    } catch {}
+  }
+
+  _refreshTerrainRanges() {
+    const idxs = this.rules
+      .map((r, i) => (r.type === 'terrain' ? i : -1))
+      .filter(i => i >= 0);
+    if (!idxs.length) return;
+    idxs.forEach(i => { this.rules[i].rangeMin = null; this.rules[i].rangeMax = null; });
+    this._renderRules();
+    idxs.forEach(i => this._fetchTerrainRange(i));
+  }
+
+  async _fetchTerrainRange(idx) {
+    const r = this.rules[idx];
+    if (!r || r.type !== 'terrain') return;
+    const tvar  = r.terrain_var || 'elevation';
+    const state = this.getMapState();
+    // Post the AOI cell IDs so a drawn/uploaded area reports its own range;
+    // otherwise the council/catchment/national scope string is enough.
+    const payload = { var: tvar, scope: state.scope };
+    if (state.scope === 'aoi' && state.aoiCells?.length) payload.ids = state.aoiCells;
+    try {
+      const resp = await fetch('/api/terrain/range', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const cur = this.rules[idx];
+      if (!cur || cur.type !== 'terrain' || (cur.terrain_var || 'elevation') !== tvar) return;
+      const span = this.el.querySelector(`#fp-rh-${idx}`);
+      if (data.min == null || data.max == null) {
+        cur.rangeMin = null;
+        cur.rangeMax = null;
+        if (span) {
+          span.textContent = 'no LiDAR terrain data here — this rule will match 0 cells';
+          span.classList.add('fp-hint-partial');
+          span.title = 'None of the cells in the current scope have LiDAR terrain data.';
+        }
+        return;
+      }
+      cur.rangeMin = data.min;
+      cur.rangeMax = data.max;
+      if (span) {
+        const units = data.units ? ` ${data.units}` : '';
+        const pct   = data.coverage_pct;
+        // LiDAR is partial, so state the coverage the range came from — a bare
+        // range reads as if it described every cell in view.
+        const cov = (data.scope_total && pct != null)
+          ? ` · from ${data.count.toLocaleString()} of ${data.scope_total.toLocaleString()} cells with LiDAR (${pct}%)`
+          : '';
+        span.textContent =
+          `data range: ${data.min.toFixed(1)} – ${data.max.toFixed(1)}${units}${cov}`;
+        span.classList.toggle('fp-hint-partial', pct != null && pct < 100);
+        span.title = (pct != null && pct < 100)
+          ? `Range covers only the ${data.count.toLocaleString()} cells here that have LiDAR terrain data `
+            + `(${pct}% of ${data.scope_total.toLocaleString()}). Cells without LiDAR are excluded from this `
+            + `range and cannot match a terrain rule.`
+          : 'Range across all cells in the current scope.';
         span.removeAttribute('id');
       }
     } catch {}
@@ -711,6 +792,27 @@ class FilterPanel {
     this._updateExportControls();
   }
 
+  /* Trigger a file download from a blob.
+     The anchor MUST be in the document: Firefox ignores click() on a detached
+     element, so downloads silently did nothing there. The object URL must also
+     outlive the click — revoking it synchronously races the browser starting
+     the download and can cancel it. */
+  _saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+  }
+
+  _exportError(msg) {
+    const resultEl = this.el.querySelector('#fp-result');
+    if (resultEl) resultEl.textContent = msg;
+  }
+
   async _downloadAoiExport(fmt) {
     if (!this._aoiCells) return;
     const wrap = this.el.querySelector('#fp-export-btns');
@@ -725,18 +827,21 @@ class FilterPanel {
           metric:  state.metric,
           period:  state.period,
           month:   state.month,
+          ...(state.member && state.member !== 'mean' ? { member: state.member } : {}),
           fmt,
         }),
       });
-      if (!resp.ok) return;
-      const blob = await resp.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = fmt === 'geojson' ? 'climascope_aoi.geojson' : 'climascope_aoi.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {}
+      if (!resp.ok) {
+        // Was a silent return — a failed export looked identical to a working one.
+        const detail = await resp.json().catch(() => null);
+        this._exportError(`Export failed (${resp.status})${detail?.error ? ': ' + detail.error : ''}`);
+        return;
+      }
+      this._saveBlob(await resp.blob(),
+        fmt === 'geojson' ? 'climascope_aoi.geojson' : 'climascope_aoi.csv');
+    } catch (e) {
+      this._exportError(`Export failed: ${e.message}`);
+    }
     finally {
       this._updateExportControls();
     }
@@ -747,20 +852,40 @@ class FilterPanel {
     const wrap = this.el.querySelector('#fp-export-btns');
     if (wrap) wrap.innerHTML = '<button class="fp-export-btn" disabled>⏳ …</button>';
     try {
-      const resp = await fetch('/api/filter/export', {
+      // Export the already-matched cell IDs rather than re-running the rules.
+      // The old /api/filter/export re-ran them but understood climate rules
+      // only, so it 400'd on any terrain/landcover rule; it has been removed.
+      // /api/aoi/export takes plain IDs and enriches them with terrain +
+      // LiDAR phase columns.
+      const state = this.getMapState();
+      const ids   = this.matchedIds;
+      if (!ids?.length) { this._exportError('Nothing to export — apply a filter first.'); return; }
+      if (ids.length > 35000) {
+        this._exportError(`Too many cells to export (${ids.length.toLocaleString()}; limit 35,000). Narrow the filter.`);
+        return;
+      }
+      const resp = await fetch('/api/aoi/export', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...this._lastApplied, fmt }),
+        body:    JSON.stringify({
+          aoi_ids: ids,
+          metric:  state.metric,
+          period:  state.period,
+          month:   state.month,
+          ...(state.member && state.member !== 'mean' ? { member: state.member } : {}),
+          fmt,
+        }),
       });
-      if (!resp.ok) return;
-      const blob = await resp.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = fmt === 'geojson' ? 'climascope_filter.geojson' : 'climascope_filter.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {}
+      if (!resp.ok) {
+        const detail = await resp.json().catch(() => null);
+        this._exportError(`Export failed (${resp.status})${detail?.error ? ': ' + detail.error : ''}`);
+        return;
+      }
+      this._saveBlob(await resp.blob(),
+        fmt === 'geojson' ? 'climascope_filter.geojson' : 'climascope_filter.csv');
+    } catch (e) {
+      this._exportError(`Export failed: ${e.message}`);
+    }
     finally {
       this._updateExportControls();
     }

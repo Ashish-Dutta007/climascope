@@ -380,6 +380,12 @@
   color: rgba(255,255,255,.25);
 }
 
+/* Range derived from partial LiDAR coverage — lift it out of the faint
+   hint colour so the caveat is actually read, not skimmed past. */
+.fp-rule-hint.fp-hint-partial {
+  color: rgba(251,191,36,.72);
+}
+
 /* ── Add rule row ── */
 .fp-add-row {
   padding: 6px 10px;

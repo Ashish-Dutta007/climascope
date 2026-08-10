@@ -1343,6 +1343,61 @@ def terrain():
                     for i, v in zip(sub["id_1km"], sub[col])})
 
 
+@app.route("/api/terrain/range", methods=["GET", "POST"])
+def terrain_range():
+    """Min/max of one terrain variable for the current scope.
+
+    Mirrors /api/filter/range for the terrain rule type. Unlike the climate
+    range, an AOI can be honoured directly: POST the drawn/uploaded cell IDs
+    and the range is computed over exactly those cells.
+    """
+    body = _json_object() if request.method == "POST" else {}
+    var = (body.get("var") or request.args.get("var") or "elevation").strip()
+    if var not in TERRAIN_VARS:
+        return jsonify({"error": f"unknown var {var!r}"}), 400
+
+    df = _get_terrain()
+    if df.empty:
+        return jsonify({"error": "NO_TERRAIN_DATA"}), 404
+
+    scope = (body.get("scope") or request.args.get("scope") or "national").strip()
+    ids = body.get("ids")
+    try:
+        if ids is not None:
+            scope_ids = _validated_ids(ids, field="ids")
+        elif scope == "aoi":
+            # AOI selected but no IDs supplied — fall back to the national range
+            # rather than silently reporting a wrong (narrower) one.
+            scope, scope_ids = "national", None
+        else:
+            scope_ids = _scope_cells(scope)
+    except InvalidSelection as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    col = TERRAIN_VARS[var][0]
+    sub = df[["id_1km", col]].dropna()
+    if scope_ids is not None:
+        sub = sub[sub["id_1km"].isin(scope_ids)]
+        scope_total = len(scope_ids)
+    else:
+        scope_total = int(len(get_grid()))
+
+    # LiDAR covers only part of Scotland, so the range alone is misleading —
+    # always report how many of the scope's cells it was actually derived from.
+    payload = {
+        "var": var, "column": col, "scope": scope,
+        "units": TERRAIN_VARS[var][2],
+        "count": int(len(sub)),
+        "scope_total": scope_total,
+        "coverage_pct": round(100.0 * len(sub) / scope_total, 1) if scope_total else 0.0,
+    }
+    if sub.empty:
+        payload.update({"min": None, "max": None})
+    else:
+        payload.update({"min": float(sub[col].min()), "max": float(sub[col].max())})
+    return jsonify(payload)
+
+
 _cov_df = None
 _coll_df = None
 
@@ -2827,122 +2882,6 @@ def filter_query():
     return jsonify({"matched_ids": ids, "count": len(ids)})
 
 
-@app.route("/api/filter/export", methods=["POST"])
-def filter_export():
-    body    = _json_object()
-    rules   = body.get("rules", [])
-    logic   = str(body.get("logic", "AND")).upper()
-    scope   = body.get("scope", "national")
-    aoi_ids = body.get("aoi_ids")
-    fmt     = body.get("fmt", "csv")
-    member  = body.get("member", None)
-    if fmt not in ("csv", "geojson"):
-        fmt = "csv"
-
-    if not rules:
-        return jsonify({"error": "rules must be a non-empty list"}), 400
-    if not isinstance(rules, list) or len(rules) > MAX_FILTER_RULES:
-        return jsonify({"error": f"rules must contain at most {MAX_FILTER_RULES} items"}), 400
-    if logic not in ("AND", "OR"):
-        return jsonify({"error": "logic must be AND or OR"}), 400
-    if not isinstance(scope, str):
-        return jsonify({"error": "scope must be a string"}), 400
-
-    for i, r in enumerate(rules):
-        if not isinstance(r, dict):
-            return jsonify({"error": f"rule[{i}] must be an object"}), 400
-        for field in ("metric", "period", "month", "operator", "value"):
-            if field not in r:
-                return jsonify({"error": f"rule[{i}] missing field: {field}"}), 400
-        if r["metric"] not in COVERAGE_METRIC_TYPES:
-            return jsonify({"error": f"rule[{i}] unknown metric: {r['metric']!r}"}), 400
-        if r["operator"] not in _VALID_OPERATORS:
-            return jsonify({"error": f"rule[{i}] invalid operator: {r['operator']!r}"}), 400
-        _validated_climate_selection(r["metric"], r["period"], r["month"], member)
-        if r["operator"] == "between" and (not isinstance(r["value"], (list, tuple)) or len(r["value"]) != 2):
-            return jsonify({"error": f"rule[{i}] between requires [lo, hi]"}), 400
-
-    try:
-        conn = duckdb.connect(":memory:")
-        subqueries = []
-        for i, r in enumerate(rules):
-            path = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
-            if not os.path.exists(path):
-                conn.close()
-                return jsonify({"error": f"rule[{i}] no data for {r['metric']}/{r['period']}/Month={r['month']}"}), 404
-            col = _filter_col(r["metric"])
-            op, val = r["operator"], r["value"]
-            if op == "gt":    cond = f'"{col}" > {float(val)}'
-            elif op == "lt":  cond = f'"{col}" < {float(val)}'
-            elif op == "gte": cond = f'"{col}" >= {float(val)}'
-            elif op == "lte": cond = f'"{col}" <= {float(val)}'
-            elif op == "between":
-                cond = f'"{col}" BETWEEN {float(val[0])} AND {float(val[1])}'
-            tbl = f"_r{i}"
-            conn.execute(f"CREATE TEMP TABLE {tbl} AS SELECT id_1km FROM read_parquet(?) WHERE {cond}", [path])
-            subqueries.append(tbl)
-
-        if logic == "AND":
-            base = f"SELECT id_1km FROM {subqueries[0]}"
-            for tbl in subqueries[1:]:
-                base = f"SELECT a.id_1km FROM ({base}) a JOIN {tbl} b ON a.id_1km = b.id_1km"
-            id_sql = base
-        else:
-            id_sql = " UNION ".join(f"SELECT id_1km FROM {t}" for t in subqueries)
-
-        matched_ids = conn.execute(
-            f"SELECT id_1km FROM ({id_sql}) ORDER BY id_1km"
-        ).fetchdf()["id_1km"].astype(int).tolist()
-        conn.close()
-    except Exception as e:
-        app.logger.exception("filter/export query error")
-        return jsonify({"error": "filter export failed"}), 500
-
-    if scope == 'aoi' and aoi_ids is not None:
-        scope_ids = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
-    else:
-        scope_ids = _scope_cells(scope)
-    if scope_ids is not None:
-        scope_set = set(scope_ids)
-        matched_ids = [i for i in matched_ids if i in scope_set]
-
-    grid_web, _ = get_grid_web()
-    id_set = set(matched_ids)
-    sub = grid_web[grid_web["id_1km"].isin(id_set)].copy()
-    centroids = sub.geometry.centroid
-    result = pd.DataFrame({
-        "id_1km": sub["id_1km"].values,
-        "lon":    centroids.x.round(6).values,
-        "lat":    centroids.y.round(6).values,
-    })
-
-    for r in rules:
-        path  = _resolve_precomp_path(r["metric"], r["period"], str(r["month"]), member)
-        col   = _filter_col(r["metric"])
-        cname = f"{r['metric']}_{r['period']}_{r['month']}"
-        try:
-            vals = pd.read_parquet(path, columns=["id_1km", col])
-            vals = vals[vals["id_1km"].isin(id_set)][["id_1km", col]].rename(columns={col: cname})
-            result = result.merge(vals, on="id_1km", how="left")
-        except Exception:
-            result[cname] = None
-
-    if fmt == "geojson":
-        gdf = grid_web[grid_web["id_1km"].isin(id_set)][["id_1km", "geometry"]].copy()
-        gdf = gdf.merge(result, on="id_1km", how="left")
-        gdf = gdf[[c for c in result.columns] + ["geometry"]]
-        return Response(
-            gdf.to_json(),
-            mimetype="application/geo+json",
-            headers={"Content-Disposition": "attachment; filename=climascope_filter.geojson"},
-        )
-    return Response(
-        _csv_safe(result).to_csv(index=False),
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=climascope_filter.csv"},
-    )
-
-
 @app.route("/api/filter/bbox", methods=["POST"])
 def filter_bbox():
     body = _json_object()
@@ -3063,6 +3002,7 @@ def aoi_export():
     period  = body.get("period", "2050-2079")
     month   = body.get("month", _current_month())
     fmt     = body.get("fmt", "csv")
+    member  = body.get("member", None)
     if fmt not in ("csv", "geojson"):
         fmt = "csv"
 
@@ -3070,9 +3010,11 @@ def aoi_export():
         return jsonify({"error": "aoi_ids required"}), 400
 
     id_set   = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
-    metric, period, month_s, _ = _validated_climate_selection(metric, period, month, None)
+    # Honour the selected ensemble member — hardcoding None silently exported
+    # mean values while the map showed a different member.
+    metric, period, month_s, member = _validated_climate_selection(metric, period, month, member)
     month = int(month_s)
-    df       = slice_facts(metric, period, month, None)
+    df       = slice_facts(metric, period, month, member)
     sub_df   = df[df["id_1km"].isin(id_set)][["id_1km", "Change"]].copy()
 
     grid_web, _ = get_grid_web()
@@ -3085,9 +3027,11 @@ def aoi_export():
         "lat":    centroids.y.round(6).values,
         "period": period,
         "month":  month,
+        "metric": metric,
+        "member": member or "mean",
     }).merge(sub_df, on="id_1km", how="left")
     result = _enrich_export(result)
-    cols = ["id_1km", "tile", "lon", "lat", "period", "month", "Change",
+    cols = ["id_1km", "tile", "lon", "lat", "period", "month", "metric", "member", "Change",
             "elev_mean", "slope_mean", "ruggedness", "canopy_mean", "lidar_phase"]
     result = result[[c for c in cols if c in result.columns]]
 

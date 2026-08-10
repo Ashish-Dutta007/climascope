@@ -8,6 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]);
 
+  /* Download a blob as a file.
+     The anchor must be attached to the document — Firefox ignores click() on a
+     detached element, so downloads silently did nothing there. The object URL
+     must also outlive the click; revoking it synchronously races the browser
+     starting the download and can cancel it. */
+  function _saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
+  }
+
   // Coverage panel — mounted after map state is initialised
   let coveragePanel      = null;
   let filterPanel        = null;
@@ -526,13 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const detail = await resp.json().catch(() => ({}));
         throw new Error(detail.error || `Export failed (${resp.status})`);
       }
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'climascope_hillshade_aoi.tif';
-      link.click();
-      URL.revokeObjectURL(url);
+      _saveBlob(await resp.blob(), 'climascope_hillshade_aoi.tif');
       if (_hillshadeExportStatus) _hillshadeExportStatus.textContent = 'GeoTIFF downloaded';
     } catch (error) {
       if (_hillshadeExportStatus) {
@@ -863,15 +873,27 @@ document.addEventListener('DOMContentLoaded', () => {
     _terrainApplied = false;
   }
 
-  function _renderTerrainLegend(varId, lo, hi) {
+  function _renderTerrainLegend(varId, lo, hi, cov) {
     let leg = document.getElementById('terrain-legend');
     if (!leg) { leg = document.createElement('div'); leg.id = 'terrain-legend'; map.getContainer().appendChild(leg); }
     const [label, units] = TERRAIN_LABELS[varId] || [varId, ''];
     const ramp = TERRAIN_RAMPS[varId] || TERRAIN_RAMPS.slope;
     const grad = `linear-gradient(to right, ${ramp.join(',')})`;
+    // LiDAR covers only part of Scotland. Without saying so, a choropleth over
+    // 41% of the country reads as a national picture, and the ramp's max reads
+    // as the national maximum (it isn't — e.g. Ben Nevis has no LiDAR).
+    const partial = cov && cov.coverage_pct != null && cov.coverage_pct < 100;
+    const covNote = partial
+      ? `<div class="legend-coverage" title="Only cells with LiDAR terrain data are coloured. `
+        + `Uncoloured cells have no LiDAR and are not zero — the range below is the range of `
+        + `surveyed cells only, not of all Scotland.">`
+        + `⚠ Surveyed area only · ${cov.count.toLocaleString()} of ${cov.scope_total.toLocaleString()} cells `
+        + `(${cov.coverage_pct}%)</div>`
+      : '';
     leg.innerHTML =
       `<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>`
       + `<div class="legend-subtitle">LiDAR-derived · 1km</div>`
+      + covNote
       + `<div class="legend-ramp" style="background:${grad}"></div>`
       + `<div class="legend-labels"><span>${lo.toFixed(lo<10?1:0)}</span><span>${hi.toFixed(hi<10?1:0)}</span></div>`;
     leg.style.display = 'block';
@@ -892,10 +914,18 @@ document.addEventListener('DOMContentLoaded', () => {
         _terrainCache[varId] = entry;
       } catch(_) { return false; }
     }
+    if (entry.cov === undefined) {
+      // National coverage, matching the national ramp below. Cached per var;
+      // a failure just omits the caveat rather than blocking the layer.
+      try {
+        const r = await fetch(`/api/terrain/range?var=${encodeURIComponent(varId)}`);
+        entry.cov = r.ok ? await r.json() : null;
+      } catch(_) { entry.cov = null; }
+    }
     _clearTerrainStates();
     map.setPaintProperty('terrain-fill', 'fill-color', buildTerrainColor(entry.min, entry.max, varId));
     _applyTerrainStates(entry.data);
-    _renderTerrainLegend(varId, entry.min, entry.max);
+    _renderTerrainLegend(varId, entry.min, entry.max, entry.cov);
     return true;
   }
 
@@ -955,13 +985,17 @@ document.addEventListener('DOMContentLoaded', () => {
     try { map.setPaintProperty('terrain-hs-layer', 'raster-opacity', hillshadeOpacity); } catch(_) {}
     _applyDataOpacity();
     _renderActiveLayers();
-    // The hillshade only has detail at z >= minzoom; if the user toggles it on
-    // from a zoomed-out view they'd see nothing, so fly to its footprint.
+    // With the near-national hillshade, fitting its full footprint would zoom
+    // away from the user's area. Keep their centre and only move to the first
+    // useful tile zoom when the current view is still too far out.
     if (on && _hillshadeInfo?.bounds) {
       const p = _hillshadeInfo.bounds.split(',').map(Number);
       const minz = _hillshadeInfo.minzoom ?? 8;
       if (p.length === 4 && map.getZoom() < minz) {
-        map.fitBounds([[p[0], p[1]], [p[2], p[3]]], { padding: 40, duration: 900 });
+        const centre = map.getCenter();
+        const centreInFootprint = centre.lng >= p[0] && centre.lng <= p[2]
+          && centre.lat >= p[1] && centre.lat <= p[3];
+        if (centreInFootprint) map.easeTo({ zoom: minz, duration: 700 });
       }
     }
   }
@@ -2338,11 +2372,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }),
     };
     const blob = new Blob([JSON.stringify(exported, null, 2)], { type:'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `climascope_${metric}_${period}_${month}${memberSuffix}.geojson`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    _saveBlob(blob, `climascope_${metric}_${period}_${month}${memberSuffix}.geojson`);
   }
 
   const exportBtn = document.createElement('div');
@@ -2511,7 +2541,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function _onCellHover(e) {
     if (_drawActive) { _hoverPop.remove(); return; }
     const f = e.features[0];
-    const id = f.id ?? f.properties?.id_1km;
+    // Prefer the real cell ID from properties. Vector-tile cells promote id_1km
+    // onto f.id, but AOI/council GeoJSON comes from GeoPandas to_json(), whose
+    // feature "id" is the row index (0,1,2…) — using that would look up a
+    // nonexistent cell and report "no data" for every hovered cell.
+    const rawId = f.properties?.id_1km ?? f.id;
+    const id = (rawId != null && isFinite(+rawId)) ? Math.trunc(+rawId) : rawId;
     if (id == null || (f.properties?.catchment_name && f.properties?.id_1km == null)) { _hoverPop.remove(); return; }
     const isBase = ($('period')?.value || '') === '1990-2019';
     _hoverPop.setLngLat(e.lngLat)

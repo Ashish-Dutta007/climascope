@@ -943,6 +943,20 @@ input[type=range]::-moz-range-thumb {
   font-size: 9px; color: rgba(255,255,255,.2);
   margin-top: -5px; margin-bottom: 8px;
 }
+/* Partial-coverage caveat. Deliberately louder than .legend-subtitle: the ramp
+   max is the max of surveyed cells, not of Scotland, and that must not be
+   mistaken for a national figure. */
+#terrain-legend .legend-coverage {
+  font-size: 9px;
+  line-height: 1.35;
+  color: rgba(251,191,36,.82);
+  background: rgba(251,191,36,.09);
+  border-left: 2px solid rgba(251,191,36,.55);
+  padding: 4px 6px;
+  border-radius: 0 3px 3px 0;
+  margin: -2px 0 8px;
+  cursor: help;
+}
 #terrain-legend .legend-ramp { height: 10px; border-radius: 3px; margin-bottom: 6px; }
 #terrain-legend .legend-labels {
   display: flex; justify-content: space-between;
