@@ -96,9 +96,18 @@ class InvalidSelection(ValueError):
     """A client supplied an unsupported climate data selector."""
 
 
+class ClimateDataUnavailable(LookupError):
+    """A valid selector refers to climate grid data that must not be served."""
+
+
 @app.errorhandler(InvalidSelection)
 def _invalid_selection(exc):
     return jsonify({"error": str(exc)}), 400
+
+
+@app.errorhandler(ClimateDataUnavailable)
+def _climate_data_unavailable(exc):
+    return jsonify({"error": str(exc)}), 404
 
 
 @app.errorhandler(413)
@@ -2003,6 +2012,8 @@ def coverage():
         try:
             result = _compute_coverage(metric, 'aoi', threshold, period_1=period_1, period_2=period_2, aoi_cell_ids=cell_ids, member=member)
             return jsonify(result)
+        except ClimateDataUnavailable:
+            raise
         except Exception as e:
             app.logger.exception('coverage AOI error')
             return jsonify({'error': 'coverage analysis failed'}), 500
@@ -2034,6 +2045,8 @@ def coverage():
     try:
         result_json = _coverage_json_cached(metric, scope, threshold, period_1, period_2, member)
         return app.response_class(result_json, mimetype='application/json')
+    except ClimateDataUnavailable:
+        raise
     except KeyError as e:
         return jsonify({'error': f'Council not found: {e}'}), 400
     except FileNotFoundError:
@@ -2353,6 +2366,15 @@ def _validated_climate_selection(metric, period, month, member=None):
         raise InvalidSelection(f"unknown metric: {metric!r}")
     if period not in _PRECOMP_PERIODS:
         raise InvalidSelection(f"unknown period: {period!r}")
+    # Future CWR precomputes are known copies of CWB rather than genuine CWR
+    # data.  Gate the combination here so every grid-data route (map features,
+    # AOIs, filters, exports, coverage and timeseries) fails consistently.
+    # The catchment dashboard uses its separate JESS CWR dataset and does not
+    # pass through this validator.
+    if metric in _INVALID_METRICS and period not in _CWR_VALID_PERIODS:
+        raise ClimateDataUnavailable(
+            f"{metric} grid data not available for period {period!r}"
+        )
     try:
         month_int = int(month)
     except (TypeError, ValueError) as exc:
@@ -2646,9 +2668,6 @@ def get_values():
     period = request.args.get('period', '2050-2079')
     month  = request.args.get('month', str(_current_month()))
     member = request.args.get('member', None)
-
-    if metric in _INVALID_METRICS and period not in _CWR_VALID_PERIODS:
-        return jsonify({'error': f'{metric} data not available for period {period!r}'}), 404
 
     metric, period, month, member = _validated_climate_selection(metric, period, month, member)
 
