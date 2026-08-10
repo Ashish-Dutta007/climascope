@@ -223,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let catchmentsData  = [];        // [{name, category, bbox}] from /api/catchments
   let councilsGJ      = null;
   let currentGJ       = null;
+  let _currentViewExportBtn = null;
   let aoiGeoJSON      = null;       // drawn / uploaded AOI (kept for map layer)
   let refreshTimer    = null;
   let currentBasemap   = 'dark';
@@ -249,6 +250,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let terrainVar       = 'elevation';
   const _terrainCache  = {};     // var -> { data:{id:val}, min, max }
   let _terrainApplied  = false;  // whether feature-states are currently set
+
+  function _setCurrentViewData(gj) {
+    currentGJ = gj;
+    if (!_currentViewExportBtn) return;
+    const scoped = Boolean(activeCouncil || activeCatchment || aoiGeoJSON);
+    const available = scoped && Boolean(gj?.features?.length);
+    _currentViewExportBtn.disabled = !available;
+    _currentViewExportBtn.title = scoped
+      ? (available ? 'Export the currently displayed scoped cells' : 'No scoped cell data is loaded')
+      : 'National cell export is unavailable; select a council, catchment, or AOI';
+  }
 
   // Whole-of-Scotland framing including the island groups. Bounds adapt better
   // than a fixed zoom across desktop, laptop, and mobile map sizes.
@@ -1421,6 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function _paintAoiFeature(feature) {
+    _setCurrentViewData(null);
     map.setLayoutProperty('cells-fill', 'visibility', 'none');
     map.setLayoutProperty('cells-line', 'visibility', 'none');
     map.setLayoutProperty('grid-fill',  'visibility', 'visible');
@@ -1441,7 +1454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!resp.ok) return;
       const gj = await resp.json();
-      currentGJ = gj;
+      _setCurrentViewData(gj);
       setData(SRC.grid, gj);
       const vals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
       const dMin = vals.length ? Math.min(...vals) : null;
@@ -2010,6 +2023,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // A new selection must never leave the previous scope available to the
+    // export control while its replacement is loading (or after an error).
+    _setCurrentViewData(null);
+
     if (aoiGeoJSON?.geometry) {
       await _paintAoiFeature(aoiGeoJSON);
       return;
@@ -2041,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         const gj = await resp.json();
-        currentGJ = gj;
+        _setCurrentViewData(gj);
         setData(SRC.grid, gj);
         const vals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
         const cMin = vals.length ? Math.min(...vals) : null;
@@ -2108,7 +2125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const gj = await resp.json();
-      currentGJ = gj;
+      _setCurrentViewData(gj);
       setData(SRC.grid, gj);
       const _cVals = gj.features.map(f => +f.properties.Change).filter(v => !isNaN(v));
       const _cMin  = _cVals.length ? Math.min(..._cVals) : null;
@@ -2338,8 +2355,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function exportCurrentView() {
-    if (!currentGJ?.features?.length) { alert('No data loaded yet.'); return; }
     const { metric, period, month, member, scope, councilName, catchmentName } = _getMapState();
+    if (scope === 'national') {
+      alert('National cell export is unavailable. Select a council, catchment, or draw an AOI first.');
+      return;
+    }
+    if (!currentGJ?.features?.length) { alert('No scoped data loaded yet.'); return; }
     const memberLabel = member && member !== 'mean' ? member : 'mean';
     const memberSuffix = memberLabel !== 'mean' ? `_member_${memberLabel}` : `_ensemble_mean`;
     const colName = `${metric}_${period}_${month}${memberSuffix}`;
@@ -2378,10 +2399,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportBtn = document.createElement('div');
   exportBtn.className = 'section';
   exportBtn.innerHTML = `<button id="btn-export" class="draw-btn" style="width:100%;justify-content:center">
-    ⬇&nbsp;&nbsp;Export current view (GeoJSON)
+    ⬇&nbsp;&nbsp;Export scoped view (GeoJSON)
   </button>`;
   $('panel-explore').appendChild(exportBtn);
-  exportBtn.querySelector('#btn-export').addEventListener('click', exportCurrentView);
+  _currentViewExportBtn = exportBtn.querySelector('#btn-export');
+  _currentViewExportBtn.addEventListener('click', exportCurrentView);
+  _setCurrentViewData(currentGJ);
 
   // ----- context-aware popups (localized to the active overlay) -----
   let _lcById = null, _lcCodeName = null, _habitatById = null, _habitatCodeName = null,

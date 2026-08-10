@@ -162,9 +162,11 @@ class FilterPanel {
     this.el.querySelector('#fp-logic-toggle').addEventListener('click', e => {
       const btn = e.target.closest('[data-logic]');
       if (!btn) return;
+      if (this.logic === btn.dataset.logic) return;
       this.logic = btn.dataset.logic;
       this.el.querySelectorAll('[data-logic]').forEach(b =>
         b.classList.toggle('active', b.dataset.logic === this.logic));
+      this._invalidateAppliedResults();
     });
 
     this.el.querySelector('#fp-mask-toggle').addEventListener('click', e => {
@@ -246,6 +248,7 @@ class FilterPanel {
     const ids = await this._resolveAoiCells(feature);
     if (revision !== this._aoiRevision) return;
     if (ids !== null) {
+      this._invalidateAppliedResults();
       this._aoiCells  = ids;
       this._aoiActive = true;
       const clearBtn  = this.el.querySelector('#fp-sp-clear');
@@ -388,16 +391,7 @@ class FilterPanel {
     if (state.scope !== this._lastScope || state.member !== this._lastMember) {
       this._lastScope  = state.scope;
       this._lastMember = state.member;
-      this.matchedIds   = null;
-      this._lastApplied = null;
-      const resultEl = this.el.querySelector('#fp-result');
-      if (resultEl) resultEl.textContent = '';
-      this._updateExportControls();
-      // Reset mask and clear cell highlights
-      this.maskMode = 'none';
-      this.el.querySelectorAll('[data-mask]').forEach(b =>
-        b.classList.toggle('active', b.dataset.mask === 'none'));
-      this._dispatchMask();
+      this._invalidateAppliedResults(false);
       // Re-fetch range hints for all rules with new scope/member
       this.rules.forEach((_, i) => {
         this.rules[i].rangeMin = null;
@@ -411,6 +405,7 @@ class FilterPanel {
     if (this.rules.length > 0 && !this.rules[0]._userEdited) {
       const r = this.rules[0];
       if (r.metric !== state.metric || r.period !== state.period || r.month !== state.month) {
+        this._invalidateAppliedResults();
         r.metric   = state.metric;
         r.period   = state.period;
         r.month    = state.month;
@@ -424,6 +419,7 @@ class FilterPanel {
 
   _addRule() {
     if (this.rules.length >= _FP_MAX_RULES) return;
+    this._invalidateAppliedResults();
     const s = this.getMapState();
     this.rules.push({
       type:        'climate',
@@ -444,6 +440,7 @@ class FilterPanel {
   }
 
   _removeRule(idx) {
+    this._invalidateAppliedResults();
     this.rules.splice(idx, 1);
     this._renderRules();
   }
@@ -552,6 +549,7 @@ class FilterPanel {
 
       row.querySelectorAll('.fp-sel').forEach(sel => {
         sel.addEventListener('change', e => {
+          this._invalidateAppliedResults();
           const key = e.target.dataset.key;
           this.rules[i][key] = key === 'month' ? parseInt(e.target.value) : e.target.value;
           this.rules[i]._userEdited = true;
@@ -583,6 +581,7 @@ class FilterPanel {
 
       row.querySelectorAll('.fp-val').forEach(inp => {
         inp.addEventListener('input', e => {
+          this._invalidateAppliedResults();
           this.rules[i][e.target.dataset.key] = e.target.value;
           this.rules[i]._userEdited = true;
         });
@@ -767,6 +766,23 @@ class FilterPanel {
     hint.textContent = (this.matchedIds && this.maskMode !== 'none')
       ? `${this.matchedIds.length.toLocaleString()} ids`
       : '';
+  }
+
+  _invalidateAppliedResults(showMessage = true) {
+    const hadApplied = this.matchedIds !== null || this._lastApplied !== null;
+    this.matchedIds   = null;
+    this._lastApplied = null;
+    this.maskMode     = 'none';
+    this.el.querySelectorAll('[data-mask]').forEach(b =>
+      b.classList.toggle('active', b.dataset.mask === 'none'));
+    const resultEl = this.el.querySelector('#fp-result');
+    if (resultEl) {
+      resultEl.textContent = hadApplied && showMessage
+        ? 'Rules changed — apply filter again.'
+        : '';
+    }
+    this._dispatchMask();
+    this._updateExportControls();
   }
 
   _dispatchMask() {
