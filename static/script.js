@@ -2601,10 +2601,34 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch { el.textContent = 'error'; }
   }
 
-  // hover tooltip — active-context value, from memory (no fetch)
-  const _hoverPop = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8, className: 'hover-pop' });
+  // Hover tooltip — active-context value, from memory (no fetch). Measure it
+  // after rendering and clamp it to the map rather than relying on MapLibre's
+  // half-map anchor heuristic, which can clip long text on narrow maps.
+  const _hoverTip = document.createElement('div');
+  _hoverTip.className = 'hover-tip';
+  _hoverTip.hidden = true;
+  _hoverTip.setAttribute('aria-hidden', 'true');
+  map.getContainer().appendChild(_hoverTip);
+
+  function _positionHoverTip(point) {
+    const pad = 8, gap = 10;
+    const mapEl = map.getContainer();
+    const tipW = _hoverTip.offsetWidth, tipH = _hoverTip.offsetHeight;
+    let left = point.x + gap;
+    let top  = point.y - tipH - gap;
+    if (left + tipW > mapEl.clientWidth - pad) left = point.x - tipW - gap;
+    if (top < pad) top = point.y + gap;
+    left = Math.max(pad, Math.min(left, mapEl.clientWidth - tipW - pad));
+    top  = Math.max(pad, Math.min(top, mapEl.clientHeight - tipH - pad));
+    _hoverTip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  }
+
+  function _hideHoverTip() {
+    _hoverTip.hidden = true;
+  }
+
   function _onCellHover(e) {
-    if (_drawActive) { _hoverPop.remove(); return; }
+    if (_drawActive) { _hideHoverTip(); return; }
     const f = e.features[0];
     // Prefer the real cell ID from properties. Vector-tile cells promote id_1km
     // onto f.id, but AOI/council GeoJSON comes from GeoPandas to_json(), whose
@@ -2612,14 +2636,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // nonexistent cell and report "no data" for every hovered cell.
     const rawId = f.properties?.id_1km ?? f.id;
     const id = (rawId != null && isFinite(+rawId)) ? Math.trunc(+rawId) : rawId;
-    if (id == null || (f.properties?.catchment_name && f.properties?.id_1km == null)) { _hoverPop.remove(); return; }
+    if (id == null || (f.properties?.catchment_name && f.properties?.id_1km == null)) { _hideHoverTip(); return; }
     const isBase = ($('period')?.value || '') === '1990-2019';
-    _hoverPop.setLngLat(e.lngLat)
-      .setHTML(`<div class="hover-pop-inner">Cell ${id} · ${_ctxSummary(id, _cellClimateVal(f, id), isBase)}</div>`)
-      .addTo(map);
+    _hoverTip.innerHTML = `Cell ${id} · ${_ctxSummary(id, _cellClimateVal(f, id), isBase)}`;
+    _hoverTip.hidden = false;
+    _positionHoverTip(e.point);
     map.getCanvas().style.cursor = 'crosshair';
   }
-  function _offCellHover() { _hoverPop.remove(); map.getCanvas().style.cursor = ''; }
+  function _offCellHover() { _hideHoverTip(); map.getCanvas().style.cursor = ''; }
 
   function attachPopup() {
     map.on('click', 'grid-fill', e => {

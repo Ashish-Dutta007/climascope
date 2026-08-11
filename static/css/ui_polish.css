@@ -188,11 +188,27 @@ button:disabled, select:disabled, input:disabled {
   #rp-toggle { min-width: 40px; }
 }
 
+/* At compact desktop widths the search field and collapsed analysis tabs
+   otherwise occupy the same top row. Keep both fully visible. */
+@media (min-width: 768px) and (max-width: 900px) {
+  #map-search { top: 62px; }
+}
+
 @media (max-width: 767px) {
   /* Keep map furniture clear of the collapsed analysis dock. */
   #map-search { top: 56px; width: min(240px, calc(100vw - 20px)); }
   #legend { bottom: 70px; right: 12px; }
   #active-layers { right: 8px; min-width: 196px; }
+  .maplibregl-ctrl-bottom-right {
+    right: auto;
+    top: 104px;
+    bottom: auto;
+    left: 0;
+  }
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+    margin-right: 0;
+    margin-left: 10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

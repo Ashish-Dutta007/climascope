@@ -523,7 +523,7 @@ input[type=range]::-moz-range-thumb {
    LEGEND
 =========================== */
 #legend {
-  position:absolute; bottom:26px; right:24px;
+  position:absolute; bottom:44px; right:24px;
   background: rgba(17,24,39,.95); color: var(--text-primary);
   padding:12px 14px; border-radius:9px;
   font-size:11px; border:1px solid var(--border-subtle);
@@ -595,11 +595,29 @@ input[type=range]::-moz-range-thumb {
 }
 .maplibregl-popup-tip { border-top-color: var(--bg-sidebar) !important; border-bottom-color: var(--bg-sidebar) !important; }
 
-/* compact, non-interactive hover tooltip */
-.hover-pop { pointer-events: none; }
-.hover-pop .maplibregl-popup-content { padding: 5px 9px !important; border-radius: 6px !important; }
-.hover-pop .maplibregl-popup-tip { display: none !important; }
-.hover-pop-inner { font-size: 11px; white-space: nowrap; color: var(--text-primary); }
+/* Compact, non-interactive hover tooltip. Its position is measured and clamped
+   by script after the content is rendered, so both the background and text stay
+   inside the map at narrow desktop widths. */
+.hover-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+  width: max-content;
+  max-width: min(420px, calc(100% - 16px));
+  padding: 5px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--bg-sidebar);
+  box-shadow: 0 6px 24px rgba(0,0,0,.55);
+  color: var(--text-primary);
+  font-family: system-ui,sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.hover-tip[hidden] { display: none; }
 .popup-tile {
   font-family: ui-monospace, monospace;
   font-size: 10px;
