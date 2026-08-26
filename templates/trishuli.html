@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trishuli Corridor Map | ClimaScope</title>
 <meta name="description" content="Pre-event baseline map of the Bhote Koshi and Trishuli corridor, Rasuwa to Nuwakot, Nepal. Terrain screening and exposure layers for the 26 August 2026 flood response.">
+<meta name="author" content="Ashish Dutta">
+<link rel="canonical" href="https://climascope.hutton.ac.uk/trishuli">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ClimaScope">
+<meta property="og:title" content="Bhote Koshi–Trishuli Pre-event GIS Baseline">
+<meta property="og:description" content="Explore terrain and mapped assets along the flood corridor. Exposure baseline only; no flood extent or damage is shown.">
+<meta property="og:url" content="https://climascope.hutton.ac.uk/trishuli">
+<meta property="og:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"
       integrity="sha384-p5cy4wHtKSqjnLUNjQ+8ffCwUp0vlLS+6lg1lc3qqXax2E1EmVCMCAimU+R0MOZH" crossorigin="anonymous">
 <link rel="stylesheet" href="{{ url_for('static', filename='trishuli/base.css') }}?v={{ av('trishuli/base.css') }}">
@@ -16,8 +27,8 @@
     <img src="{{ url_for('static', filename='hutton_logo.svg') }}" alt="James Hutton Institute">
     <a href="/">ClimaScope</a><span class="sep">/</span>
     <span>Trishuli corridor</span><span class="sep">/</span>
-    <a href="/trishuli/report">Assessment report</a>
-    <span class="grow">Pre-event baseline &middot; OSM 24 Aug 2026</span>
+    <a href="/trishuli/report">Evidence brief</a>
+    <span class="grow">Version 0.2 &middot; OSM 24 Aug 2026</span>
   </div>
 
   <div class="app">
@@ -25,7 +36,7 @@
     <div class="brand">
       <div class="eyebrow">Pre-event baseline</div>
       <h1>Trishuli Corridor Map</h1>
-      <p>Bhote Koshi and Trishuli, Rasuwagadhi to Bidur. Imagery and terrain predate the 26 Aug 2026 flood.</p>
+      <p>Bhote Koshi and Trishuli, Rasuwagadhi to Bidur. Terrain and mapped assets predate the 26 Aug 2026 flood.</p>
     </div>
 
     <div class="grp">
@@ -40,14 +51,14 @@
     </div>
 
     <div class="grp">
-      <h2>Slope hazard overlay</h2>
+      <h2>Terrain context</h2>
       <label class="row"><input type="checkbox" id="l-slope" checked><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
       <input type="range" id="slopeop" min="0" max="100" value="62" aria-label="Slope overlay opacity">
     </div>
 
     <div class="grp">
       <h2>Layers</h2>
-      <label class="row"><input type="checkbox" id="l-stem" checked><span class="sw" style="background:#b8392e"></span><span>River, by blockage index</span></label>
+      <label class="row"><input type="checkbox" id="l-stem" checked><span class="sw" style="background:#b8392e"></span><span>River, nearby steep terrain</span></label>
       <label class="row"><input type="checkbox" id="l-trib" checked><span class="sw" style="background:#2b8fab"></span><span>Tributaries</span><span class="ct">187</span></label>
       <label class="row"><input type="checkbox" id="l-rmaj" checked><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
       <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct">400</span></label>
@@ -57,18 +68,19 @@
       <label class="row"><input type="checkbox" id="l-hlth" checked><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
       <label class="row"><input type="checkbox" id="l-heli" checked><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct">15</span></label>
       <label class="row"><input type="checkbox" id="l-plc" checked><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct">223</span></label>
-      <label class="row"><input type="checkbox" id="l-buf"><span class="sw" style="background:#a9d3e0"></span><span>250 m channel buffer</span></label>
+      <label class="row"><input type="checkbox" id="l-buf"><span class="sw" style="background:#a9d3e0"></span><span>Approx. 250 m channel zone</span></label>
       <button type="button" id="fit" class="dl" style="margin-top:9px;cursor:pointer;width:100%;text-align:left;font-family:inherit"><b>Reset view</b>Fit the whole corridor</button>
     </div>
 
     <div class="grp">
-      <h2>Blockage hotspots</h2>
+      <h2>Steep terrain reaches</h2>
       <div class="jump" id="jump"></div>
     </div>
 
     <div class="grp">
       <h2>Download</h2>
-      <a class="dl" href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download><b>GeoPackage, 5.3 MB</b>10 layers for QGIS or ArcGIS Pro: reach metrics, exposure with distance to channel, channel buffers.</a>
+      <a class="dl" href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download><b>GeoPackage, 5.3 MB</b>10 baseline layers for QGIS or ArcGIS Pro.</a>
+      <a class="dl secondary" href="{{ url_for('static', filename='trishuli/DATA_NOTES.txt') }}"><b>Data notes</b>Sources, fields, licence and analytical limits.</a>
     </div>
 
     <div class="grp">
@@ -77,18 +89,19 @@
         <b>Imagery</b> Esri World Imagery, live tiles. Source: Esri, Vantor, Earthstar Geographics.<br><br>
         <b>Terrain</b> Copernicus DEM GLO-30, slope computed at 27&times;31&nbsp;m and served as a georeferenced overlay.<br><br>
         <b>Vectors</b> OpenStreetMap via the HOT extract <span class="mono">hot_flood_npl</span>, OSM data 24 Aug 2026, ODbL.<br><br>
-        <b>Blockage index</b> screening heuristic from near-channel slope, local relief and channel gradient. Rank order is meaningful; absolute values are not.
+        <b>River colours</b> share of terrain steeper than 45&deg; within 500&nbsp;m of each 1&nbsp;km river sample. This is descriptive terrain context, not hazard probability.<br><br>
+        <b>Author</b> Ashish Dutta, GIS scientist. Corrections: <a href="mailto:Ashish.Dutta@hutton.ac.uk">email</a>.
       </p>
     </div>
   </aside>
 
   <main>
     <div id="map"></div>
-    <div class="banner"><b>Pre-event baseline.</b> Nothing here shows flood extent. Markers show what sits near the channel, not observed damage.</div>
+    <div class="banner"><b>Pre-event baseline.</b> Nothing here shows flood extent or damage. Markers show mapped assets near the channel.</div>
     <div id="legend">
-      <h3>Blockage susceptibility</h3>
+      <h3>Nearby terrain &gt;45&deg;</h3>
       <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
-      <div class="rl"><span>low</span><span>very high</span></div>
+      <div class="rl"><span>&lt;10%</span><span>40%+</span></div>
       <div style="height:8px"></div>
       <h3>Slope</h3>
       <div class="ramp"><span style="background:#fad678"></span><span style="background:#f6aa50"></span><span style="background:#e9783a"></span><span style="background:#ce422d"></span><span style="background:#961c1e"></span></div>
