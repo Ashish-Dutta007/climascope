@@ -629,6 +629,27 @@ def immersive_control():
     return resp
 
 
+# --- Trishuli corridor (Nepal, 26 Aug 2026 flood) -------------------------
+# Static pre-event baseline pages. Vectors, slope overlay and the GeoPackage
+# are plain files under static/trishuli/; basemap tiles come live from
+# server.arcgisonline.com, which the CSP in _security_headers already allows.
+
+@app.route("/trishuli", strict_slashes=False)
+def trishuli_map():
+    from flask import render_template, make_response
+    resp = make_response(render_template("trishuli.html"))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/trishuli/report", strict_slashes=False)
+def trishuli_report():
+    from flask import render_template, make_response
+    resp = make_response(render_template("trishuli_report.html"))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 _OS_NAMES_ENDPOINT = "https://api.os.uk/search/names/v1/find"
 _OS_NAMES_BOUNDS = "0,530000,470000,1220000"
 
