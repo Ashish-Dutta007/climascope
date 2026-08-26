@@ -5,7 +5,7 @@ Author
 ------
 Ashish Dutta, geospatial researcher
 The James Hutton Institute
-Ashish.Dutta@hutton.ac.uk
+ashish.dutta@hutton.ac.uk
 
 Purpose
 -------
