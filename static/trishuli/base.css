@@ -1,0 +1,43 @@
+/* Trishuli corridor pages - shared tokens, self-hosted faces (CSP font-src 'self') */
+@font-face{font-family:Archivo;src:url("fonts/Archivo_600.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:Archivo;src:url("fonts/Archivo_700.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url("fonts/PlexMono_400.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex Mono";src:url("fonts/PlexMono_600.woff2") format("woff2");font-weight:600;font-display:swap}
+:root{
+  --bg:#eaeef2; --panel:#fbfcfd; --panel-2:#e3e9ef; --line:#c7d2dc; --line-soft:#dde4eb;
+  --ink:#131c25; --ink-2:#3b4956; --muted:#697785;
+  --accent:#0f6f8c; --accent-ink:#0b5266; --accent-soft:#d3e7ee; --on-accent:#fff;
+  --amber:#8f5d10; --amber-soft:#f2e3c6; --crit:#962c24; --crit-soft:#f3d7d3;
+  --good:#285c45; --good-soft:#d0e4da;
+  --shadow:0 1px 2px rgba(19,28,37,.07),0 8px 24px rgba(19,28,37,.10);
+  --ui:Archivo,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --mono:"Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c131a; --panel:#131c25; --panel-2:#1b2732; --line:#2a3844; --line-soft:#212e39;
+  --ink:#e9eff4; --ink-2:#b4c2ce; --muted:#8394a2;
+  --accent:#5cb9d6; --accent-ink:#9ad6ea; --accent-soft:#123340; --on-accent:#08161c;
+  --amber:#e0a94e; --amber-soft:#3a2c12; --crit:#e8776b; --crit-soft:#3d1a16;
+  --good:#6fbd97; --good-soft:#12301f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --bg:#0c131a; --panel:#131c25; --panel-2:#1b2732; --line:#2a3844; --line-soft:#212e39;
+  --ink:#e9eff4; --ink-2:#b4c2ce; --muted:#8394a2;
+  --accent:#5cb9d6; --accent-ink:#9ad6ea; --accent-soft:#123340; --on-accent:#08161c;
+  --amber:#e0a94e; --amber-soft:#3a2c12; --crit:#e8776b; --crit-soft:#3d1a16;
+  --good:#6fbd97; --good-soft:#12301f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sitebar{display:flex;align-items:center;gap:14px;padding:8px 16px;background:var(--panel);
+  border-bottom:1px solid var(--line);font-family:var(--ui);font-size:12.5px;flex:none}
+.sitebar img{height:20px;width:auto}
+.sitebar a{color:var(--accent-ink);text-decoration:none;font-weight:600}
+.sitebar a:hover{text-decoration:underline}
+.sitebar .sep{color:var(--line);}
+.sitebar .grow{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:11px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

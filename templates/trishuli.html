@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trishuli Corridor Map | ClimaScope</title>
+<meta name="description" content="Pre-event baseline map of the Bhote Koshi and Trishuli corridor, Rasuwa to Nuwakot, Nepal. Terrain screening and exposure layers for the 26 August 2026 flood response.">
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"
+      integrity="sha384-p5cy4wHtKSqjnLUNjQ+8ffCwUp0vlLS+6lg1lc3qqXax2E1EmVCMCAimU+R0MOZH" crossorigin="anonymous">
+<link rel="stylesheet" href="{{ url_for('static', filename='trishuli/base.css') }}?v={{ av('trishuli/base.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='trishuli/map.css') }}?v={{ av('trishuli/map.css') }}">
+</head>
+<body>
+<div class="page">
+  <div class="sitebar">
+    <img src="{{ url_for('static', filename='hutton_logo.svg') }}" alt="James Hutton Institute">
+    <a href="/">ClimaScope</a><span class="sep">/</span>
+    <span>Trishuli corridor</span><span class="sep">/</span>
+    <a href="/trishuli/report">Assessment report</a>
+    <span class="grow">Pre-event baseline &middot; OSM 24 Aug 2026</span>
+  </div>
+
+  <div class="app">
+  <aside>
+    <div class="brand">
+      <div class="eyebrow">Pre-event baseline</div>
+      <h1>Trishuli Corridor Map</h1>
+      <p>Bhote Koshi and Trishuli, Rasuwagadhi to Bidur. Imagery and terrain predate the 26 Aug 2026 flood.</p>
+    </div>
+
+    <div class="grp">
+      <h2>Basemap</h2>
+      <div class="seg" role="group" aria-label="Basemap">
+        <button type="button" id="b-img" aria-pressed="true">Imagery</button>
+        <button type="button" id="b-topo" aria-pressed="false">Topo</button>
+        <button type="button" id="b-hs" aria-pressed="false">Hillshade</button>
+        <button type="button" id="b-terr" aria-pressed="false">Terrain</button>
+      </div>
+      <p class="note" style="margin-top:8px">Live Esri tiles, zoom to 1&nbsp;m where coverage allows.</p>
+    </div>
+
+    <div class="grp">
+      <h2>Slope hazard overlay</h2>
+      <label class="row"><input type="checkbox" id="l-slope" checked><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
+      <input type="range" id="slopeop" min="0" max="100" value="62" aria-label="Slope overlay opacity">
+    </div>
+
+    <div class="grp">
+      <h2>Layers</h2>
+      <label class="row"><input type="checkbox" id="l-stem" checked><span class="sw" style="background:#b8392e"></span><span>River, by blockage index</span></label>
+      <label class="row"><input type="checkbox" id="l-trib" checked><span class="sw" style="background:#2b8fab"></span><span>Tributaries</span><span class="ct">187</span></label>
+      <label class="row"><input type="checkbox" id="l-rmaj" checked><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
+      <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct">400</span></label>
+      <label class="row"><input type="checkbox" id="l-bldg" checked><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct">17,167</span></label>
+      <label class="row"><input type="checkbox" id="l-brg" checked><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct">69</span></label>
+      <label class="row"><input type="checkbox" id="l-edu" checked><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct">58</span></label>
+      <label class="row"><input type="checkbox" id="l-hlth" checked><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
+      <label class="row"><input type="checkbox" id="l-heli" checked><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct">15</span></label>
+      <label class="row"><input type="checkbox" id="l-plc" checked><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct">223</span></label>
+      <label class="row"><input type="checkbox" id="l-buf"><span class="sw" style="background:#a9d3e0"></span><span>250 m channel buffer</span></label>
+      <button type="button" id="fit" class="dl" style="margin-top:9px;cursor:pointer;width:100%;text-align:left;font-family:inherit"><b>Reset view</b>Fit the whole corridor</button>
+    </div>
+
+    <div class="grp">
+      <h2>Blockage hotspots</h2>
+      <div class="jump" id="jump"></div>
+    </div>
+
+    <div class="grp">
+      <h2>Download</h2>
+      <a class="dl" href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download><b>GeoPackage, 5.3 MB</b>10 layers for QGIS or ArcGIS Pro: reach metrics, exposure with distance to channel, channel buffers.</a>
+    </div>
+
+    <div class="grp">
+      <h2>Provenance</h2>
+      <p class="note">
+        <b>Imagery</b> Esri World Imagery, live tiles. Source: Esri, Vantor, Earthstar Geographics.<br><br>
+        <b>Terrain</b> Copernicus DEM GLO-30, slope computed at 27&times;31&nbsp;m and served as a georeferenced overlay.<br><br>
+        <b>Vectors</b> OpenStreetMap via the HOT extract <span class="mono">hot_flood_npl</span>, OSM data 24 Aug 2026, ODbL.<br><br>
+        <b>Blockage index</b> screening heuristic from near-channel slope, local relief and channel gradient. Rank order is meaningful; absolute values are not.
+      </p>
+    </div>
+  </aside>
+
+  <main>
+    <div id="map"></div>
+    <div class="banner"><b>Pre-event baseline.</b> Nothing here shows flood extent. Markers show what sits near the channel, not observed damage.</div>
+    <div id="legend">
+      <h3>Blockage susceptibility</h3>
+      <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
+      <div class="rl"><span>low</span><span>very high</span></div>
+      <div style="height:8px"></div>
+      <h3>Slope</h3>
+      <div class="ramp"><span style="background:#fad678"></span><span style="background:#f6aa50"></span><span style="background:#e9783a"></span><span style="background:#ce422d"></span><span style="background:#961c1e"></span></div>
+      <div class="rl"><span>30&deg;</span><span>50&deg;+</span></div>
+      <div style="height:8px"></div>
+      <h3>Buildings</h3>
+      <div class="li"><i style="background:#c9423a"></i>within 100 m of channel</div>
+      <div class="li"><i style="background:#d68c36"></i>100 to 250 m</div>
+      <div class="li"><i style="background:#78848f"></i>beyond 250 m</div>
+    </div>
+  </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"
+        integrity="sha384-3WUbXI7T+/GIrWP/5MDMjhzLyHQ+0utF3PnJ7ozD7UeN1/bbZ96Hk+Vvd024VYfW" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='trishuli/map.js') }}?v={{ av('trishuli/map.js') }}"
+        data-base="{{ url_for('static', filename='trishuli/') }}"></script>
+</body>
+</html>
