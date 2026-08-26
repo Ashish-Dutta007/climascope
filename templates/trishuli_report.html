@@ -3,8 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trishuli Flood Assessment | ClimaScope</title>
-<meta name="description" content="Rapid open-data assessment of the 26 August 2026 Bhote Koshi and Trishuli flood, Nepal: rainfall exclusion, terrain screening, exposure and satellite tasking.">
+<title>Trishuli Flood Evidence Brief | ClimaScope</title>
+<meta name="description" content="A living, open-data GIS brief for the 26 August 2026 Bhote Koshi and Trishuli flood in Nepal: verified status, pre-event exposure, terrain context and the next satellite observations.">
+<meta name="author" content="Ashish Dutta">
+<link rel="canonical" href="https://climascope.hutton.ac.uk/trishuli/report">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="ClimaScope">
+<meta property="og:title" content="Trishuli Flood: Living GIS Evidence Brief">
+<meta property="og:description" content="What is confirmed, what remains uncertain, and what open GIS data can show after the 26 August flood in Nepal.">
+<meta property="og:url" content="https://climascope.hutton.ac.uk/trishuli/report">
+<meta property="og:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Trishuli Flood: Living GIS Evidence Brief">
+<meta name="twitter:description" content="Verified status, pre-event exposure and the next satellite observations.">
+<meta name="twitter:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
 <link rel="stylesheet" href="{{ url_for('static', filename='trishuli/base.css') }}?v={{ av('trishuli/base.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='trishuli/report.css') }}?v={{ av('trishuli/report.css') }}">
 </head>
@@ -12,326 +26,146 @@
 <div class="sitebar">
   <img src="{{ url_for('static', filename='hutton_logo.svg') }}" alt="James Hutton Institute">
   <a href="/">ClimaScope</a><span class="sep">/</span>
-  <a href="/trishuli">Trishuli corridor</a><span class="sep">/</span>
-  <span>Assessment report</span>
-  <span class="grow">Prepared 2026-08-26 15:21 UTC</span>
-</div>
-<header class="mast"><div class="mast-in">
-  <div>
-    <div class="eyebrow">Rapid remote assessment &middot; Open data only</div>
-    <h1>Trishuli Corridor Watch</h1>
-    <p class="sub">Bhote Koshi to Trishuli to Narayani, Rasuwa through Nuwakot toward Nawalparasi. Evidence assembled from public APIs within hours of onset.</p>
-  </div>
-  <div class="stamp">
-    ASSESSMENT&nbsp;&nbsp;<b>2026-08-26 21:06 NPT</b><br>
-    EVENT&nbsp;ONSET&nbsp;&nbsp;<b>2026-08-26 ~08:30 NPT</b><br>
-    SOURCES&nbsp;&nbsp;<b>7 APIs queried, 6 failed</b><br>
-    FLOOD&nbsp;EXTENT&nbsp;&nbsp;<b>not yet mappable</b>
-  </div>
-</div></header>
-
-<div class="wrap">
-
-<div class="band">
-  <div class="cell"><div class="k">Elapsed since onset</div><div class="v amber" id="elapsed">12.6 h</div><div class="n">First post-event radar still pending</div></div>
-  <div class="cell"><div class="k">Rain at source, 72 h</div><div class="v good">0.5&ndash;0.8 mm</div><div class="n">Rainfall effectively excluded as driver</div></div>
-  <div class="cell"><div class="k">Next Sentinel-1 pass</div><div class="v acc" id="nextpass">~39 h</div><div class="n">28 Aug 12:21 UTC, orbit 85 ASC</div></div>
-  <div class="cell"><div class="k">Same-day optical</div><div class="v crit">75% cloud</div><div class="n">VIIRS 250 m, unusable for extent</div></div>
-  <div class="cell"><div class="k">Buildings within 250 m</div><div class="v">4,619</div><div class="n">of 17,167 mapped in corridor</div></div>
+  <a href="/trishuli">Interactive map</a><span class="sep">/</span>
+  <span>Evidence brief</span>
+  <span class="grow">Version 0.2 &middot; 26 Aug 2026, 19:38 UTC</span>
 </div>
 
-<div class="notice"><b>What this document is not.</b> No flood extent has been delineated, because no post-event satellite image exists yet. Every downstream number below is exposure (what sits near the channel) or a model estimate, never observed damage. Casualty and damage figures are quoted from news and official sources with attribution, not derived here. No individual, company, or agency is assigned responsibility.</div>
-
-<section id="exec">
-  <div class="shead"><span class="idx">01</span><h2>Executive summary</h2></div>
-  <p class="lede">A large, rainfall-independent surge entered Nepal from Tibet down the Lhende/Bhote Koshi on the morning of 26 August 2026 and propagated into the Trishuli. The meteorological evidence is strong and points away from rainfall; the satellite evidence does not yet exist.</p>
-  <div class="grid2">
-    <div class="card"><h4>Rainfall is effectively excluded at source <span class="chip c-obs">High confidence</span></h4><p>Open-Meteo reanalysis over the Tibetan source catchment gives <b class="mono">0.5&ndash;0.8&nbsp;mm</b> of precipitation in the 72&nbsp;hours before onset, and <b class="mono">0.1&ndash;0.3&nbsp;mm</b> in the final 24&nbsp;hours. This independently corroborates the Rasuwa Chief District Officer's statement that there had been no rain. A rain-generated flash flood of this magnitude is not consistent with these totals.</p></div>
-    <div class="card"><h4>A cryospheric or mass-movement source is the leading hypothesis <span class="chip c-pla">Plausible, unverified</span></h4><p>ICIMOD attributes the flood to an avalanche in the Lhende Khola. Modelled freezing level over the source catchment sat at <b class="mono">5,480&ndash;6,280&nbsp;m</b> through the preceding 72&nbsp;hours, placing melt conditions across nearly the whole glacierised band. That is a permissive condition, not proof.</p></div>
-    <div class="card"><h4>The seismic trigger is genuinely ambiguous <span class="chip c-unk">Unresolved</span></h4><p>USGS and EMSC both catalogue an <b class="mono">mb 4.4</b> at <b class="mono">02:52:47 UTC</b> (08:37:47 NPT), about 34&nbsp;km from Rasuwagadhi. But depth is fixed at 10&nbsp;km in both solutions, no moment tensor was published, and the origin time falls <i>after</i> the reported ~08:30 flood arrival. Whether this is a trigger, an aftershock, or the seismic signature of the mass movement itself cannot be decided from catalogue metadata.</p></div>
-    <div class="card"><h4>Terrain analysis independently flags the worst-hit reach <span class="chip c-obs">Observed</span></h4><p>A blind slope and confinement analysis of the Copernicus 30&nbsp;m DEM ranks river chainage <b class="mono">16.1&nbsp;km</b> (28.1545&nbsp;N, 85.3289&nbsp;E, at Syabrubesi) as the single most blockage-susceptible reach: 49% of the near-channel area steeper than 45&deg;, 738&nbsp;m of relief within 500&nbsp;m, channel gradient 54&nbsp;m/km. This was computed from terrain alone and matches where the heaviest damage is reported.</p></div>
+<header class="mast">
+  <div class="mast-in">
+    <div>
+      <div class="eyebrow">Living GIS evidence brief &middot; Open data</div>
+      <h1>Bhote Koshi&ndash;Trishuli flood</h1>
+      <p class="sub">A clear account of what public evidence can show, what it cannot yet show, and which observations should change the picture next.</p>
+      <div class="byline">Ashish Dutta &middot; GIS scientist &middot; 26 August 2026</div>
+    </div>
+    <a class="map-cta" href="/trishuli"><span>Explore the corridor</span><b>Open interactive map &rarr;</b></a>
   </div>
-</section>
+</header>
 
-<section id="data">
-  <div class="shead"><span class="idx">02</span><h2>Data retrieved</h2></div>
-  <p class="lede">Every row was fetched live during this assessment. Acquisition times are UTC. Failures are listed with the same weight as successes.</p>
-  <div class="scroll"><table>
-    <caption>All endpoints queried 2026-08-26 between 15:21 and 16:45 UTC. No API keys were used or required.</caption>
-    <thead><tr><th>Source</th><th>Endpoint / parameters</th><th>Returned</th><th>Status</th></tr></thead>
-    <tbody>
-      <tr><td><strong>USGS FDSN</strong><br><span class="mono" style="font-size:11.5px">earthquake.usgs.gov/fdsnws/event/1/query</span></td><td class="mono" style="font-size:11.5px">format=geojson, 2026-08-19&rarr;27, bbox 27.0&ndash;29.5&nbsp;N / 84.0&ndash;86.5&nbsp;E, minmag=2.5</td><td>1 event: mb&nbsp;4.4, 02:52:47Z, 28.5495&nbsp;N 85.5378&nbsp;E, depth 10&nbsp;km (fixed), gap 91&deg;, nst 38</td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>EMSC seismicportal</strong><br><span class="mono" style="font-size:11.5px">seismicportal.eu/fdsnws/event/1/query</span></td><td class="mono" style="font-size:11.5px">format=json, 2026-08-25T12:00&rarr;27, same bbox, minmag=2.0</td><td>Same event, independent solution: 28.5935&nbsp;N 85.5804&nbsp;E, depth 10&nbsp;km, evtype <span class="mono">ke</span></td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>Open-Meteo forecast</strong><br><span class="mono" style="font-size:11.5px">api.open-meteo.com/v1/forecast</span></td><td class="mono" style="font-size:11.5px">9 corridor + 5 Tibet points, past_days=9, forecast_days=4, hourly=precipitation,snowfall,freezing_level_height, tz=Asia/Kathmandu</td><td>Hourly and daily precipitation 17&ndash;29 Aug for 14 points</td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>Open-Meteo elevation</strong><br><span class="mono" style="font-size:11.5px">api.open-meteo.com/v1/elevation</span></td><td class="mono" style="font-size:11.5px">100 points interpolated along river centreline</td><td>Long profile 1,800&nbsp;m &rarr; 462&nbsp;m over 62.5&nbsp;km</td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>Copernicus Data Space</strong><br><span class="mono" style="font-size:11.5px">catalogue.dataspace.copernicus.eu/odata/v1/Products</span></td><td class="mono" style="font-size:11.5px">$filter=Collection/Name eq 'SENTINEL-1'/'SENTINEL-2' and OData.CSC.Intersects(POINT(85.34 28.16)), $expand=Attributes</td><td>23 S1 products (3 relative orbits), 9 S2 L2A scenes with cloud cover. <b>Zero post-event scenes.</b></td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>Copernicus DEM 30&nbsp;m</strong><br><span class="mono" style="font-size:11.5px">copernicus-dem-30m.s3.amazonaws.com</span></td><td class="mono" style="font-size:11.5px">COG windowed read, tiles N27_00_E085_00 + N28_00_E085_00, bbox 85.03&ndash;85.42&nbsp;E / 27.83&ndash;28.30&nbsp;N</td><td>1692&times;1404 DEM, 27.3&times;30.7&nbsp;m pixels; slope mean 30.2&deg;, p90 44.5&deg;</td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>HDX / HOT</strong><br><span class="mono" style="font-size:11.5px">data.humdata.org/api/3/action/package_show</span></td><td class="mono" style="font-size:11.5px">id=hot_flood_npl</td><td>Event-specific OSM extract published 14:34Z today: 17,167 buildings, 1,557 roads, 69 bridges, 224 places, 58 schools, 6 health facilities over a 132.93&nbsp;km&sup2; AOI</td><td><span class="chip c-obs">200 OK</span></td></tr>
-      <tr><td><strong>NASA GIBS WMS</strong><br><span class="mono" style="font-size:11.5px">gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi</span></td><td class="mono" style="font-size:11.5px">VIIRS_NOAA20_CorrectedReflectance_TrueColor, BBOX=27.6,84.3,28.4,85.6, TIME=2026-08-26</td><td>Same-day 250&nbsp;m true colour, but 74.7% of the frame is cloud/snow bright</td><td><span class="chip c-pla">200, low value</span></td></tr>
-      <tr><td><strong>Overpass API</strong><br><span class="mono" style="font-size:11.5px">overpass-api.de, kumi.systems, private.coffee, maps.mail.ru</span></td><td class="mono" style="font-size:11.5px">Corridor bbox 27.60,84.35,28.35,85.50; bridges, roads, places, power, health</td><td>Nothing. Superseded by the HDX/HOT extract, which covers the same layers.</td><td><span class="chip c-exc">504 / 502 / refused</span></td></tr>
-      <tr><td><strong>ReliefWeb</strong><br><span class="mono" style="font-size:11.5px">api.reliefweb.int/v1/reports, /v2/reports</span></td><td class="mono" style="font-size:11.5px">filter country.name=Nepal, date.created from 2026-08-25</td><td>v1 decommissioned; v2 rejected the request</td><td><span class="chip c-exc">410 then 403</span></td></tr>
-      <tr><td><strong>GDACS</strong><br><span class="mono" style="font-size:11.5px">gdacs.org/gdacsapi/.../geteventlist, /xml/rss.xml</span></td><td class="mono" style="font-size:11.5px">eventlist=FL, 2026-08-24&rarr;27; RSS scanned for Nepal</td><td>No Nepal flood alert present as of 16:40Z. RSS returned but contains no entry for this event.</td><td><span class="chip c-pla">204 / no entry</span></td></tr>
-      <tr><td><strong>Copernicus EMS Rapid Mapping</strong><br><span class="mono" style="font-size:11.5px">rapidmapping.emergency.copernicus.eu/backend/api/activations</span></td><td class="mono" style="font-size:11.5px">limit=10, ordering=-activation_time</td><td>No activation matched. No EMS product available to consume yet.</td><td><span class="chip c-exc">404</span></td></tr>
-      <tr><td><strong>Nepal DHM</strong><br><span class="mono" style="font-size:11.5px">hydrology.gov.np, dhm.gov.np</span></td><td class="mono" style="font-size:11.5px">/api/v1/realtime/river, /hydrology/realtime</td><td>Hosts resolve and serve, but no public JSON endpoint at these paths. <b>No gauge data obtained.</b></td><td><span class="chip c-exc">404</span></td></tr>
-      <tr><td><strong>NASA GPM IMERG</strong><br><span class="mono" style="font-size:11.5px">gpm1.gesdisc.eosdis.nasa.gov</span></td><td class="mono" style="font-size:11.5px">GPM_3IMERGHHE.07 half-hourly Early Run</td><td>Not retrieved. Requires an <b>Earthdata Login</b> bearer token, which this assessment did not use.</td><td><span class="chip c-unk">Credential required</span></td></tr>
-    </tbody>
-  </table></div>
-</section>
-<section id="findings">
-  <div class="shead"><span class="idx">03</span><h2>Preliminary findings</h2></div>
-  <p class="lede">Four independent lines of evidence, in descending order of how firmly the data supports them.</p>
+<main class="wrap">
+  <section class="status" aria-label="Current assessment status">
+    <div><span>Brief status</span><strong>Working assessment</strong><small>Updates are dated below</small></div>
+    <div><span>Observed event</span><strong>Debris-rich flood</strong><small>Bhote Koshi into Trishuli</small></div>
+    <div><span>Leading explanation</span><strong>Mass movement</strong><small>Mechanism not confirmed</small></div>
+    <div><span>Mapped impact</span><strong>Not available</strong><small>No flood extent yet</small></div>
+  </section>
 
-  <h3>3.1 &nbsp;Precipitation: the source catchment was dry</h3>
-  <figure><div id="rainchart"></div>
-  <figcaption>Precipitation totals in the 72&nbsp;hours before onset (08:00 NPT, 26 Aug), from Open-Meteo <span class="mono">best_match</span> at 14 points. The five Tibetan source-catchment points, upstream of the border, are the pale bars at the top. Model analysis, not gauge observation.</figcaption></figure>
-  <p>The contrast is the finding. Across the Tibetan source catchment, including the epicentral area at 6,314&nbsp;m, 72-hour totals sit between <b class="mono">0.5</b> and <b class="mono">0.8&nbsp;mm</b>. Nepal-side corridor points recorded ordinary monsoon rain, <b class="mono">17&ndash;60&nbsp;mm</b> over the same window, which is unremarkable for late August and not close to flash-flood generating in catchments this size. The wettest corridor point over the previous 7 days was Devighat at <b class="mono">145&nbsp;mm</b>.</p>
-  <p><b>Caveat that matters:</b> this is model reanalysis on a coarse grid, not rain gauges. High-altitude Tibetan precipitation is among the least well constrained fields in any global model, and the grid snapped Betrawati and Bidur into a single cell. The finding is robust to that uncertainty only because the deficit is an order of magnitude, not a marginal difference.</p>
+  <div class="safety"><b>Not emergency guidance.</b> This is an independent rapid GIS note, not an official warning or damage assessment. Follow Nepal&rsquo;s authorities and local responders for safety information.</div>
 
-  <h3>3.2 &nbsp;Terrain: where the corridor is primed to block</h3>
-  <figure><div id="profile"></div>
-  <figcaption>Long profile of the mapped 62.5&nbsp;km main stem from Rasuwagadhi to Bidur, sampled at 1&nbsp;km spacing. The stripe below encodes a blockage-susceptibility index combining near-channel slope above 45&deg;, local relief within 500&nbsp;m, and channel gradient. Derived from Copernicus DEM 30&nbsp;m; the index is a screening heuristic, not a calibrated hazard model.</figcaption></figure>
-  <p>Mean slope across the corridor window is <b class="mono">30.2&deg;</b>, with the 90th percentile at <b class="mono">44.5&deg;</b>. This is terrain where valley walls deliver material directly into the channel. The index peaks at chainage 16.1&nbsp;km (Syabrubesi), 21.2&nbsp;km, and 27.2&nbsp;km, all in the confined upper gorge. Below roughly chainage 43&nbsp;km the valley opens, susceptibility collapses toward zero, and the dominant process changes from debris supply and blockage to inundation and siltation, which is consistent with the reported silting at Trishuli Bazaar, Battar and Devighat.</p>
+  <section id="evidence">
+    <div class="section-head"><span>01</span><div><h2>What we know now</h2><p>The language below follows the strength of the evidence, not the urgency of the story.</p></div></div>
+    <div class="evidence-grid">
+      <article class="evidence confirmed">
+        <div class="evidence-label">Confirmed in retrieved sources</div>
+        <h3>A large flood moved through the river system</h3>
+        <p>ICIMOD reports rapid water-level rise from about 09:00 NPT, with water, sediment and boulders moving from the Bhote Koshi into the Trishuli.</p>
+        <p>The current USGS catalogue classifies the 02:52:10 UTC seismic source as an <b>M&nbsp;5.2 landslide</b>, not an earthquake.</p>
+      </article>
+      <article class="evidence likely">
+        <div class="evidence-label">Best current interpretation</div>
+        <h3>An ice-rock avalanche is suspected</h3>
+        <p>ICIMOD and partners are investigating whether an ice-rock avalanche entered the Lhende Khola and generated or released the surge.</p>
+        <p>A temporary channel blockage may be part of the sequence. The source mechanism and blockage history remain unconfirmed.</p>
+      </article>
+      <article class="evidence unknown">
+        <div class="evidence-label">Not known from this analysis</div>
+        <h3>The footprint and affected assets</h3>
+        <p>There is no satellite-derived flood or debris extent here, no measured discharge series, and no verified count of affected buildings, roads or bridges.</p>
+        <p>Proximity to the pre-event channel is exposure, never proof of damage.</p>
+      </article>
+    </div>
+  </section>
 
-  <h3>3.3 &nbsp;Corridor map and exposure</h3>
-  <figure><div id="map"></div>
-  <figcaption>Main stem coloured by blockage-susceptibility index. Markers are OSM/HOT features within 1.5&nbsp;km of the channel. Hover any element for detail. This shows <b>exposure</b>, what sits near the river, not observed inundation.</figcaption></figure>
-  <div class="scroll"><table>
-    <caption>Exposure within buffered distance of the Bhote Koshi / Trishuli main stem. Source: HOT extract <span class="mono">hot_flood_npl</span>, OSM data as of 24 Aug 2026. OSM completeness in rural Rasuwa is uneven, so these are lower bounds.</caption>
-    <thead><tr><th>Layer</th><th class="num">Total in AOI</th><th class="num">&lt;100 m</th><th class="num">&lt;250 m</th><th class="num">&lt;500 m</th></tr></thead>
-    <tbody id="exptbl"></tbody>
-  </table></div>
-  <p style="margin-top:14px">Road exposure is the operationally decisive number: of <b class="mono">96.8&nbsp;km</b> of trunk, primary, secondary and tertiary road in the corridor, <b class="mono">38.3&nbsp;km</b> lies within 250&nbsp;m of the channel and <b class="mono">48.7&nbsp;km</b> within 500&nbsp;m. The Pasang Lhamu Highway is the single lifeline to the border and appears on four of the 69 mapped bridges. <b class="mono">48</b> of those 69 bridges sit within 100&nbsp;m of the main stem.</p>
+  <section id="corridor">
+    <div class="section-head"><span>02</span><div><h2>The corridor before the flood</h2><p>A consistent baseline for orienting imagery review and field reports, not an impact map.</p></div></div>
+    <div class="split">
+      <div>
+        <div id="exposure" class="exposure" aria-label="Mapped features by distance to the pre-event channel"></div>
+        <p class="caption">OpenStreetMap features from the HOT/HDX extract dated 24 August 2026. Rural mapping is incomplete, and distances use the mapped channel centreline.</p>
+      </div>
+      <aside class="reading">
+        <div class="reading-k">Read this as</div>
+        <p><b>4,619 mapped building footprints</b> have centroids within 250&nbsp;m of the channel. This is useful for prioritising later image interpretation.</p>
+        <p>It does <b>not</b> mean 4,619 buildings flooded. Only an observed extent or verified field report can support that claim.</p>
+        <a href="/trishuli">Inspect buildings, roads and facilities on the map &rarr;</a>
+      </aside>
+    </div>
+  </section>
 
-  <h3>3.4 &nbsp;Wave propagation downstream</h3>
-  <p>No gauge data was obtainable, so arrival times are computed from river distance and an assumed celerity range for confined, debris-laden Himalayan surges. Measured channel sinuosity over the mapped reach is <b class="mono">1.19</b>, applied to downstream straight-line distances.</p>
-  <div class="scroll"><table>
-    <caption>Model estimate only. Celerity range 3&ndash;8&nbsp;m/s is taken from published Himalayan outburst-flood observations and is <b>not calibrated to this event</b>. Attenuation, channel storage, and the Budhi Gandaki and Kali Gandaki confluences are not modelled. Treat as order-of-magnitude.</caption>
-    <thead><tr><th>Node</th><th class="num">River km</th><th class="num">Elev m</th><th class="num">Fast 8 m/s</th><th class="num">Mid 5 m/s</th><th class="num">Slow 3 m/s</th><th>Est. arrival window (NPT)</th></tr></thead>
-    <tbody id="tttbl"></tbody>
-  </table></div>
-</section>
-<section id="sat">
-  <div class="shead"><span class="idx">04</span><h2>Satellite: what exists, and when the first usable image lands</h2></div>
-  <p class="lede">The single most important operational fact in this assessment: as of 16:45 UTC on 26 August, no post-event Sentinel scene exists over the corridor. The catalogue was queried directly and returned only Sentinel-5P atmospheric products and CGLS land-surface temperature for today.</p>
-  <figure><div id="timeline"></div>
-  <figcaption>Sentinel acquisitions over Syabrubesi (85.34&nbsp;E, 28.16&nbsp;N) from the Copernicus catalogue, with future passes projected from the observed 12-day repeat of each relative orbit. Sentinel-2 cloud cover is the scene-level value from the product attributes.</figcaption></figure>
-  <div class="grid2">
-    <div class="card"><h4>Use orbit 85 ascending, 28 Aug 12:21 UTC <span class="chip c-acc">Priority</span></h4><p>This is the first post-event acquisition and it has a <b>geometrically matched pre-event twin on 16 Aug at 12:21 UTC</b>, same track, same look angle, 12-day baseline. That pairing is what makes a clean change detection possible. Expect the product online within roughly 3 to 6 hours of acquisition.</p></div>
-    <div class="card"><h4>Then orbit 121 descending, 31 Aug 00:10 UTC <span class="chip c-acc">Confirmation</span></h4><p>Pre-event twin on 19 Aug. A second, independent look geometry three days later, which matters in this terrain because a single SAR geometry in a steep gorge suffers layover and shadow that can be mistaken for water.</p></div>
-    <div class="card"><h4>Orbit 19 descending, 5 Sep 00:18 UTC <span class="chip c-unk">Best baseline, latest</span></h4><p>Its pre-event twin, 24 Aug 00:18 UTC, is only two days before onset and is therefore the cleanest possible "before" state, but the post-event half is ten days away.</p></div>
-    <div class="card"><h4>Optical is a poor bet this week <span class="chip c-pla">Low expectation</span></h4><p>Sentinel-2 scene cloud cover over the corridor ran 51%, 78% and 97% on 24, 22 and 17 August. The next R119 pass falls around 27 August. In active monsoon, plan on radar and treat any clear optical scene as a bonus.</p></div>
-  </div>
-</section>
+  <section id="terrain">
+    <div class="section-head"><span>03</span><div><h2>Terrain shapes the problem</h2><p>The upper gorge is steep and confined; the valley opens progressively toward Bidur.</p></div></div>
+    <figure>
+      <div id="profile"></div>
+      <figcaption>Copernicus DEM GLO-30 profile along 62.5&nbsp;km of mapped channel. The colour strip shows the measured share of terrain steeper than 45&deg; within 500&nbsp;m of each sample. It is terrain context, not a landslide probability or blockage forecast.</figcaption>
+    </figure>
+  </section>
 
-<section id="outputs">
-  <div class="shead"><span class="idx">05</span><h2>Outputs that can be produced immediately</h2></div>
-  <p class="lede">These need no new data and no credentials. Everything below was already computed to build this page.</p>
-  <ul class="tight">
-    <li><b>Corridor exposure package</b> &mdash; buildings, roads, bridges, schools, health facilities and helipads tagged with distance to channel and river chainage, as GeoPackage and CSV. Complete.</li>
-    <li><b>Blockage-susceptibility screening layer</b> &mdash; 63 reach nodes at 1&nbsp;km spacing with slope, relief and gradient metrics, ranked. Complete, delivered as <span class="mono">reach_metrics.csv</span>.</li>
-    <li><b>Slope and relief rasters</b> &mdash; 27&times;31&nbsp;m over the corridor window, from Copernicus DEM. Complete.</li>
-    <li><b>Pre-event SAR baseline stack</b> &mdash; three matched pre-event GRD scenes, one per relative orbit, ready so that change detection runs the moment the post-event scene appears. Downloadable now without credentials from the catalogue's public endpoints.</li>
-    <li><b>Rainfall time series</b> &mdash; hourly and daily, 14 points, 17 Aug to 29 Aug, corridor and source catchment. Complete.</li>
-    <li><b>Arrival-time nomogram</b> &mdash; the travel table above, refreshable against any celerity assumption.</li>
-  </ul>
-  <p>What cannot be produced today, and should not be improvised: a flood extent polygon, an inundation depth grid, a damage count, or a landslide inventory. All four require post-event imagery.</p>
-</section>
+  <section id="rain">
+    <div class="section-head"><span>04</span><div><h2>Rainfall is context, not a verdict</h2><p>Archived model forecasts were dry at sampled high-altitude locations and wetter along the Nepal corridor.</p></div></div>
+    <figure>
+      <div id="rainchart"></div>
+      <figcaption>Open-Meteo <span class="mono">best_match</span> archived forecast values for the 72 hours ending 08:00 NPT. These are coarse model grid locations, not gauges or a catchment-wide precipitation analysis. They cannot by themselves exclude rainfall from a cascading event.</figcaption>
+    </figure>
+  </section>
 
-<section id="matrix">
-  <div class="shead"><span class="idx">06</span><h2>Attribution evidence matrix</h2></div>
-  <p class="lede">Competing causes, each scored on what the retrieved data actually supports. "Observed" means measured in data retrieved here or stated by a named official source. "Plausible" means physically consistent and unfalsified but not demonstrated. Nothing here assigns responsibility to any person or organisation.</p>
-  <div class="scroll"><table>
-    <caption>Assessment date 2026-08-26. Every row should be revisited after the 28 August radar pass.</caption>
-    <thead><tr><th>Candidate cause</th><th>Status</th><th>Evidence retrieved</th><th>What would confirm or refute it</th></tr></thead>
-    <tbody>
-      <tr><td><strong>Extreme rainfall over source catchment</strong></td><td><span class="chip c-exc">Excluded</span></td><td>0.5&ndash;0.8&nbsp;mm in 72&nbsp;h, 0.1&ndash;0.3&nbsp;mm in 24&nbsp;h across five Tibetan points (Open-Meteo). Rasuwa CDO: "There has been no rain here. The sun is out."</td><td>IMERG half-hourly Early Run over the Lhende catchment would settle it independently. Needs an Earthdata Login token.</td></tr>
-      <tr><td><strong>Extreme rainfall over Nepal-side corridor</strong></td><td><span class="chip c-exc">Excluded as driver</span></td><td>6.6&ndash;10.8&nbsp;mm in the pre-event 24&nbsp;h at Timure and Syabrubesi. Ordinary monsoon. Cannot generate a surge of the reported scale.</td><td>DHM gauge and rain-gauge records, currently not exposed via any public API found.</td></tr>
-      <tr><td><strong>Glacial lake outburst / supraglacial or moraine-dammed release</strong></td><td><span class="chip c-pla">Leading hypothesis</span></td><td>Freezing level 5,480&ndash;6,280&nbsp;m over 72&nbsp;h, i.e. melt conditions across the glacierised band. Eyewitness accounts of a dam-break signature. A closely analogous Lhende-sourced flood struck the same reach on 8 July 2025.</td><td>Pre/post optical or SAR over the Lhende headwaters showing a drained lake basin or a new breach scar. Requires cloud-free optical or the 28 Aug SAR extended north of the border.</td></tr>
-      <tr><td><strong>Ice/rock avalanche into a water body or channel</strong></td><td><span class="chip c-pla">Leading hypothesis</span></td><td>ICIMOD attributes the flood to an avalanche in the Lhende Khola. Consistent with rainfall exclusion, high freezing level, and the abrupt onset described by witnesses.</td><td>Post-event imagery showing a headwall detachment scar and runout deposit. SAR amplitude change would detect this even under cloud.</td></tr>
-      <tr><td><strong>Earthquake as trigger</strong></td><td><span class="chip c-unk">Unresolved</span></td><td>mb 4.4 at 02:52:47 UTC catalogued independently by USGS and EMSC, 34&nbsp;km from Rasuwagadhi. Nepal's foreign minister stated an earthquake triggered the avalanche.</td><td><b>The catalogue cannot resolve this.</b> Depth is fixed at 10&nbsp;km in both solutions and neither published a moment tensor. Origin time falls ~7&nbsp;min after reported flood arrival. A long-period surface-wave force inversion on raw waveforms would distinguish a tectonic source from a landslide-generated one.</td></tr>
-      <tr><td><strong>Landslide dam formation and breach in the Nepal reach</strong></td><td><span class="chip c-pla">Plausible, unverified</span></td><td>Terrain analysis independently identifies chainage 16.1, 21.2 and 27.2&nbsp;km as highly blockage-susceptible: up to 49% of near-channel area steeper than 45&deg;. Media report massive landslides blocking the Pasang Lhamu Highway.</td><td>SAR change detection on 28 Aug: an impounded reach shows as a new low-backscatter patch upstream of a blockage. This is directly detectable.</td></tr>
-      <tr><td><strong>Saturated slopes preconditioning failure</strong></td><td><span class="chip c-pla">Plausible contributor</span></td><td>Nepal-side corridor received 33&ndash;145&nbsp;mm over the preceding 7 days, mid-monsoon. Antecedent wetness is a standard precondition for landsliding. But the source catchment was dry, so this cannot explain the initiating surge.</td><td>Soil moisture reanalysis plus a dated landslide inventory from post-event imagery.</td></tr>
-      <tr><td><strong>River erosion and channel migration</strong></td><td><span class="chip c-unk">Not assessed</span></td><td>No pre/post channel comparison possible without post-event imagery.</td><td>Multi-date channel centreline extraction from S2 or S1, once available.</td></tr>
-      <tr><td><strong>Road construction, quarrying, drainage alteration</strong></td><td><span class="chip c-unk">Not assessed</span></td><td>None retrieved. The corridor carries a major highway and multiple hydropower schemes, so these pressures plausibly exist, but no observation here bears on them.</td><td>A multi-year S2 time series of bare-earth and channel-margin change, plus permitting records. This is a weeks-long study, not a rapid product, and imagery alone cannot establish who did what.</td></tr>
-      <tr><td><strong>Floodplain encroachment raising exposure</strong></td><td><span class="chip c-obs">Observed as exposure</span></td><td>1,288 buildings within 100&nbsp;m of the channel and 4,619 within 250&nbsp;m; 48 of 69 bridges within 100&nbsp;m. This is a measured statement about where assets sit, and says nothing about whether siting was lawful or who authorised it.</td><td>Historical building footprint growth within the floodplain, from archive imagery, against any applicable setback standard.</td></tr>
-      <tr><td><strong>Hydropower infrastructure as a cause</strong></td><td><span class="chip c-unk">Not supported</span></td><td>Six facilities are reported damaged (Rasuwagadhi, Chilime, Trishuli 3A, Trishuli 3B substation, Trishuli, Devighat). These are reported as <b>affected</b>. No retrieved evidence indicates any facility caused or amplified the flood.</td><td>Operator release records and structural survey. Outside the reach of remote sensing.</td></tr>
-    </tbody>
-  </table></div>
-</section>
-<section id="outlook">
-  <div class="shead"><span class="idx">07</span><h2>24 to 72 hour outlook</h2></div>
-  <div class="notice"><b>Model-based and uncertain.</b> This outlook rests on numerical weather prediction and terrain screening, not on observation of the current channel state. No post-event imagery informs it. It should be superseded by the 28 August radar pass and by any ground reporting, both of which outrank it.</div>
-  <div class="grid2">
-    <div class="card"><h4>Rainfall adds moderate, not extreme, stress <span class="chip c-pla">Moderate confidence</span></h4><p>Open-Meteo forecasts <b class="mono">17&ndash;19&nbsp;mm</b> over the next 72&nbsp;h at the Rasuwa headwater points and <b class="mono">16&ndash;63&nbsp;mm</b> along the Nepal corridor, peaking at Benighat (<b class="mono">63&nbsp;mm</b>) and Devighat (<b class="mono">38&nbsp;mm</b>). This is normal monsoon loading. It is not forecast to generate a second flood on its own, but it falls on slopes already destabilised and on channels already choked with fresh debris.</p></div>
-    <div class="card"><h4>Secondary landslide and debris-flow risk is the main concern <span class="chip c-pla">Moderate confidence</span></h4><p>The upper gorge between chainage 4 and 34&nbsp;km combines slopes above 45&deg;, 500&ndash;750&nbsp;m of local relief, and now a freshly scoured channel margin. Rain on newly exposed, undercut slopes is the classic setting for follow-on failures in the days after a surge. Reaches 16.1, 21.2, 27.2 and 7.1&nbsp;km rank highest.</p></div>
-    <div class="card"><h4>Landslide-dam breach is the highest-consequence scenario <span class="chip c-unk">Unquantified</span></h4><p>If any blockage formed in the upper gorge, an impounded reach can fail suddenly and produce a second surge with little warning. Whether any such impoundment exists is <b>unknown</b> and is precisely what the 28 August radar pass can answer. This scenario cannot be assigned a probability from available data.</p></div>
-    <div class="card"><h4>Downstream wave has largely passed the corridor <span class="chip c-pla">Model estimate</span></h4><p>On the celerity range used here, the initial wave would have reached Narayangadh between roughly 14:20 and 24:00 NPT on 26 August and Tribeni overnight. The residual downstream signal over the next 24&nbsp;h is more likely elevated stage, heavy sediment and debris rafts than a sharp flood peak. Chitwan and Nawalparasi remain exposed to any <i>second</i> surge from upstream.</p></div>
-  </div>
-</section>
+  <section id="next">
+    <div class="section-head"><span>05</span><div><h2>What should change the map next</h2><p>New evidence is added by observation date and kept separate from interpretation.</p></div></div>
+    <div class="observation-line">
+      <div class="obs done"><span>Baseline</span><b>16 Aug</b><small>Sentinel-1, orbit 85</small></div>
+      <div class="obs now"><span>Event</span><b>26 Aug</b><small>Public reports and catalogues</small></div>
+      <div class="obs next"><span>First radar look</span><b>28 Aug</b><small>Orbit 85, matched geometry</small></div>
+      <div class="obs"><span>Independent look</span><b>31 Aug</b><small>Orbit 121, descending</small></div>
+    </div>
+    <div class="next-grid">
+      <div><span class="count-label">Next expected Sentinel-1 acquisition</span><strong id="nextpass">Calculating&hellip;</strong><small>28 Aug 12:21 UTC, projected from the repeat cycle</small></div>
+      <p>The first radar pair can identify candidate surface changes despite cloud, but steep terrain creates shadow and layover. Candidate flood, deposit or blockage features should be checked against the second viewing geometry and any field evidence before publication.</p>
+    </div>
+  </section>
 
-<section id="monitor">
-  <div class="shead"><span class="idx">08</span><h2>24 to 72 hour monitoring plan</h2></div>
-  <p class="lede">Ordered by acquisition time, because the plan is driven by when data actually lands.</p>
-  <div class="scroll"><table>
-    <thead><tr><th>When (UTC)</th><th>Action</th><th>Source</th><th>Decision it informs</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">Continuous</td><td>Poll the Copernicus catalogue every 2&nbsp;h for any SENTINEL-1 or SENTINEL-2 product intersecting the corridor with <span class="mono">ContentDate/Start gt 2026-08-26T00:00Z</span></td><td>Copernicus OData</td><td>Triggers everything else. First hit starts the change-detection run.</td></tr>
-      <tr><td class="mono">27 Aug ~04:57</td><td>Check the Sentinel-2 R119 pass for a cloud gap. If scene cloud cover is under about 40%, run an NDWI/MNDWI difference against 12 Aug (18.7% cloud, the best recent baseline).</td><td>Sentinel-2 L2A</td><td>Opportunistic early extent over open reaches near Bidur and Betrawati.</td></tr>
-      <tr><td class="mono">27 Aug, daily</td><td>Pull VIIRS and MODIS true colour from GIBS as a coarse cloud-gap scout. Do not use for extent delineation at 250&nbsp;m.</td><td>NASA GIBS WMS</td><td>Whether to expect a usable optical scene at all.</td></tr>
-      <tr><td class="mono"><b>28 Aug 12:21</b></td><td><b>Primary task.</b> Retrieve S1 GRD orbit 85 ASC. Pair with 16 Aug 12:21 UTC. Run the change-detection workflow in section 09. Inspect specifically for: new low-backscatter patches upstream of chainage 16.1, 21.2, 27.2&nbsp;km (impoundment); bright new deposits in the channel; loss of returns at bridge locations.</td><td>Sentinel-1 GRD</td><td>Flood extent, blockage presence, bridge status. The pivot point of this whole assessment.</td></tr>
-      <tr><td class="mono">28&ndash;29 Aug</td><td>Re-run the exposure intersection against the derived extent to convert exposure counts into affected counts. Only after this step do affected-asset numbers become defensible.</td><td>Derived + HOT extract</td><td>Turns exposure into impact.</td></tr>
-      <tr><td class="mono">29 Aug</td><td>Re-query GDACS and Copernicus EMS for an activation. If EMS has activated, consume their delineation as an independent cross-check rather than duplicating it.</td><td>GDACS, EMS</td><td>Avoids duplicate mapping effort.</td></tr>
-      <tr><td class="mono"><b>31 Aug 00:10</b></td><td>S1 GRD orbit 121 DESC paired with 19 Aug. Second look geometry.</td><td>Sentinel-1 GRD</td><td>Confirms or rejects features seen on 28 Aug that could be layover/shadow artefacts.</td></tr>
-      <tr><td class="mono">Throughout</td><td>Refresh Open-Meteo every 6&nbsp;h at the 14 corridor points. Escalate if any 24&nbsp;h forecast total exceeds about 100&nbsp;mm over the upper gorge.</td><td>Open-Meteo</td><td>Secondary debris-flow risk.</td></tr>
-      <tr><td class="mono">If obtainable</td><td>Establish an Earthdata Login and pull IMERG Early half-hourly over the Lhende catchment for 25&ndash;26 Aug. This is the one retrieval that would independently close the rainfall question at source.</td><td>NASA GPM IMERG</td><td>Hardens the strongest current finding.</td></tr>
-    </tbody>
-  </table></div>
-</section>
+  <section id="updates">
+    <div class="section-head"><span>06</span><div><h2>Evidence updates</h2><p>Short, attributable changes rather than a silently rewritten narrative.</p></div></div>
+    <div class="updates">
+      <article><time datetime="2026-08-26T19:38:00Z">26 Aug &middot; 19:38 UTC</time><h3>USGS catalogue revised</h3><p>Event <span class="mono">us7000tbwb</span> is now classified as an M&nbsp;5.2 landslide at 28.271&deg;&nbsp;N, 85.515&deg;&nbsp;E. Earlier M&nbsp;4.4 earthquake wording is superseded.</p><a href="https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb" rel="noreferrer">USGS event record &rarr;</a></article>
+      <article><time datetime="2026-08-26">26 Aug &middot; source perspective</time><h3>ICIMOD: suspected, not confirmed</h3><p>ICIMOD describes an ice avalanche in the Lhende Khola as the suspected trigger while explicitly keeping the cause unconfirmed and noting a possible upstream blockage.</p><a href="https://www.icimod.org/press-release/major-flash-flood-sweeps-through-nepals-rasuwa-district-raising-fears-of-further-downstream-flooding/" rel="noreferrer">ICIMOD advisory &rarr;</a></article>
+    </div>
+    <div class="contribute"><b>Local knowledge and expert review are welcome.</b> Corrections, dated field observations and alternative interpretations can be sent to <a href="mailto:Ashish.Dutta@hutton.ac.uk?subject=Trishuli%20evidence%20brief">Ashish.Dutta@hutton.ac.uk</a>. Contributions will be attributed and separated from mapped observations.</div>
+  </section>
 
-<section id="code">
-  <div class="shead"><span class="idx">09</span><h2>Reproducible commands</h2></div>
-  <p class="lede">Every retrieval in this assessment, verbatim. No API key is required for any of these.</p>
-  <h3>Poll for the first post-event scene</h3>
-<pre><span class="cm"># Returns empty until a post-event product is indexed. This is the trigger.</span>
-curl -s -G "https://catalogue.dataspace.copernicus.eu/odata/v1/Products" \
-  --data-urlencode "\$filter=Collection/Name eq 'SENTINEL-1' and \
-OData.CSC.Intersects(area=geography'SRID=4326;POINT(85.34 28.16)') and \
-ContentDate/Start gt 2026-08-26T00:00:00.000Z and contains(Name,'GRDH')" \
-  --data-urlencode "\$orderby=ContentDate/Start desc" --data-urlencode "\$top=10"</pre>
-  <h3>Confirm the matched pre-event pair</h3>
-<pre><span class="cm"># relativeOrbitNumber 85, ASCENDING. Pre-event twin: 2026-08-16T12:21:41Z</span>
-curl -s -G "https://catalogue.dataspace.copernicus.eu/odata/v1/Products" \
-  --data-urlencode "\$filter=Collection/Name eq 'SENTINEL-1' and \
-OData.CSC.Intersects(area=geography'SRID=4326;POINT(85.34 28.16)') and \
-ContentDate/Start gt 2026-08-15T00:00:00.000Z and contains(Name,'GRDH')" \
-  --data-urlencode "\$expand=Attributes" --data-urlencode "\$top=40"</pre>
-  <h3>Rainfall, corridor and Tibetan source catchment</h3>
-<pre>curl -s -G "https://api.open-meteo.com/v1/forecast" \
-  --data-urlencode "latitude=28.2760,28.1620,27.9720,27.8700,27.8330,27.8000,27.8570,27.6950,27.4400" \
-  --data-urlencode "longitude=85.3780,85.3350,85.1830,85.1600,85.1750,84.8000,84.5540,84.4300,83.9200" \
-  --data-urlencode "hourly=precipitation,snowfall,freezing_level_height" \
-  --data-urlencode "daily=precipitation_sum" --data-urlencode "timezone=Asia/Kathmandu" \
-  --data-urlencode "past_days=9" --data-urlencode "forecast_days=4"
+  <section id="method">
+    <div class="section-head"><span>07</span><div><h2>Sources and boundaries</h2><p>Enough detail to audit the brief without making the main story carry the whole notebook.</p></div></div>
+    <details open>
+      <summary>Primary sources</summary>
+      <ul>
+        <li><a href="https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb">USGS event record</a> &mdash; event type, magnitude, location and origin time.</li>
+        <li><a href="https://www.icimod.org/press-release/major-flash-flood-sweeps-through-nepals-rasuwa-district-raising-fears-of-further-downstream-flooding/">ICIMOD media advisory</a> &mdash; observed river behaviour and current scientific interpretation.</li>
+        <li><a href="https://data.humdata.org/dataset/hot_flood_npl">HOT/HDX Nepal flood extract</a> &mdash; OpenStreetMap snapshot dated 24 August 2026, ODbL.</li>
+        <li><a href="https://dataspace.copernicus.eu/">Copernicus Data Space</a> and Copernicus DEM GLO-30 &mdash; acquisition catalogue and terrain.</li>
+        <li><a href="https://open-meteo.com/en/docs">Open-Meteo forecast API</a> &mdash; archived model forecasts and future outlook; no gauge observations.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Analytical boundaries</summary>
+      <ul>
+        <li>The mapped baseline runs from Rasuwagadhi to the HOT extraction limit below Bidur. It does not cover the full downstream Trishuli and Narayani system.</li>
+        <li>Building distances use footprint centroids. OSM completeness varies, so totals are an inventory of mapped features rather than the complete exposed population.</li>
+        <li>Terrain derivatives use a 30&nbsp;m surface model. No terrain score is presented as calibrated hazard.</li>
+        <li>No casualty figure, affected-asset count, flood depth or causal attribution is produced by this work.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Download and reuse</summary>
+      <p>The <a href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download>GeoPackage</a> contains ten baseline layers for QGIS or ArcGIS Pro. Read the accompanying <a href="{{ url_for('static', filename='trishuli/DATA_NOTES.txt') }}">data notes</a> before reuse. OSM-derived content is available under ODbL; retain source attribution.</p>
+    </details>
+  </section>
 
-<span class="cm"># Source catchment, north of the border</span>
-<span class="cm"># latitude=28.5495,28.4500,28.6000,28.8550,28.3500</span>
-<span class="cm"># longitude=85.5378,85.4000,85.3000,85.2970,85.4500</span></pre>
-  <h3>Seismic event, two independent catalogues</h3>
-<pre>curl -s -G "https://earthquake.usgs.gov/fdsnws/event/1/query" \
-  --data-urlencode "format=geojson" --data-urlencode "starttime=2026-08-19" \
-  --data-urlencode "endtime=2026-08-27" --data-urlencode "minmagnitude=2.5" \
-  --data-urlencode "minlatitude=27.0" --data-urlencode "maxlatitude=29.5" \
-  --data-urlencode "minlongitude=84.0" --data-urlencode "maxlongitude=86.5"
+  <footer>
+    <div><b>Prepared by Ashish Dutta</b><br>GIS scientist, The James Hutton Institute</div>
+    <div>This independent rapid note may evolve as imagery, field evidence and expert review arrive. Version 0.2 &middot; 26 Aug 2026, 19:38 UTC.</div>
+  </footer>
+</main>
 
-curl -s -G "https://www.seismicportal.eu/fdsnws/event/1/query" \
-  --data-urlencode "format=json" --data-urlencode "start=2026-08-25T12:00:00" \
-  --data-urlencode "end=2026-08-27T00:00:00" --data-urlencode "minmag=2.0" \
-  --data-urlencode "minlat=27.5" --data-urlencode "maxlat=29.5" \
-  --data-urlencode "minlon=84.5" --data-urlencode "maxlon=86.5"</pre>
-  <h3>Exposure layers (Overpass was down; this is the working substitute)</h3>
-<pre>curl -s "https://data.humdata.org/api/3/action/package_show?id=hot_flood_npl"
-
-B=https://production-raw-data-api.s3.amazonaws.com/ISO3/NPL
-curl -sLO $B/bridges/hot_flood_npl_bridges_osm_geojson.zip
-curl -sLO $B/buildings/hot_flood_npl_buildings_osm_gpkg.zip
-curl -sLO $B/roads/hot_flood_npl_roads_osm_gpkg.zip
-curl -sLO $B/combined/hot_flood_npl_aoi.geojson</pre>
-  <h3>Terrain screening from the public Copernicus DEM</h3>
-<pre><span class="cm"># No credentials. Windowed COG read, no full-tile download.</span>
-import os, numpy as np, rasterio
-from rasterio.merge import merge
-os.environ.update(AWS_NO_SIGN_REQUEST='YES', GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR')
-B = ("/vsicurl/https://copernicus-dem-30m.s3.amazonaws.com/"
-     "Copernicus_DSM_COG_10_{t}_DEM/Copernicus_DSM_COG_10_{t}_DEM.tif")
-srcs = [rasterio.open(B.format(t=t)) for t in ("N27_00_E085_00","N28_00_E085_00")]
-arr, tr = merge(srcs, bounds=(85.03, 27.83, 85.42, 28.30))
-dem = arr[0].astype('float32'); dem[dem &lt; -1000] = np.nan
-px_x = abs(tr.a)*111320*np.cos(np.radians(28.06)); px_y = abs(tr.e)*110540
-gy, gx = np.gradient(dem, px_y, px_x)
-slope = np.degrees(np.arctan(np.hypot(gx, gy)))</pre>
-  <h3>Change-detection workflow, to run the moment the 28 Aug scene lands</h3>
-<pre><span class="cm"># Sentinel-1 GRD, VV, log-ratio change detection.</span>
-<span class="cm"># Pre : S1D_IW_GRDH_1SDV_20260816T122141 ... orbit 85 ASC</span>
-<span class="cm"># Post: orbit 85 ASC acquisition of 2026-08-28T12:21Z</span>
-
-<b>1. Preprocess both scenes identically</b>
-   apply orbit file -> thermal noise removal -> border noise removal
-   -> radiometric calibration to sigma0 -> Range-Doppler terrain correction
-   using Copernicus DEM 30 m -> convert to dB. Same DEM, same pixel
-   spacing (10 m), same output grid for both dates.
-
-<b>2. Speckle filtering</b>
-   Refined Lee 5x5, or a multitemporal filter across the pre-event stack.
-   Filter AFTER calibration and BEFORE differencing.
-
-<b>3. Difference</b>
-   d = sigma0_post_dB - sigma0_pre_dB
-   New open water: strong NEGATIVE d (smooth water backscatters away).
-   New coarse deposits / debris: POSITIVE d (rough surface).
-
-<b>4. Threshold</b>
-   Do not hard-code a threshold. Fit a bimodal histogram over the valley
-   floor mask and take the Otsu or Kittler-Illingworth split. Report the
-   threshold you used, and the extent's sensitivity to +/- 1 dB on it.
-
-<b>5. Mask the terrain artefacts, which is essential here</b>
-   Slopes &gt; 45 deg cover ~30% of this corridor. Compute layover and
-   shadow masks from the DEM and the scene's incidence geometry and
-   DELETE them from the result. Radar shadow mimics water perfectly.
-   Also mask permanent water from the pre-event scene so you report
-   only NEW water.
-
-<b>6. Validate before publishing</b>
-   Require agreement with the 31 Aug orbit 121 DESC pair before
-   treating any patch as real. A feature seen in one geometry only,
-   in terrain this steep, is an artefact until proven otherwise.
-
-<b>7. Intersect with exposure</b>
-   Only now join to the HOT layers to produce affected-asset counts.</pre>
-</section>
-
-<section id="limits">
-  <div class="shead"><span class="idx">10</span><h2>Limitations and next actions</h2></div>
-  <h3>Limitations, stated plainly</h3>
-  <ul class="tight">
-    <li><b>No post-event imagery exists.</b> Every statement about what the flood did on the ground comes from news and official reporting, cited as such, not from analysis performed here.</li>
-    <li><b>No gauge data.</b> Nepal DHM exposes no public API at the paths tried. Discharge, stage and actual wave timing are all unmeasured here. The travel-time table is a nomogram, not a forecast.</li>
-    <li><b>Rainfall is modelled, not observed.</b> Open-Meteo <span class="mono">best_match</span> on a coarse grid, in the terrain where global models perform worst. The source-catchment finding survives this only because the signal is an order of magnitude.</li>
-    <li><b>IMERG was not retrieved.</b> It requires an Earthdata Login bearer token. This is the single most valuable missing dataset.</li>
-    <li><b>The blockage index is a screening heuristic.</b> Three normalised terrain terms with chosen weights (0.40 slope, 0.30 relief, 0.30 gradient). It is not calibrated against any landslide inventory and its absolute values carry no physical meaning. Its rank ordering is the usable part.</li>
-    <li><b>The DEM predates the event</b> and is a surface model, so it includes canopy and produced a few spurious negative gradients over water.</li>
-    <li><b>OSM completeness is uneven</b> in rural Rasuwa. Exposure counts are lower bounds, and the HOT AOI stops at Bidur, so the Dhading, Gorkha, Chitwan and Nawalparasi reaches have no exposure analysis here.</li>
-    <li><b>Causal attribution is not settled and cannot be settled from this data.</b> The earthquake-versus-mass-movement question in particular requires waveform analysis that catalogue metadata cannot substitute for.</li>
-  </ul>
-  <h3>Next actions, in priority order</h3>
-  <ul class="tight">
-    <li>Set the catalogue poll running now, so the 28 August scene is picked up within minutes rather than hours.</li>
-    <li>Download and preprocess the three pre-event GRD scenes today, so only the post-event half remains when it lands.</li>
-    <li>Obtain an Earthdata Login and pull IMERG over the Lhende catchment.</li>
-    <li>Extend the exposure analysis downstream past Bidur to Narayangadh and Nawalparasi, which the current AOI excludes.</li>
-    <li>Request seismic waveforms and run a force inversion if the trigger question needs to be answered rather than left open.</li>
-    <li>Re-issue this assessment after the 28 August pass. Treat the present version as superseded at that point.</li>
-  </ul>
-</section>
-
-<section id="sources">
-  <div class="shead"><span class="idx">11</span><h2>Sources</h2></div>
-  <p class="lede">Reporting used for event context. All accessed 2026-08-26 between 15:20 and 16:50 UTC. These are cited for context; the analytical findings above rest on the API retrievals in section 02.</p>
-  <ul class="tight">
-    <li><a href="https://en.wikipedia.org/wiki/2026_Nuwakot_Flood">2026 Nuwakot Flood</a> &mdash; Wikipedia. Timeline, affected districts, damaged hydropower facilities, ICIMOD and ministerial statements on cause.</li>
-    <li><a href="https://kathmandupost.com/national/2026/08/26/major-flood-damages-syabrubesi-hydropower-projects-in-rasuwa">Flash flood hits Rasuwa, damages hydropower projects and markets</a> &mdash; The Kathmandu Post. Rasuwa CDO quotation on absence of rain; Timure and Syabrubesi damage; the 8 July 2025 Lhende analogue.</li>
-    <li><a href="https://www.cnn.com/2026/08/26/world/live-news/nepal-flash-flooding-floods-intl">Nepal flooding live coverage</a> &mdash; CNN.</li>
-    <li><a href="https://www.npr.org/2026/08/26/g-s1-140211/8-dead-hundreds-missing-as-nepal-avalanche-triggers-flash-floods">Nepal avalanche triggers flash floods</a> &mdash; NPR.</li>
-    <li><a href="https://www.foxweather.com/extreme-weather/3-americans-missing-following-devastating-flash-flooding-nepal">Snow-rock landslide unleashes flash flood</a> &mdash; Fox Weather.</li>
-    <li><a href="https://www.outlookindia.com/international/heavy-casualties-feared-as-flash-flood-sweeps-villages-roads-in-nepals-rasuwa">Missing-persons figures</a> &mdash; Outlook India.</li>
-    <li><a href="https://data.humdata.org/dataset/hot_flood_npl">Nepal Flood 2026 Upper Trishuli and Bhote Koshi Corridor</a> &mdash; Humanitarian OpenStreetMap Team via HDX. OSM data 24 Aug 2026, published 26 Aug 14:34 UTC. Licence ODbL.</li>
-  </ul>
-  <div class="foot">Prepared 2026-08-26, 21:06 NPT / 15:21 UTC. Contains modified Copernicus Sentinel and Copernicus DEM data 2026. OpenStreetMap contributors, ODbL. Open-Meteo, USGS and EMSC data used under their respective open terms. Casualty and damage figures are attributed to the sources above and were not derived in this assessment.</div>
-</section>
-</div>
 <div class="tip" id="tip"></div>
-
-<script src="{{ url_for('static', filename='trishuli/report.js') }}?v={{ av('trishuli/report.js') }}"
-        data-base="{{ url_for('static', filename='trishuli/') }}"></script>
+<script src="{{ url_for('static', filename='trishuli/report.js') }}?v={{ av('trishuli/report.js') }}" data-base="{{ url_for('static', filename='trishuli/') }}"></script>
 </body>
 </html>

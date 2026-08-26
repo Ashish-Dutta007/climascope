@@ -18,11 +18,11 @@
     return {type: 'raster', tiles: [ESRI + BASEMAPS[key].name + '/MapServer/tile/{z}/{y}/{x}'],
             tileSize: 256, maxzoom: 19, attribution: ATTR};
   }
-  var bsiCol = function (v) {
-    return v >= 0.75 ? '#b8392e' : v >= 0.55 ? '#d99a2b' : v >= 0.30 ? '#2b8fab' : '#7d8b98';
+  var steepCol = function (v) {
+    return v >= 40 ? '#b8392e' : v >= 25 ? '#d99a2b' : v >= 10 ? '#2b8fab' : '#7d8b98';
   };
-  var bsiLab = function (v) {
-    return v >= 0.75 ? 'very high' : v >= 0.55 ? 'high' : v >= 0.30 ? 'moderate' : 'low';
+  var steepLab = function (v) {
+    return v >= 40 ? '40% or more' : v >= 25 ? '25–40%' : v >= 10 ? '10–25%' : 'under 10%';
   };
   var esc = function (s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -84,7 +84,7 @@
     map.addLayer({id: 'buf', type: 'line', source: 'buf',
       layout: {'line-cap': 'round', 'line-join': 'round', visibility: 'none'},
       paint: {'line-color': '#2b8fab', 'line-opacity': 0.28,
-        'line-width': ['interpolate', ['exponential', 2], ['zoom'], 10, 4, 18, 260]}});
+        'line-width': ['interpolate', ['exponential', 2], ['zoom'], 10, 3.7, 18, 947]}});
 
     /* --- tributaries / roads --- */
     map.addSource('trib', {type: 'geojson', data: fc(DATA.trib.map(function (l) { return line(l); }))});
@@ -109,7 +109,7 @@
       for (var i = 0; i < l.length - 1; i++) {
         var r = nearestReach(l[i][0], l[i][1]);
         segs.push(line([l[i], l[i + 1]], {
-          col: bsiCol(r[4]), km: r[0], z: r[3], bsi: r[4], lab: bsiLab(r[4]),
+          col: steepCol(r[5]), km: r[0], z: r[3], steepLab: steepLab(r[5]),
           s45: r[5], relief: r[6], grad: r[7]
         }));
       }
@@ -201,8 +201,7 @@
       new maplibregl.Popup({closeButton: true, maxWidth: '300px'}).setLngLat(e.lngLat)
         .setHTML(popupHTML('Chainage ' + pr.km + ' km', 'River reach', [
           ['Elevation', pr.z + ' m'],
-          ['Blockage index', pr.bsi + ' (' + pr.lab + ')'],
-          ['Slope &gt;45° within 500 m', pr.s45 + '%'],
+          ['Terrain &gt;45° within 500 m', pr.s45 + '% (' + pr.steepLab + ')'],
           ['Relief within 500 m', pr.relief + ' m'],
           ['Channel gradient', pr.grad + ' m/km']])).addTo(map);
     });
@@ -241,7 +240,7 @@
     var pct = $('slopepct');
     if (pct) pct.textContent = (DATA.terrain.pct_over35 * 100).toFixed(0) + '% of area';
 
-    var top = DATA.reach.slice().sort(function (a, b) { return b[4] - a[4]; }).slice(0, 5);
+    var top = DATA.reach.slice().sort(function (a, b) { return b[5] - a[5]; }).slice(0, 5);
     var NAMES = {16.1: 'At Syabrubesi', 21.2: 'Below Syabrubesi', 27.2: 'Mid gorge',
                  7.1: 'Below Timure', 4: 'Upper Bhote Koshi', 20.1: 'Below Syabrubesi',
                  32.2: 'Lower gorge', 28.2: 'Mid gorge', 33.2: 'Lower gorge', 2: 'Near border'};
@@ -251,7 +250,7 @@
         return '<button type="button" data-i="' + i + '"><b>' +
           esc(NAMES[r[0]] || ('Chainage ' + r[0] + ' km')) + '</b><br>' +
           '<span class="mono">km ' + r[0] + ' · ' + r[2].toFixed(4) + ', ' + r[1].toFixed(4) +
-          '</span><br><span class="bs">index ' + r[4] + ' · ' + r[5] + '% over 45°</span></button>';
+          '</span><br><span class="bs">' + r[5] + '% of nearby terrain over 45°</span></button>';
       }).join('');
       Array.prototype.forEach.call(jump.querySelectorAll('button'), function (b) {
         b.addEventListener('click', function () {

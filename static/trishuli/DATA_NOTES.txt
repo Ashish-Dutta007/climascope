@@ -1,0 +1,59 @@
+TRISHULI CORRIDOR PRE-EVENT BASELINE
+Version 0.2 - 26 August 2026, 19:38 UTC
+
+Author
+------
+Ashish Dutta, GIS scientist
+The James Hutton Institute
+Ashish.Dutta@hutton.ac.uk
+
+Purpose
+-------
+This package supports orientation and subsequent imagery or field review of
+the Bhote Koshi-Trishuli corridor from Rasuwagadhi to below Bidur, Nepal.
+It is a pre-event baseline. It is not a flood extent, damage assessment,
+hazard model, evacuation map or official emergency product.
+
+Package
+-------
+trishuli_corridor.gpkg contains ten EPSG:4326 layers:
+
+  main_stem       mapped river centreline
+  channel_buffers 100 m, 250 m and 500 m centreline buffers
+  reach_metrics   1 km terrain samples from Copernicus DEM GLO-30
+  buildings       OSM building footprints with centroid distance to channel
+  roads           OSM road lines with distance to channel
+  bridges         OSM bridge features with centroid distance to channel
+  education       OSM education features with centroid distance to channel
+  health          OSM health features with centroid distance to channel
+  aeroway         OSM aeroway and helipad features with distance to channel
+  places          OSM populated-place features with distance to channel
+
+Sources and licence
+-------------------
+OpenStreetMap features are from the HOT/HDX hot_flood_npl extract, snapshot
+24 August 2026, and are available under ODbL 1.0. Attribute as:
+"OpenStreetMap contributors, via HOT/HDX, ODbL."
+
+Terrain metrics are derived from Copernicus DEM GLO-30. Retain Copernicus
+attribution when redistributing those derivatives.
+
+Analytical limits
+-----------------
+- OSM completeness is uneven. Counts describe mapped features only.
+- Building and polygon distances use centroids, not nearest polygon edges.
+- The mapped centreline and its buffers are screening geometries.
+- The BSI field is an experimental, uncalibrated composite retained from the
+  rapid build. Do not interpret it as blockage probability or hazard. Prefer
+  the direct slope, relief and gradient fields.
+- No post-event imagery, gauge observation or field validation is included.
+- Proximity to the channel does not imply that a feature was flooded,
+  damaged or inaccessible.
+
+Current public brief
+--------------------
+https://climascope.hutton.ac.uk/trishuli/report
+
+Please send corrections, dated local observations and reuse questions to the
+author. Contributions will be attributed and kept distinct from mapped
+observations.
