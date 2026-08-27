@@ -1,0 +1,129 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "usgs-source",
+      "properties": {
+        "kind": "source",
+        "label": "USGS landslide source",
+        "time_npt": "08:37:10 NPT",
+        "elevation_m": 5590,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.515,
+          28.271
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dhm-4913",
+      "properties": {
+        "kind": "gauge",
+        "role": "mainstem",
+        "label": "Rasuwagadhi",
+        "last_time_npt": "08:40 NPT",
+        "last_level_m": 1.62,
+        "warning_m": 6.0,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://dhm.gov.np/hydrology/hms-Single/4913"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.377649,
+          28.271297
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dhm-191",
+      "properties": {
+        "kind": "gauge",
+        "role": "mainstem",
+        "label": "Syabrubesi",
+        "last_time_npt": "08:50 NPT",
+        "last_level_m": 3.8,
+        "warning_m": 5.5,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://dhm.gov.np/hydrology/hms-Single/191"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.342554,
+          28.17065
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dhm-190",
+      "properties": {
+        "kind": "gauge",
+        "role": "tributary",
+        "label": "Langtang at Syabrubesi",
+        "last_time_npt": "08:50 NPT",
+        "last_level_m": 2.81,
+        "warning_m": 3.75,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://dhm.gov.np/hydrology/hms-Single/190"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.34611111,
+          28.16222222
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dhm-4657",
+      "properties": {
+        "kind": "gauge",
+        "role": "tributary",
+        "label": "Dhunche",
+        "last_time_npt": "09:20 NPT",
+        "last_level_m": 2.4,
+        "warning_m": 3.2,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://dhm.gov.np/hydrology/hms-Single/4657"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.318589,
+          28.098163
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dhm-52",
+      "properties": {
+        "kind": "gauge",
+        "role": "mainstem",
+        "label": "Betrawati",
+        "last_time_npt": "09:20 NPT",
+        "last_level_m": 3.55,
+        "warning_m": 4.1,
+        "evidence_tier": "retrieved observation",
+        "source_url": "https://dhm.gov.np/hydrology/hms-Single/52"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.18,
+          27.97
+        ]
+      }
+    }
+  ]
+}

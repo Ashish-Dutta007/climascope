@@ -41,14 +41,20 @@
   map.addControl(new maplibregl.ScaleControl({maxWidth: 130, unit: 'metric'}), 'bottom-left');
   map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
 
-  var DATA = null, currentBase = 'img';
+  var DATA = null, EVENT = null, currentBase = 'img';
 
-  fetch(BASE + 'mapdata.json', {credentials: 'same-origin'})
-    .then(function (r) {
-      if (!r.ok) throw new Error('mapdata.json HTTP ' + r.status);
-      return r.json();
+  Promise.all([
+    fetch(BASE + 'mapdata.json', {credentials: 'same-origin'}),
+    fetch(BASE + 'event_observations.geojson', {credentials: 'same-origin'})
+  ])
+    .then(function (responses) {
+      responses.forEach(function (r) { if (!r.ok) throw new Error(r.url + ' HTTP ' + r.status); });
+      return Promise.all(responses.map(function (r) { return r.json(); }));
     })
-    .then(function (d) { DATA = d; if (map.isStyleLoaded()) build(); else map.on('load', build); })
+    .then(function (d) {
+      DATA = d[0]; EVENT = d[1];
+      if (map.isStyleLoaded()) build(); else map.on('load', build);
+    })
     .catch(function (e) {
       var b = document.querySelector('.banner');
       if (b) { b.innerHTML = '<b>Vector layers failed to load.</b> ' + esc(e.message); }
@@ -77,6 +83,23 @@
     });
     map.addLayer({id: 'slope', type: 'raster', source: 'slope',
                   paint: {'raster-opacity': 0.62, 'raster-fade-duration': 0}});
+
+    /* --- event evidence: reviewed source and public gauge observations --- */
+    map.addSource('event', {type: 'geojson', data: EVENT});
+    map.addLayer({id: 'event-gauges', type: 'circle', source: 'event',
+      filter: ['==', ['get', 'kind'], 'gauge'],
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 7],
+        'circle-color': ['match', ['get', 'role'], 'mainstem', '#131c25', '#8f5d10'],
+        'circle-stroke-color': '#fff', 'circle-stroke-width': 2, 'circle-opacity': 0.95
+      }});
+    map.addLayer({id: 'event-source', type: 'circle', source: 'event',
+      filter: ['==', ['get', 'kind'], 'source'],
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 8, 14, 13],
+        'circle-color': '#962c24', 'circle-stroke-color': '#fff',
+        'circle-stroke-width': 3, 'circle-opacity': 0.98
+      }});
 
     /* --- 250 m channel buffer (drawn as a wide translucent casing) --- */
     var stemFeatures = DATA.stem.map(function (l) { return line(l); });
@@ -164,6 +187,14 @@
       dot.style.cssText = 'width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid #131c25';
       new maplibregl.Marker({element: dot}).setLngLat([a[0], a[1]]).addTo(map);
     });
+    EVENT.features.forEach(function (feature) {
+      if (feature.properties.kind !== 'source') return;
+      var el = document.createElement('div');
+      el.className = 'event-label';
+      el.innerHTML = '<b>USGS landslide source</b><span>08:37:10 NPT · 5,590 m</span>';
+      new maplibregl.Marker({element: el, anchor: 'left', offset: [13, 0]})
+        .setLngLat(feature.geometry.coordinates).addTo(map);
+    });
 
     fitCorridor();
     wireUI();
@@ -173,6 +204,9 @@
   function fitCorridor() {
     var b = new maplibregl.LngLatBounds();
     DATA.stem.forEach(function (l) { l.forEach(function (p) { b.extend(p); }); });
+    EVENT.features.forEach(function (f) {
+      if (f.geometry.type === 'Point') b.extend(f.geometry.coordinates);
+    });
     map.fitBounds(b, {padding: 46, duration: 0});
   }
 
@@ -182,6 +216,25 @@
   }
 
   function wirePopups() {
+    ['event-source', 'event-gauges'].forEach(function (layer) {
+      map.on('click', layer, function (e) {
+        var f = e.features[0], p = f.properties, c = f.geometry.coordinates;
+        var rows = p.kind === 'source' ? [
+          ['Time', p.time_npt], ['Elevation', p.elevation_m + ' m'],
+          ['Evidence tier', p.evidence_tier], ['Geometry', 'Seismic source point, not collapse polygon']
+        ] : [
+          ['Last sample', p.last_time_npt], ['Last level', Number(p.last_level_m).toFixed(2) + ' m'],
+          ['Warning level', Number(p.warning_m).toFixed(2) + ' m'],
+          ['Interpretation', 'Peak unobserved; later telemetry unavailable']
+        ];
+        new maplibregl.Popup({closeButton: true, maxWidth: '330px'}).setLngLat(c)
+          .setHTML(popupHTML(p.label, p.kind === 'source' ? 'Retrieved event observation' : 'Nepal DHM gauge', rows) +
+            '<a class="popup-source" href="' + esc(p.source_url) + '">Open source record</a>')
+          .addTo(map);
+      });
+      map.on('mouseenter', layer, function () { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layer, function () { map.getCanvas().style.cursor = ''; });
+    });
     var POINTS = [['brg', 'Bridge'], ['hlth', 'Health facility'], ['edu', 'School'],
                   ['heli', 'Aeroway'], ['plc', 'Settlement']];
     POINTS.forEach(function (p) {
@@ -233,6 +286,12 @@
         map.setLayoutProperty(boxes[id], 'visibility', el.checked ? 'visible' : 'none');
       }
     });
+    var eventBox = $('l-event');
+    if (eventBox) eventBox.addEventListener('change', function () {
+      ['event-source', 'event-gauges'].forEach(function (layer) {
+        map.setLayoutProperty(layer, 'visibility', eventBox.checked ? 'visible' : 'none');
+      });
+    });
     var op = $('slopeop');
     if (op) op.addEventListener('input', function () {
       map.setPaintProperty('slope', 'raster-opacity', op.value / 100);
@@ -262,6 +321,11 @@
     var fitBtn = $('fit');
     if (fitBtn) fitBtn.addEventListener('click', function () {
       fitCorridor();
+    });
+    var sourceBtn = $('source');
+    if (sourceBtn) sourceBtn.addEventListener('click', function () {
+      var source = EVENT.features.filter(function (f) { return f.properties.kind === 'source'; })[0];
+      map.flyTo({center: source.geometry.coordinates, zoom: 12.7, duration: 900});
     });
   }
 })();

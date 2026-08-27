@@ -1,0 +1,562 @@
+{
+  "schema_version": "1.0",
+  "brief_version": "0.3",
+  "generated_at_utc": "2026-08-26T20:58:07+00:00",
+  "event": {
+    "id": "us7000tbwb",
+    "catalogue_class": "landslide",
+    "catalogue_title": "M 5.2 Landslide - 55 km NW of Kod\u0101ri\u0307\u0304, Nepal",
+    "magnitude": 5.2,
+    "time_utc": "2026-08-26T02:52:10+00:00",
+    "time_npt": "2026-08-26T08:37:10+05:45",
+    "longitude": 85.515,
+    "latitude": 28.271,
+    "source_elevation_m": 5590,
+    "rasuwagadhi_elevation_m": 1752,
+    "relief_to_rasuwagadhi_m": 3838,
+    "straight_distance_to_rasuwagadhi_km": 13.5,
+    "reported_blockage_distance_upstream_km": 20,
+    "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
+  },
+  "gauges": [
+    {
+      "id": 4913,
+      "series_id": 23251,
+      "name": "Rasuwagadhi",
+      "role": "mainstem",
+      "warning_m": 6.0,
+      "station_index": "446.22",
+      "longitude": 85.377649,
+      "latitude": 28.271297,
+      "source_url": "https://dhm.gov.np/hydrology/hms-Single/4913",
+      "samples": [
+        {
+          "time_npt": "2026-08-26T05:50:00+05:45",
+          "level_m": 1.78
+        },
+        {
+          "time_npt": "2026-08-26T06:00:00+05:45",
+          "level_m": 1.74
+        },
+        {
+          "time_npt": "2026-08-26T06:10:00+05:45",
+          "level_m": 1.75
+        },
+        {
+          "time_npt": "2026-08-26T06:20:00+05:45",
+          "level_m": 1.77
+        },
+        {
+          "time_npt": "2026-08-26T06:30:00+05:45",
+          "level_m": 1.74
+        },
+        {
+          "time_npt": "2026-08-26T06:40:00+05:45",
+          "level_m": 1.73
+        },
+        {
+          "time_npt": "2026-08-26T06:50:00+05:45",
+          "level_m": 1.74
+        },
+        {
+          "time_npt": "2026-08-26T07:00:00+05:45",
+          "level_m": 1.71
+        },
+        {
+          "time_npt": "2026-08-26T07:10:00+05:45",
+          "level_m": 1.73
+        },
+        {
+          "time_npt": "2026-08-26T07:20:00+05:45",
+          "level_m": 1.68
+        },
+        {
+          "time_npt": "2026-08-26T07:30:00+05:45",
+          "level_m": 1.68
+        },
+        {
+          "time_npt": "2026-08-26T07:40:00+05:45",
+          "level_m": 1.67
+        },
+        {
+          "time_npt": "2026-08-26T07:50:00+05:45",
+          "level_m": 1.65
+        },
+        {
+          "time_npt": "2026-08-26T08:00:00+05:45",
+          "level_m": 1.64
+        },
+        {
+          "time_npt": "2026-08-26T08:10:00+05:45",
+          "level_m": 1.64
+        },
+        {
+          "time_npt": "2026-08-26T08:20:00+05:45",
+          "level_m": 1.64
+        },
+        {
+          "time_npt": "2026-08-26T08:30:00+05:45",
+          "level_m": 1.63
+        },
+        {
+          "time_npt": "2026-08-26T08:40:00+05:45",
+          "level_m": 1.62,
+          "minutes_after_mass_movement": 3
+        }
+      ],
+      "last_sample": {
+        "time_npt": "2026-08-26T08:40:00+05:45",
+        "level_m": 1.62,
+        "minutes_after_mass_movement": 3
+      }
+    },
+    {
+      "id": 191,
+      "series_id": 2810,
+      "name": "Syabrubesi",
+      "role": "mainstem",
+      "warning_m": 5.5,
+      "station_index": "446.25",
+      "longitude": 85.342554,
+      "latitude": 28.17065,
+      "source_url": "https://dhm.gov.np/hydrology/hms-Single/191",
+      "samples": [
+        {
+          "time_npt": "2026-08-26T05:50:00+05:45",
+          "level_m": 3.79
+        },
+        {
+          "time_npt": "2026-08-26T06:00:00+05:45",
+          "level_m": 3.84
+        },
+        {
+          "time_npt": "2026-08-26T06:10:00+05:45",
+          "level_m": 3.96
+        },
+        {
+          "time_npt": "2026-08-26T06:20:00+05:45",
+          "level_m": 3.91
+        },
+        {
+          "time_npt": "2026-08-26T06:30:00+05:45",
+          "level_m": 3.94
+        },
+        {
+          "time_npt": "2026-08-26T06:40:00+05:45",
+          "level_m": 3.83
+        },
+        {
+          "time_npt": "2026-08-26T06:50:00+05:45",
+          "level_m": 3.83
+        },
+        {
+          "time_npt": "2026-08-26T07:00:00+05:45",
+          "level_m": 3.9
+        },
+        {
+          "time_npt": "2026-08-26T07:10:00+05:45",
+          "level_m": 3.97
+        },
+        {
+          "time_npt": "2026-08-26T07:20:00+05:45",
+          "level_m": 3.93
+        },
+        {
+          "time_npt": "2026-08-26T07:30:00+05:45",
+          "level_m": 3.91
+        },
+        {
+          "time_npt": "2026-08-26T07:40:00+05:45",
+          "level_m": 3.91
+        },
+        {
+          "time_npt": "2026-08-26T07:50:00+05:45",
+          "level_m": 3.97
+        },
+        {
+          "time_npt": "2026-08-26T08:00:00+05:45",
+          "level_m": 3.76
+        },
+        {
+          "time_npt": "2026-08-26T08:10:00+05:45",
+          "level_m": 3.97
+        },
+        {
+          "time_npt": "2026-08-26T08:20:00+05:45",
+          "level_m": 3.88
+        },
+        {
+          "time_npt": "2026-08-26T08:30:00+05:45",
+          "level_m": 3.78
+        },
+        {
+          "time_npt": "2026-08-26T08:40:00+05:45",
+          "level_m": 3.9
+        },
+        {
+          "time_npt": "2026-08-26T08:50:00+05:45",
+          "level_m": 3.8,
+          "minutes_after_mass_movement": 13
+        }
+      ],
+      "last_sample": {
+        "time_npt": "2026-08-26T08:50:00+05:45",
+        "level_m": 3.8,
+        "minutes_after_mass_movement": 13
+      }
+    },
+    {
+      "id": 190,
+      "series_id": 2788,
+      "name": "Langtang at Syabrubesi",
+      "role": "tributary",
+      "warning_m": 3.75,
+      "station_index": "446.2",
+      "longitude": 85.34611111,
+      "latitude": 28.16222222,
+      "source_url": "https://dhm.gov.np/hydrology/hms-Single/190",
+      "samples": [
+        {
+          "time_npt": "2026-08-26T05:50:00+05:45",
+          "level_m": 2.89
+        },
+        {
+          "time_npt": "2026-08-26T06:00:00+05:45",
+          "level_m": 2.9
+        },
+        {
+          "time_npt": "2026-08-26T06:10:00+05:45",
+          "level_m": 2.9
+        },
+        {
+          "time_npt": "2026-08-26T06:20:00+05:45",
+          "level_m": 2.88
+        },
+        {
+          "time_npt": "2026-08-26T06:30:00+05:45",
+          "level_m": 2.86
+        },
+        {
+          "time_npt": "2026-08-26T06:40:00+05:45",
+          "level_m": 2.88
+        },
+        {
+          "time_npt": "2026-08-26T06:50:00+05:45",
+          "level_m": 2.86
+        },
+        {
+          "time_npt": "2026-08-26T07:00:00+05:45",
+          "level_m": 2.84
+        },
+        {
+          "time_npt": "2026-08-26T07:10:00+05:45",
+          "level_m": 2.85
+        },
+        {
+          "time_npt": "2026-08-26T07:20:00+05:45",
+          "level_m": 2.84
+        },
+        {
+          "time_npt": "2026-08-26T07:30:00+05:45",
+          "level_m": 2.83
+        },
+        {
+          "time_npt": "2026-08-26T07:40:00+05:45",
+          "level_m": 2.84
+        },
+        {
+          "time_npt": "2026-08-26T07:50:00+05:45",
+          "level_m": 2.84
+        },
+        {
+          "time_npt": "2026-08-26T08:00:00+05:45",
+          "level_m": 2.83
+        },
+        {
+          "time_npt": "2026-08-26T08:10:00+05:45",
+          "level_m": 2.8
+        },
+        {
+          "time_npt": "2026-08-26T08:20:00+05:45",
+          "level_m": 2.81
+        },
+        {
+          "time_npt": "2026-08-26T08:30:00+05:45",
+          "level_m": 2.83
+        },
+        {
+          "time_npt": "2026-08-26T08:40:00+05:45",
+          "level_m": 2.82
+        },
+        {
+          "time_npt": "2026-08-26T08:50:00+05:45",
+          "level_m": 2.81,
+          "minutes_after_mass_movement": 13
+        }
+      ],
+      "last_sample": {
+        "time_npt": "2026-08-26T08:50:00+05:45",
+        "level_m": 2.81,
+        "minutes_after_mass_movement": 13
+      }
+    },
+    {
+      "id": 4657,
+      "series_id": 19916,
+      "name": "Dhunche",
+      "role": "tributary",
+      "warning_m": 3.2,
+      "station_index": "446.3",
+      "longitude": 85.318589,
+      "latitude": 28.098163,
+      "source_url": "https://dhm.gov.np/hydrology/hms-Single/4657",
+      "samples": [
+        {
+          "time_npt": "2026-08-26T05:50:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T06:00:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T06:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T06:20:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T06:30:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T06:40:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T06:50:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T07:00:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T07:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T07:20:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T07:30:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T07:40:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T07:50:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T08:00:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T08:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-26T08:20:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T08:30:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T08:40:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T08:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T09:00:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T09:10:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T09:20:00+05:45",
+          "level_m": 2.4,
+          "minutes_after_mass_movement": 43
+        }
+      ],
+      "last_sample": {
+        "time_npt": "2026-08-26T09:20:00+05:45",
+        "level_m": 2.4,
+        "minutes_after_mass_movement": 43
+      }
+    },
+    {
+      "id": 52,
+      "series_id": 943,
+      "name": "Betrawati",
+      "role": "mainstem",
+      "warning_m": 4.1,
+      "station_index": "447",
+      "longitude": 85.18,
+      "latitude": 27.97,
+      "source_url": "https://dhm.gov.np/hydrology/hms-Single/52",
+      "samples": [
+        {
+          "time_npt": "2026-08-26T05:50:00+05:45",
+          "level_m": 3.57
+        },
+        {
+          "time_npt": "2026-08-26T06:00:00+05:45",
+          "level_m": 3.58
+        },
+        {
+          "time_npt": "2026-08-26T06:10:00+05:45",
+          "level_m": 3.6
+        },
+        {
+          "time_npt": "2026-08-26T06:20:00+05:45",
+          "level_m": 3.58
+        },
+        {
+          "time_npt": "2026-08-26T06:30:00+05:45",
+          "level_m": 3.56
+        },
+        {
+          "time_npt": "2026-08-26T06:40:00+05:45",
+          "level_m": 3.6
+        },
+        {
+          "time_npt": "2026-08-26T06:50:00+05:45",
+          "level_m": 3.58
+        },
+        {
+          "time_npt": "2026-08-26T07:00:00+05:45",
+          "level_m": 3.59
+        },
+        {
+          "time_npt": "2026-08-26T07:10:00+05:45",
+          "level_m": 3.58
+        },
+        {
+          "time_npt": "2026-08-26T07:20:00+05:45",
+          "level_m": 3.61
+        },
+        {
+          "time_npt": "2026-08-26T07:30:00+05:45",
+          "level_m": 3.56
+        },
+        {
+          "time_npt": "2026-08-26T07:40:00+05:45",
+          "level_m": 3.58
+        },
+        {
+          "time_npt": "2026-08-26T07:50:00+05:45",
+          "level_m": 3.54
+        },
+        {
+          "time_npt": "2026-08-26T08:00:00+05:45",
+          "level_m": 3.52
+        },
+        {
+          "time_npt": "2026-08-26T08:10:00+05:45",
+          "level_m": 3.53
+        },
+        {
+          "time_npt": "2026-08-26T08:20:00+05:45",
+          "level_m": 3.54
+        },
+        {
+          "time_npt": "2026-08-26T08:30:00+05:45",
+          "level_m": 3.56
+        },
+        {
+          "time_npt": "2026-08-26T08:40:00+05:45",
+          "level_m": 3.52
+        },
+        {
+          "time_npt": "2026-08-26T08:50:00+05:45",
+          "level_m": 3.55
+        },
+        {
+          "time_npt": "2026-08-26T09:00:00+05:45",
+          "level_m": 3.52
+        },
+        {
+          "time_npt": "2026-08-26T09:10:00+05:45",
+          "level_m": 3.54
+        },
+        {
+          "time_npt": "2026-08-26T09:20:00+05:45",
+          "level_m": 3.55,
+          "minutes_after_mass_movement": 43
+        }
+      ],
+      "last_sample": {
+        "time_npt": "2026-08-26T09:20:00+05:45",
+        "level_m": 3.55,
+        "minutes_after_mass_movement": 43
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-usgs-landslide",
+      "tier": "retrieved observation",
+      "statement": "USGS classifies the seismic source as an M 5.2 landslide, not an earthquake.",
+      "source": "USGS",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
+    },
+    {
+      "id": "obs-planet-change",
+      "tier": "expert image interpretation",
+      "statement": "A PlanetScope 25/26 August comparison shows a major new high-altitude surface disturbance near the seismic source.",
+      "source": "Dan Shugar, PlanetScope comparison",
+      "source_url": "https://www.linkedin.com/posts/dan-shugar-39217813_the-cause-of-the-horrific-floods-in-nepal-ugcPost-7498343111895556096-93RO",
+      "licence_note": "Linked evidence only; Planet imagery is not redistributed here."
+    },
+    {
+      "id": "obs-dhm-blockage",
+      "tier": "official preliminary interpretation",
+      "statement": "DHM officials reported imagery indicating a temporary debris blockage about 20 km upstream of Miteri Bridge and a subsequent breach.",
+      "source": "DHM official quoted by The Kathmandu Post",
+      "source_url": "https://kathmandupost.com/national/2026/08/26/ice-avalanche-debris-lake-may-have-triggered-bhotekoshi-flood"
+    },
+    {
+      "id": "obs-gauge-silence",
+      "tier": "retrieved observation",
+      "statement": "Five DHM gauges in the corridor ceased transmitting between 08:40 and 09:20 NPT; their displayed warning status does not describe the flood peak.",
+      "source": "Nepal DHM station observations",
+      "source_url": "https://dhm.gov.np/hydrology/realtime-stream"
+    }
+  ],
+  "related_work": [
+    {
+      "title": "PlanetScope before/after source-area comparison",
+      "authors": "Dan Shugar",
+      "url": "https://www.linkedin.com/posts/dan-shugar-39217813_the-cause-of-the-horrific-floods-in-nepal-ugcPost-7498343111895556096-93RO"
+    },
+    {
+      "title": "Rasuwa suspected-flood susceptibility tool and open deposit",
+      "authors": "Narayan Thapa and Suman Sanjel",
+      "url": "https://ee-narayanthapa.projects.earthengine.app/view/rasuwasuscepectedflood",
+      "data_url": "https://zenodo.org/uploads/22111526"
+    }
+  ]
+}

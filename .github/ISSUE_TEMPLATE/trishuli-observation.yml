@@ -1,0 +1,77 @@
+name: Trishuli evidence contribution
+description: Submit imagery, a field observation, a correction, or an alternative event interpretation.
+title: "[Trishuli evidence] "
+labels: ["trishuli-evidence"]
+body:
+  - type: dropdown
+    id: contribution_type
+    attributes:
+      label: Contribution type
+      options:
+        - Dated field observation
+        - Satellite or aerial imagery
+        - Gauge or sensor record
+        - Geometry or mapped feature
+        - Correction to published evidence
+        - Alternative mechanism or interpretation
+    validations:
+      required: true
+  - type: input
+    id: observed_at
+    attributes:
+      label: Observation time
+      description: Include date, time and timezone. Use "unknown" only when the source does not provide one.
+      placeholder: 2026-08-26 09:05 NPT
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location or footprint
+      description: Coordinates, place name, bounding box, or a link to a GeoJSON geometry.
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: What is directly observed?
+      description: Describe visible or measured evidence before offering an interpretation.
+    validations:
+      required: true
+  - type: textarea
+    id: interpretation
+    attributes:
+      label: Interpretation
+      description: Optional. State the mechanism you think the observation supports and plausible alternatives.
+  - type: input
+    id: source
+    attributes:
+      label: Source and stable link
+      description: Name the observer, organisation, dataset or publication and provide a URL or DOI.
+    validations:
+      required: true
+  - type: dropdown
+    id: licence
+    attributes:
+      label: Redistribution permission
+      options:
+        - Open licence stated at source
+        - Permission granted to redistribute
+        - Link only; do not redistribute
+        - Licence or permission unknown
+    validations:
+      required: true
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Uncertainty and limitations
+      description: Include cloud, layover, geolocation, timing, completeness or verification limitations.
+    validations:
+      required: true
+  - type: checkboxes
+    id: attribution
+    attributes:
+      label: Attribution
+      options:
+        - label: I consent to this contribution and my supplied attribution being cited in the public evidence ledger.
+          required: true
