@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trishuli Flood Event Reconstruction | ClimaScope</title>
-<meta name="description" content="An open, testable reconstruction of the 26 August 2026 Bhote Koshi-Trishuli flood: source failure, terrain relief, gauge telemetry loss, competing mechanisms and the observations needed next.">
+<title>Trishuli Flood Geospatial Research Note | ClimaScope</title>
+<meta name="description" content="An evolving geospatial research note on the 26 August 2026 Bhote Koshi-Trishuli flood: first post-event channel measurements, source evidence, rainfall screening and public gauge telemetry.">
 <meta name="author" content="Ashish Dutta">
 <link rel="canonical" href="https://climascope.hutton.ac.uk/trishuli/report">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="ClimaScope">
-<meta property="og:title" content="Trishuli Flood: Source-to-impact Reconstruction">
-<meta property="og:description" content="Measured source relief, a public gauge-telemetry audit, competing mechanisms and an open evidence ledger.">
+<meta property="og:title" content="Bhote Koshi-Trishuli Flood: An Evolving Geospatial Note">
+<meta property="og:description" content="Interactive evidence and the first controlled post-event channel comparison, by geospatial researcher Ashish Dutta.">
 <meta property="og:url" content="https://climascope.hutton.ac.uk/trishuli/report">
 <meta property="og:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Trishuli Flood: Source-to-impact Reconstruction">
-<meta name="twitter:description" content="What the current evidence establishes, what remains unresolved, and how to contribute new observations.">
+<meta name="twitter:title" content="Bhote Koshi-Trishuli Flood: An Evolving Geospatial Note">
+<meta name="twitter:description" content="Interactive evidence and the first controlled post-event channel comparison, by geospatial researcher Ashish Dutta.">
 <meta name="twitter:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
 <link rel="stylesheet" href="{{ url_for('static', filename='trishuli/base.css') }}?v={{ av('trishuli/base.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='trishuli/report.css') }}?v={{ av('trishuli/report.css') }}">
@@ -28,15 +28,15 @@
   <a href="/">ClimaScope</a><span class="sep">/</span>
   <a href="/trishuli">Evidence map</a><span class="sep">/</span>
   <span>Event reconstruction</span>
-  <span class="grow">Version 0.3.1 &middot; 27 Aug 2026, 09:45 UTC</span>
+  <span class="grow">Version 0.4.0 &middot; 27 Aug 2026, 12:25 UTC</span>
 </div>
 
 <header class="mast">
   <div class="mast-in">
     <div>
-      <div class="eyebrow">Field note &middot; 27 August 2026</div>
+      <div class="eyebrow">Evolving research note &middot; 27 August 2026</div>
       <h1>Bhote Koshi&ndash;Trishuli flood</h1>
-      <p class="sub">A geospatial reading of the mass-movement record, the terrain and the public river gauges from 26 August.</p>
+      <p class="sub">An interactive geospatial reading of the first post-event image, source evidence, terrain and public river gauges.</p>
       <div class="byline">Ashish Dutta &middot; Geospatial researcher &middot; 27 August 2026</div>
     </div>
     <a class="map-cta" href="/trishuli"><span>Start with the geography</span><b>Open interactive map &rarr;</b></a>
@@ -47,18 +47,29 @@
   <div class="safety"><b>Not emergency guidance.</b> This is an independent reconstruction, not an official warning or damage assessment. Follow Nepal&rsquo;s authorities and local responders for safety information.</div>
 
   <section id="findings" class="opening-note">
-    <p class="lede">At <strong id="event-time">08:37:10 NPT</strong>, USGS recorded a large landslide high above the border. The mapped point sits at about <strong id="source-elevation">5,590 m</strong>, with <strong id="source-relief">3,838 m</strong> of vertical difference to the Rasuwagadhi gauge. That places a major mass movement at the right time and in a very energetic landscape. It does not, on its own, explain where all the water came from.</p>
+    <p class="lede">The clearest result so far is downstream. In the first usable post-event Sentinel-2 image, median wetted width across 46 cloud-free cross-sections changes from <strong>60 to 120&nbsp;m</strong>; 40 of the 46 are wider. It is a measured difference between 12 and 27 August, not a flood footprint and not an explanation of the trigger.</p>
     <dl class="keyfacts">
-      <div><dt>USGS origin</dt><dd>08:37:10 NPT</dd></div>
-      <div><dt>Mapped source</dt><dd>5,590 m</dd></div>
-      <div><dt>Endpoint relief</dt><dd>3,838 m</dd></div>
-      <div><dt>Preliminary blockage account</dt><dd>about 20 km upstream</dd></div>
+      <div><dt>Clear cross-sections</dt><dd>46</dd></div>
+      <div><dt>Median wetted width</dt><dd>60 &rarr; 120 m</dd></div>
+      <div><dt>Cross-sections wider</dt><dd>40 of 46</dd></div>
+      <div><dt>Channel readable</dt><dd>71%</dd></div>
     </dl>
-    <p class="author-note">The part I find most important is the gap between a convincing source event and an unresolved flood sequence.</p>
+    <p class="author-note">I am publishing this early because the useful evidence is arriving now. The map and figures will evolve, but observations, interpretation and uncertainty stay separate.</p>
+  </section>
+
+  <section id="rainfall">
+    <div class="section-head"><h2>A coarse rainfall screen does not explain the source surge</h2><p>The high-altitude source grid was nearly dry; the Nepal-side headwaters had ordinary monsoon rain.</p></div>
+    <dl class="keyfacts">
+      <div><dt>Source catchment, 72 h</dt><dd>0.5&ndash;0.8 mm</dd></div>
+      <div><dt>Source catchment, final 24 h</dt><dd>0.1&ndash;0.3 mm</dd></div>
+      <div><dt>Nepal headwaters, final 24 h</dt><dd>6.6&ndash;10.8 mm</dd></div>
+      <div><dt>Open-Meteo samples</dt><dd>14 points</dd></div>
+    </dl>
+    <p class="plain-caution">This is a rapid model-grid screen, not a mountain rain-gauge network. It makes intense source-area rainfall a poor fit to the available record, but cannot exclude local precipitation missed by a coarse grid.</p>
   </section>
 
   <section id="reconstruction">
-    <div class="section-head"><h2>A very steep source-to-border connection</h2><p>The elevation difference is striking, but it is not a mapped flow path.</p></div>
+    <div class="section-head"><h2>A very steep source-to-border connection</h2><p>USGS currently classifies the reviewed seismic source as an M 5.2 landslide.</p></div>
     <figure>
       <div id="reliefchart"></div>
       <figcaption>The USGS location and Rasuwagadhi DHM gauge are 13.5 km apart in a straight line. Copernicus DEM endpoint elevations differ by 3,838 m. DHM officials separately described a blockage about 20 km upstream along the corridor. No exact avalanche or flood path is inferred here.</figcaption>
@@ -76,6 +87,7 @@
       <div id="gauge-table" class="gauge-table" aria-label="Last available DHM gauge readings"></div>
     </details>
     <p class="plain-caution">A dashboard may still show these stations as &ldquo;below warning level&rdquo;. That label belongs to the final sample received; it says nothing about the unobserved peak or present safety.</p>
+    <p>ICIMOD separately reports a rise of as much as 9&nbsp;m in 30 minutes at Galchhi, citing hydrological observations. That value is attributed here because it is not present in the public DHM series retrieved for this audit.</p>
   </section>
 
   <section id="channel">
@@ -86,25 +98,27 @@
     </figure>
     <p>Scene cloud cover for 27 August is 78 per cent, but that is an average over a 110&nbsp;km tile. Read along the channel itself, 71 per cent of the river is usable, and the clear part is the lower corridor through Betrawati, Bidur and Devighat. The gorge above stays covered.</p>
     <p>Comparing only pixels free of cloud on both dates, within 600&nbsp;m of the mapped channel, the wetted area grows from 0.93 to 1.72&nbsp;km&sup2;, an increase of 85 per cent. Loosening or tightening the water threshold moves that figure between 72 and 133 per cent but does not change its direction. Across 46 cross-sections clear on both dates, median wetted width goes from 60 to 120&nbsp;m, and 40 of the 46 are wider.</p>
+    <p>The new <a href="https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26">Planet Crisis Response collection</a> includes 27 August SkySat imagery at about 0.8&nbsp;m. It is sharper, but opaque cloud covers Rasuwagadhi and valley haze covers the channel at Syabrubesi. I have not used it for quantitative change mapping; higher resolution is not better evidence when the target is obscured.</p>
     <p class="plain-caution">This measures a difference between two dates. It does not attribute one. Both fall inside the monsoon, so part of the change is ordinary discharge variation, and at 20&nbsp;m pixels a 60&nbsp;m channel is three pixels across. It is an observation awaiting the radar pass, not a flood extent.</p>
   </section>
 
   <section id="mechanisms">
-    <div class="section-head"><h2>What is still open</h2><p>Three things the current evidence does not settle.</p></div>
+    <div class="section-head"><h2>What remains unresolved</h2><p>ICIMOD suspects an ice-rock avalanche, while saying the cause remains unconfirmed.</p></div>
     <div class="question-list">
       <article>
         <h3>Rock-and-ice flow</h3>
-        <p>The USGS solution gives a location, not a volume, and no deposit has been traced from scar to channel. Needs stereo or sub-metre optical.</p>
+        <p>USGS gives a reviewed seismic location and ICIMOD reports a suspected avalanche, but no scar-to-channel deposit or volume has been mapped here. Testing needs clear stereo or sub-metre optical imagery.</p>
       </article>
       <article>
         <h3>Debris dam and breach</h3>
-        <p>DHM&rsquo;s preliminary reading. An impoundment leaves slack water upstream, which radar detects through cloud. The 28 August pass covers this.</p>
+        <p>DHM and ICIMOD are assessing a temporary blockage. An impoundment may leave slack water or deposits upstream; the 28 August radar pass can test for those signatures through cloud.</p>
       </article>
       <article>
         <h3>An additional water store</h3>
-        <p>Kept open by the reported water volume. Testing needs before and after lake shorelines; recent Sentinel-2 scenes were 51, 78 and 97 per cent cloud.</p>
+        <p>The present imagery does not establish drainage from a lake or another stored-water source. Testing needs before-and-after shorelines; the relevant upper catchment remains cloud-covered.</p>
       </article>
     </div>
+    <p class="plain-caution">A supraglacial-lake drainage and roughly 20&nbsp;million&nbsp;m&sup3; explanation circulating for Rasuwa refers to the July 2025 flood. ICIMOD&rsquo;s 26 August 2026 advisory does not make that attribution for this event.</p>
   </section>
 
   <section id="next">
@@ -134,7 +148,9 @@
         <li><a href="https://dhm.gov.np/hydrology/realtime-stream">Nepal DHM station observations</a> &mdash; public point readings and station warning thresholds.</li>
         <li><a href="https://kathmandupost.com/national/2026/08/26/ice-avalanche-debris-lake-may-have-triggered-bhotekoshi-flood">DHM preliminary interpretation</a> &mdash; blockage distance and proposed temporary-lake sequence, reported by The Kathmandu Post.</li>
         <li><a href="https://www.icimod.org/press-release/major-flash-flood-sweeps-through-nepals-rasuwa-district-raising-fears-of-further-downstream-flooding/">ICIMOD advisory</a> &mdash; observed river behaviour and cause uncertainty.</li>
-        <li><a href="https://dataspace.copernicus.eu/">Copernicus DEM and Data Space</a> &mdash; endpoint terrain measurements and acquisition catalogue.</li>
+        <li><a href="https://dataspace.copernicus.eu/">Copernicus DEM and Data Space</a> &mdash; endpoint terrain measurements and Sentinel-2 acquisition catalogue.</li>
+        <li><a href="https://open-meteo.com/en/docs">Open-Meteo</a> &mdash; rapid 14-point model-grid rainfall screening.</li>
+        <li><a href="https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26">Planet Crisis Response</a> &mdash; visual review of post-event PlanetScope and SkySat coverage; not used quantitatively.</li>
       </ul>
     </details>
     <details>
@@ -154,7 +170,7 @@
 
   <footer>
     <div><b>Prepared by Ashish Dutta</b><br>Geospatial researcher, The James Hutton Institute</div>
-    <div>A working research note. Observations and interpretations are versioned separately. Version 0.3.1 &middot; 27 Aug 2026, 09:45 UTC.</div>
+    <div>A working research note. Observations and interpretations are versioned separately. Version 0.4.0 &middot; 27 Aug 2026, 12:25 UTC.</div>
   </footer>
 </main>
 

@@ -1,5 +1,5 @@
 TRISHULI FLOOD EVENT EVIDENCE AND PRE-EVENT BASELINE
-Version 0.3.1 - 27 August 2026, 09:45 UTC
+Version 0.4.0 - 27 August 2026, 12:25 UTC
 
 Author
 ------
@@ -25,6 +25,10 @@ station points. Evidence-tier and source URL fields are retained. The source
 point is not a collapse polygon; gauge telemetry cessation is not a flood-wave
 arrival time.
 
+The USGS catalogue record is mutable. Event us7000tbwb was first returned as
+an mb 4.4 earthquake at 02:52:47 UTC and was subsequently revised to a reviewed
+M 5.2 Landslide at 02:52:10 UTC. Version 0.4.0 uses the later reviewed product.
+
 districts.geojson contains the Rasuwa and Nuwakot ADM2 polygons from the Nepal
 Common Operational Dataset for Administrative Boundaries (COD-AB). Source:
 Survey Department of Nepal and UN Resident Coordinator's Office. The source
@@ -45,6 +49,26 @@ trishuli_corridor.gpkg contains ten EPSG:4326 layers:
   aeroway         OSM aeroway and helipad features with distance to channel
   places          OSM populated-place features with distance to channel
 
+Rapid post-event analyses
+--------------------------
+The 12 and 27 August Sentinel-2 comparison uses one 45RUM grid, one radiometric
+stretch, and only pixels clear on both dates. Within 600 m of the mapped
+channel, MNDWI > 0 area changes from 0.932 to 1.721 square kilometres. Across
+46 fully clear transects, median wetted width changes from 60 to 120 m and 40
+transects are wider. These are date-to-date observations, not a flood extent or
+causal attribution.
+
+Open-Meteo hourly fields were sampled at 14 source-catchment and corridor
+points. Four high-altitude source samples total 0.5-0.8 mm in the 72 hours
+before onset and 0.1-0.3 mm in the final 24 hours. This is a coarse model-grid
+screen, not a rain-gauge result, and may miss local orographic precipitation.
+
+The Planet Crisis Response collection on source.coop was visually reviewed.
+The post-event SkySat acquisitions are approximately 0.8 m, but opaque cloud at
+Rasuwagadhi and valley haze at Syabrubesi obscure the target channel. The
+PlanetScope pre/post assets also mix surface-reflectance and top-of-atmosphere
+products. No quantitative Planet change result is produced.
+
 Sources and licence
 -------------------
 OpenStreetMap features are from the HOT/HDX hot_flood_npl extract, snapshot
@@ -54,6 +78,10 @@ OpenStreetMap features are from the HOT/HDX hot_flood_npl extract, snapshot
 Terrain metrics are derived from Copernicus DEM GLO-30. Retain Copernicus
 attribution when redistributing those derivatives.
 
+Sentinel-2 imagery is from the Copernicus Sentinel programme. Planet Crisis
+Response imagery is CC BY-NC 4.0; it is reviewed but not redistributed here.
+Open-Meteo model fields are used under CC BY 4.0 with attribution.
+
 Analytical limits
 -----------------
 - OSM completeness is uneven. Counts describe mapped features only.
@@ -62,7 +90,8 @@ Analytical limits
 - The BSI field is an experimental, uncalibrated composite retained from the
   rapid build. Do not interpret it as blockage probability or hazard. Prefer
   the direct slope, relief and gradient fields.
-- No post-event image pixels or field validation are included.
+- The public figure includes a post-event Sentinel-2 derivative; no original
+  post-event image product or field validation is included in the downloads.
 - DHM gauge samples end during the event window and do not capture the peak.
 - Proximity to the channel does not imply that a feature was flooded,
   damaged or inaccessible.
