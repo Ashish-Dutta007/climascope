@@ -76,8 +76,8 @@ Methods and contributions
 Method, sources and limits are described in this file. Code and structured
 contributions:
 
-https://github.com/Ashish-Dutta007/flood-trishuli
-https://github.com/Ashish-Dutta007/flood-trishuli/issues/new
+https://github.com/Ashish-Dutta007/Trishuli-Flood-2026
+https://github.com/Ashish-Dutta007/Trishuli-Flood-2026/issues/new
 
 Corrections may also be sent to the author at meashishdutta@gmail.com.
 
