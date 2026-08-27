@@ -1,4 +1,4 @@
-/* Trishuli event reconstruction: figures are rendered from the evidence ledger. */
+/* Trishuli working note: figures are rendered from the evidence ledger. */
 (function () {
   'use strict';
   var BASE = document.currentScript ? document.currentScript.dataset.base : '';
@@ -23,11 +23,6 @@
     return String(value == null ? '' : value).replace(/[&<>"]/g, function (c) {
       return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c];
     });
-  }
-  function n(value) { return Number(value).toLocaleString('en-GB'); }
-  function setText(id, value) {
-    var el = $(id);
-    if (el) el.textContent = value;
   }
   function clock(iso, seconds) {
     var d = new Date(iso);
@@ -54,52 +49,14 @@
     })
     .then(render)
     .catch(function (error) {
-      ['reliefchart', 'telemetrychart', 'gauge-table'].forEach(function (id) {
+      ['telemetrychart', 'gauge-table'].forEach(function (id) {
         if ($(id)) $(id).textContent = 'Evidence figure unavailable: ' + error.message;
       });
     });
 
   function render(data) {
-    setText('event-time', clock(data.event.time_npt, true) + ' NPT');
-    setText('source-elevation', n(data.event.source_elevation_m) + ' m');
-    setText('source-relief', n(data.event.relief_to_rasuwagadhi_m) + ' m');
-    renderRelief(data.event);
     renderTelemetry(data);
     renderGaugeTable(data.gauges);
-  }
-
-  function renderRelief(event) {
-    var root = $('reliefchart'); if (!root) return;
-    var W = 920, H = 300, L = 75, R = 55, T = 36, B = 54;
-    var plotH = H - T - B;
-    var y = function (elev) { return T + (6000 - elev) / 5000 * plotH; };
-    var sourceX = L + 65, borderX = W - R - 65;
-    var svg = chart(W, H, 'Endpoint elevation comparison between the USGS landslide source and Rasuwagadhi gauge');
-
-    [1000, 2000, 3000, 4000, 5000, 6000].forEach(function (v) {
-      svg.appendChild(mk('line', {x1:L, x2:W-R, y1:y(v), y2:y(v), stroke:'var(--line)', 'stroke-width':1}));
-      label(svg, n(v), {x:L-10, y:y(v)+4, fill:'var(--muted)', 'font-size':10, 'text-anchor':'end', 'font-family':'Plex Mono, monospace'});
-    });
-    svg.appendChild(mk('polygon', {
-      points:sourceX+','+y(event.source_elevation_m)+' '+borderX+','+y(event.rasuwagadhi_elevation_m)+' '+borderX+','+y(1000)+' '+sourceX+','+y(1000),
-      fill:'var(--accent)', opacity:.12
-    }));
-    svg.appendChild(mk('line', {x1:sourceX, y1:y(event.source_elevation_m), x2:borderX, y2:y(event.rasuwagadhi_elevation_m), stroke:'var(--accent)', 'stroke-width':3, 'stroke-dasharray':'8 6'}));
-    [[sourceX, y(event.source_elevation_m), 'var(--crit)'], [borderX, y(event.rasuwagadhi_elevation_m), 'var(--accent)']].forEach(function (p) {
-      svg.appendChild(mk('circle', {cx:p[0], cy:p[1], r:7, fill:p[2], stroke:'var(--panel)', 'stroke-width':3}));
-    });
-
-    label(svg, 'USGS LANDSLIDE SOURCE', {x:sourceX, y:y(event.source_elevation_m)-18, fill:'var(--ink)', 'font-size':11, 'text-anchor':'middle', 'font-family':'Archivo, sans-serif'});
-    label(svg, n(event.source_elevation_m)+' m', {x:sourceX, y:y(event.source_elevation_m)+25, fill:'var(--crit)', 'font-size':15, 'font-weight':600, 'text-anchor':'middle', 'font-family':'Plex Mono, monospace'});
-    label(svg, 'RASUWAGADHI GAUGE', {x:borderX, y:y(event.rasuwagadhi_elevation_m)-18, fill:'var(--ink)', 'font-size':11, 'text-anchor':'middle', 'font-family':'Archivo, sans-serif'});
-    label(svg, n(event.rasuwagadhi_elevation_m)+' m', {x:borderX, y:y(event.rasuwagadhi_elevation_m)+25, fill:'var(--accent-ink)', 'font-size':15, 'font-weight':600, 'text-anchor':'middle', 'font-family':'Plex Mono, monospace'});
-
-    var midX = (sourceX + borderX) / 2, midY = (y(event.source_elevation_m) + y(event.rasuwagadhi_elevation_m)) / 2;
-    svg.appendChild(mk('rect', {x:midX-105, y:midY-26, width:210, height:52, fill:'var(--panel)', stroke:'var(--line)'}));
-    label(svg, n(event.relief_to_rasuwagadhi_m)+' m RELIEF', {x:midX, y:midY-3, fill:'var(--ink)', 'font-size':15, 'font-weight':600, 'text-anchor':'middle', 'font-family':'Plex Mono, monospace'});
-    label(svg, event.straight_distance_to_rasuwagadhi_km+' km straight-line separation', {x:midX, y:midY+16, fill:'var(--muted)', 'font-size':10, 'text-anchor':'middle', 'font-family':'Archivo, sans-serif'});
-    label(svg, 'Schematic endpoint connection only - not an inferred flow path', {x:(L+W-R)/2, y:H-13, fill:'var(--muted)', 'font-size':10, 'text-anchor':'middle', 'font-family':'Archivo, sans-serif'});
-    root.appendChild(svg);
   }
 
   function renderTelemetry(data) {
