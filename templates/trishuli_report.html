@@ -78,6 +78,17 @@
     <p class="plain-caution">A dashboard may still show these stations as &ldquo;below warning level&rdquo;. That label belongs to the final sample received; it says nothing about the unobserved peak or present safety.</p>
   </section>
 
+  <section id="channel">
+    <div class="section-head"><h2>The first post-event image, and a wider channel</h2><p>Optical cover arrived on 27 August. Downstream of the gorge it is clear enough to measure.</p></div>
+    <figure>
+      <img src="{{ url_for('static', filename='trishuli/s2_prepost.jpg') }}" alt="Sentinel-2 short-wave infrared composite of the Trishuli corridor on 12 and 27 August 2026, showing a wider brighter channel on the later date" loading="lazy" style="width:100%;height:auto;border:1px solid var(--line);border-radius:3px">
+      <figcaption>Sentinel-2 bands 11, 8 and 4. Water reads dark, wet sediment pale. Grey marks cloud and cloud shadow, where nothing can be read. One stretch is applied to both dates: stretching each separately can manufacture apparent change.</figcaption>
+    </figure>
+    <p>Scene cloud cover for 27 August is 78 per cent, but that is an average over a 110&nbsp;km tile. Read along the channel itself, 71 per cent of the river is usable, and the clear part is the lower corridor through Betrawati, Bidur and Devighat. The gorge above stays covered.</p>
+    <p>Comparing only pixels free of cloud on both dates, within 600&nbsp;m of the mapped channel, the wetted area grows from 0.93 to 1.72&nbsp;km&sup2;, an increase of 85 per cent. Loosening or tightening the water threshold moves that figure between 72 and 133 per cent but does not change its direction. Across 46 cross-sections clear on both dates, median wetted width goes from 60 to 120&nbsp;m, and 40 of the 46 are wider.</p>
+    <p class="plain-caution">This measures a difference between two dates. It does not attribute one. Both fall inside the monsoon, so part of the change is ordinary discharge variation, and at 20&nbsp;m pixels a 60&nbsp;m channel is three pixels across. It is an observation awaiting the radar pass, not a flood extent.</p>
+  </section>
+
   <section id="mechanisms">
     <div class="section-head"><h2>What is still open</h2><p>Three things the current evidence does not settle.</p></div>
     <div class="question-list">
