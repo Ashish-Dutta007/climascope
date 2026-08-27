@@ -53,13 +53,15 @@
         <button type="button" id="b-img" aria-pressed="true">Imagery</button>
         <button type="button" id="b-topo" aria-pressed="false">Topo</button>
         <button type="button" id="b-hs" aria-pressed="false">Hillshade</button>
-        <button type="button" id="b-terr" aria-pressed="false">Terrain</button>
+        <button type="button" id="b-canvas" aria-pressed="false">Canvas</button>
       </div>
-      <p class="note" style="margin-top:8px">Live Esri tiles, zoom to 1&nbsp;m where coverage allows.</p>
+      <p class="note" style="margin-top:8px">Live Esri tiles to zoom 18. Hillshade for terrain, Canvas for reading the overlays.</p>
     </div>
 
     <div class="grp">
       <h2>Terrain context</h2>
+      <label class="row"><input type="checkbox" id="l-district" checked><span class="sw district-sw"></span><span>Districts</span><span class="ct" id="districtpct">9%</span></label>
+      <input type="range" id="districtop" min="0" max="40" value="9" aria-label="District fill opacity">
       <label class="row"><input type="checkbox" id="l-slope"><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
       <input type="range" id="slopeop" min="0" max="100" value="62" aria-label="Slope overlay opacity">
     </div>
@@ -89,6 +91,7 @@
       <h2>Download</h2>
       <a class="dl" href="{{ url_for('static', filename='trishuli/event_observations.geojson') }}" download><b>Event observations, GeoJSON</b>USGS source and DHM gauges with evidence tiers.</a>
       <a class="dl" href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download><b>GeoPackage, 5.3 MB</b>10 baseline layers for QGIS or ArcGIS Pro.</a>
+      <a class="dl secondary" href="{{ url_for('static', filename='trishuli/districts.geojson') }}" download><b>District context, GeoJSON</b>Rasuwa and Nuwakot COD boundaries.</a>
       <a class="dl secondary" href="{{ url_for('static', filename='trishuli/DATA_NOTES.txt') }}"><b>Data notes</b>Sources, fields, licence and analytical limits.</a>
     </div>
 
@@ -97,6 +100,7 @@
       <p class="note">
         <b>Imagery</b> Esri World Imagery, live tiles. Source: Esri, Vantor, Earthstar Geographics.<br><br>
         <b>Terrain</b> Copernicus DEM GLO-30, slope computed at 27&times;31&nbsp;m and served as a georeferenced overlay.<br><br>
+        <b>Districts</b> Nepal COD-AB, Survey Department of Nepal and UN Resident Coordinator&rsquo;s Office, CC BY-IGO.<br><br>
         <b>Vectors</b> OpenStreetMap via the HOT extract <span class="mono">hot_flood_npl</span>, OSM data 24 Aug 2026, ODbL.<br><br>
         <b>River colours</b> share of terrain steeper than 45&deg; within 500&nbsp;m of each 1&nbsp;km river sample. This is descriptive terrain context, not hazard probability.<br><br>
         <b>Author</b> Ashish Dutta, geospatial researcher. Corrections: <a href="mailto:ashish.dutta@hutton.ac.uk">email</a>.

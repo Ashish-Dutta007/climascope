@@ -6,17 +6,37 @@
   var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
   var $ = function (id) { return document.getElementById(id); };
 
+  /* All four services publish to LOD 23, so one source maxzoom covers the set.
+     World_Terrain_Base, NatGeo_World_Map and World_Physical_Map are deliberately
+     absent: over Nepal they return Esri's "map data not yet available" placeholder
+     from roughly z10, so they render as an empty grey field at corridor scale. */
+  /* maxzoom is the deepest level that returns real tiles OVER THIS CORRIDOR, not the
+     service's advertised LOD. Past it Esri serves a "map data not yet available"
+     placeholder, so the source stops there and MapLibre upsamples the last good tile.
+     World_Terrain_Base, NatGeo_World_Map and World_Physical_Map are deliberately
+     absent: over Nepal they hit that placeholder from about z10. */
   var BASEMAPS = {
-    img:  {name: 'World_Imagery',              label: 'Esri World Imagery'},
-    topo: {name: 'World_Topo_Map',             label: 'Esri Topographic'},
-    hs:   {name: 'Elevation/World_Hillshade',  label: 'Esri Hillshade'},
-    terr: {name: 'World_Terrain_Base',         label: 'Esri Terrain'}
+    img:    {name: 'World_Imagery',                 label: 'Esri World Imagery',    maxzoom: 18},
+    topo:   {name: 'World_Topo_Map',                label: 'Esri Topographic',      maxzoom: 16},
+    hs:     {name: 'Elevation/World_Hillshade',     label: 'Esri Hillshade',        maxzoom: 16},
+    canvas: {name: 'Canvas/World_Light_Gray_Base',  label: 'Esri Light Gray Canvas', maxzoom: 16}
   };
-  var ATTR = 'Esri, Vantor, Earthstar Geographics | OpenStreetMap contributors (ODbL) | Copernicus DEM';
+  var ATTR = 'Esri, Vantor, Earthstar Geographics | OpenStreetMap contributors (ODbL) | Copernicus DEM | Nepal COD-AB (CC BY-IGO)';
 
   function rasterSource(key) {
     return {type: 'raster', tiles: [ESRI + BASEMAPS[key].name + '/MapServer/tile/{z}/{y}/{x}'],
-            tileSize: 256, maxzoom: 19, attribution: ATTR};
+            tileSize: 256, maxzoom: BASEMAPS[key].maxzoom, attribution: ATTR};
+  }
+
+  /* setTiles cannot change the maxzoom of a source, so switching basemap rebuilds it
+     and re-inserts the layer beneath everything else. */
+  function setBasemap(key) {
+    currentBase = key;
+    var below = map.getStyle().layers.filter(function (l) { return l.id !== 'base'; })[0];
+    if (map.getLayer('base')) map.removeLayer('base');
+    if (map.getSource('base')) map.removeSource('base');
+    map.addSource('base', rasterSource(key));
+    map.addLayer({id: 'base', type: 'raster', source: 'base'}, below ? below.id : undefined);
   }
   var steepCol = function (v) {
     return v >= 40 ? '#b8392e' : v >= 25 ? '#d99a2b' : v >= 10 ? '#2b8fab' : '#7d8b98';
@@ -41,18 +61,20 @@
   map.addControl(new maplibregl.ScaleControl({maxWidth: 130, unit: 'metric'}), 'bottom-left');
   map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
 
-  var DATA = null, EVENT = null, currentBase = 'img';
+  var DATA = null, EVENT = null, DISTRICTS = null, currentBase = 'img';
+  var districtMarkers = [];
 
   Promise.all([
     fetch(BASE + 'mapdata.json', {credentials: 'same-origin'}),
-    fetch(BASE + 'event_observations.geojson', {credentials: 'same-origin'})
+    fetch(BASE + 'event_observations.geojson', {credentials: 'same-origin'}),
+    fetch(BASE + 'districts.geojson', {credentials: 'same-origin'})
   ])
     .then(function (responses) {
       responses.forEach(function (r) { if (!r.ok) throw new Error(r.url + ' HTTP ' + r.status); });
       return Promise.all(responses.map(function (r) { return r.json(); }));
     })
     .then(function (d) {
-      DATA = d[0]; EVENT = d[1];
+      DATA = d[0]; EVENT = d[1]; DISTRICTS = d[2];
       if (map.isStyleLoaded()) build(); else map.on('load', build);
     })
     .catch(function (e) {
@@ -83,6 +105,31 @@
     });
     map.addLayer({id: 'slope', type: 'raster', source: 'slope',
                   paint: {'raster-opacity': 0.62, 'raster-fade-duration': 0}});
+
+    /* --- quiet district context: official Nepal COD ADM2 boundaries --- */
+    map.addSource('districts', {type: 'geojson', data: DISTRICTS});
+    map.addLayer({id: 'district-fill', type: 'fill', source: 'districts',
+      paint: {
+        'fill-color': ['match', ['get', 'name'], 'Rasuwa', '#2b8fab', 'Nuwakot', '#d99a2b', '#7d8b98'],
+        'fill-opacity': 0.09
+      }});
+    map.addLayer({id: 'district-line', type: 'line', source: 'districts',
+      paint: {
+        'line-color': '#f7fafc', 'line-opacity': 0.78,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 13, 2.2]
+      }});
+    /* District names are HTML markers, not a symbol layer: the style declares no
+       glyphs URL and connect-src forbids fetching one, so text-field cannot render.
+       label_lon/label_lat come from the build script and sit inside the polygon. */
+    DISTRICTS.features.forEach(function (feature) {
+      var pr = feature.properties;
+      if (pr.label_lon == null || pr.label_lat == null) return;
+      var el = document.createElement('div');
+      el.className = 'district-label';
+      el.textContent = pr.name;
+      districtMarkers.push(new maplibregl.Marker({element: el})
+        .setLngLat([pr.label_lon, pr.label_lat]).addTo(map));
+    });
 
     /* --- event evidence: reviewed source and public gauge observations --- */
     map.addSource('event', {type: 'geojson', data: EVENT});
@@ -263,29 +310,57 @@
   }
 
   function wireUI() {
-    var segs = {'b-img': 'img', 'b-topo': 'topo', 'b-hs': 'hs', 'b-terr': 'terr'};
+    var segs = {'b-img': 'img', 'b-topo': 'topo', 'b-hs': 'hs', 'b-canvas': 'canvas'};
     Object.keys(segs).forEach(function (id) {
       var el = $(id); if (!el) return;
       el.addEventListener('click', function () {
-        currentBase = segs[id];
-        map.getSource('base').setTiles([ESRI + BASEMAPS[currentBase].name + '/MapServer/tile/{z}/{y}/{x}']);
+        setBasemap(segs[id]);
         Object.keys(segs).forEach(function (j) {
           var b = $(j); if (b) b.setAttribute('aria-pressed', String(j === id));
         });
       });
     });
-    var boxes = {'l-slope': 'slope', 'l-stem': 'stem', 'l-trib': 'trib', 'l-rmaj': 'rmaj',
+    var boxes = {'l-district': ['district-fill', 'district-line'],
+                 'l-slope': 'slope', 'l-stem': 'stem', 'l-trib': 'trib', 'l-rmaj': 'rmaj',
                  'l-rmin': 'rmin', 'l-bldg': 'bldg', 'l-brg': 'brg', 'l-edu': 'edu',
                  'l-hlth': 'hlth', 'l-heli': 'heli', 'l-plc': 'plc', 'l-buf': 'buf'};
     Object.keys(boxes).forEach(function (id) {
       var el = $(id); if (!el) return;
       el.addEventListener('change', function () {
-        map.setLayoutProperty(boxes[id], 'visibility', el.checked ? 'visible' : 'none');
+        var layers = Array.isArray(boxes[id]) ? boxes[id] : [boxes[id]];
+        layers.forEach(function (layer) {
+          map.setLayoutProperty(layer, 'visibility', el.checked ? 'visible' : 'none');
+        });
       });
-      if (map.getLayer(boxes[id])) {
-        map.setLayoutProperty(boxes[id], 'visibility', el.checked ? 'visible' : 'none');
-      }
+      var layers = Array.isArray(boxes[id]) ? boxes[id] : [boxes[id]];
+      layers.forEach(function (layer) {
+        if (map.getLayer(layer)) {
+          map.setLayoutProperty(layer, 'visibility', el.checked ? 'visible' : 'none');
+        }
+      });
     });
+    var districtBox = $('l-district');
+    function syncDistrictLabels() {
+      var shown = !districtBox || districtBox.checked;
+      districtMarkers.forEach(function (marker) {
+        marker.getElement().style.display = shown ? '' : 'none';
+      });
+    }
+    if (districtBox) districtBox.addEventListener('change', syncDistrictLabels);
+    syncDistrictLabels();
+
+    var districtOp = $('districtop');
+    function syncDistrictOpacity() {
+      if (!districtOp) return;
+      var v = districtOp.value / 100;
+      map.setPaintProperty('district-fill', 'fill-opacity', v);
+      map.setPaintProperty('district-line', 'line-opacity', Math.min(1, 0.20 + v * 3.2));
+      var out = $('districtpct');
+      if (out) out.textContent = districtOp.value + '%';
+    }
+    if (districtOp) districtOp.addEventListener('input', syncDistrictOpacity);
+    syncDistrictOpacity();
+
     var eventBox = $('l-event');
     if (eventBox) eventBox.addEventListener('change', function () {
       ['event-source', 'event-gauges'].forEach(function (layer) {
