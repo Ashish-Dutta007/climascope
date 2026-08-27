@@ -25,6 +25,10 @@
     });
   }
   function n(value) { return Number(value).toLocaleString('en-GB'); }
+  function setText(id, value) {
+    var el = $(id);
+    if (el) el.textContent = value;
+  }
   function clock(iso, seconds) {
     var d = new Date(iso);
     return d.toLocaleTimeString('en-GB', {timeZone:'Asia/Kathmandu', hour:'2-digit', minute:'2-digit', second:seconds ? '2-digit' : undefined, hour12:false});
@@ -56,9 +60,9 @@
     });
 
   function render(data) {
-    $('event-time').textContent = clock(data.event.time_npt, true) + ' NPT';
-    $('source-elevation').textContent = n(data.event.source_elevation_m) + ' m';
-    $('source-relief').textContent = n(data.event.relief_to_rasuwagadhi_m) + ' m';
+    setText('event-time', clock(data.event.time_npt, true) + ' NPT');
+    setText('source-elevation', n(data.event.source_elevation_m) + ' m');
+    setText('source-relief', n(data.event.relief_to_rasuwagadhi_m) + ' m');
     renderRelief(data.event);
     renderTelemetry(data);
     renderGaugeTable(data.gauges);
