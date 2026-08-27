@@ -25,6 +25,11 @@ station points. Evidence-tier and source URL fields are retained. The source
 point is not a collapse polygon; gauge telemetry cessation is not a flood-wave
 arrival time.
 
+districts.geojson contains the Rasuwa and Nuwakot ADM2 polygons from the Nepal
+Common Operational Dataset for Administrative Boundaries (COD-AB). Source:
+Survey Department of Nepal and UN Resident Coordinator's Office. The source
+boundary is valid from 14 March 2024 and distributed under CC BY-IGO.
+
 Pre-event package
 -----------------
 trishuli_corridor.gpkg contains ten EPSG:4326 layers:
