@@ -56,7 +56,7 @@
     });
 
   function render(data) {
-    $('event-time').textContent = clock(data.event.time_npt, true);
+    $('event-time').textContent = clock(data.event.time_npt, true) + ' NPT';
     $('source-elevation').textContent = n(data.event.source_elevation_m) + ' m';
     $('source-relief').textContent = n(data.event.relief_to_rasuwagadhi_m) + ' m';
     renderRelief(data.event);
