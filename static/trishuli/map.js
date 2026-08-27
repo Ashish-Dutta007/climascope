@@ -188,7 +188,7 @@
 
     /* --- buildings, coloured by distance to channel --- */
     map.addSource('bldg', {type: 'geojson', data: fc(DATA.bldg.map(function (b) {
-      return {type: 'Feature', properties: {d: b[2]},
+      return {type: 'Feature', properties: {d: b[2], fresh: b[3] || 0},
               geometry: {type: 'Point', coordinates: [b[0], b[1]]}};
     }))});
     map.addLayer({id: 'bldg', type: 'circle', source: 'bldg', minzoom: 11,
@@ -196,6 +196,14 @@
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.1, 16, 3.4],
         'circle-color': ['step', ['get', 'd'], '#c9423a', 100, '#d68c36', 250, '#78848f'],
         'circle-opacity': 0.85}});
+    /* Buildings volunteers digitised since the flood, drawn over the rest so the
+       live mapping effort is visible rather than buried in the base count. */
+    map.addLayer({id: 'bldg-new', type: 'circle', source: 'bldg', minzoom: 10,
+      filter: ['==', ['get', 'fresh'], 1],
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.4, 16, 4],
+        'circle-color': '#4de1a2', 'circle-opacity': 0.95,
+        'circle-stroke-color': '#08301f', 'circle-stroke-width': 0.4}});
 
     /* --- point layers --- */
     function pts(key, arr, colour, radius, minz) {
@@ -318,7 +326,7 @@
         });
       });
     });
-    var boxes = {'l-district': ['district-fill', 'district-line'],
+    var boxes = {'l-district': ['district-fill', 'district-line'], 'l-bldgnew': 'bldg-new',
                  'l-slope': 'slope', 'l-stem': 'stem', 'l-trib': 'trib', 'l-rmaj': 'rmaj',
                  'l-rmin': 'rmin', 'l-bldg': 'bldg', 'l-brg': 'brg', 'l-edu': 'edu',
                  'l-hlth': 'hlth', 'l-heli': 'heli', 'l-plc': 'plc', 'l-buf': 'buf'};
@@ -369,6 +377,14 @@
     if (op) op.addEventListener('input', function () {
       map.setPaintProperty('slope', 'raster-opacity', op.value / 100);
     });
+    var osm = DATA.osm || {};
+    var osmCount = $('osmcount');
+    if (osmCount && osm.buildings) osmCount.textContent = osm.buildings.toLocaleString();
+    var osmNew = $('osmnew');
+    if (osmNew && osm.buildings_new) osmNew.textContent = osm.buildings_new.toLocaleString();
+    var osmWhen = $('osmwhen');
+    if (osmWhen && osm.snapshot) osmWhen.textContent = osm.snapshot.slice(0, 16) + ' UTC';
+
     var pct = $('slopepct');
     if (pct) pct.textContent = (DATA.terrain.pct_over35 * 100).toFixed(0) + '% of area';
 
