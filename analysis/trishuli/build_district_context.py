@@ -44,7 +44,7 @@ def label_point(geometry: dict) -> dict:
 def main() -> None:
     response = requests.get(
         SOURCE_URL,
-        headers={"User-Agent": "ClimaScope-Trishuli/0.3.1 ashish.dutta@hutton.ac.uk"},
+        headers={"User-Agent": "flood-trishuli/0.3.1 meashishdutta@gmail.com"},
         timeout=120,
     )
     response.raise_for_status()

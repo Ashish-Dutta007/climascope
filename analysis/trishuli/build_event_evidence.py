@@ -92,7 +92,7 @@ def sample_dem(points: list[tuple[float, float]]) -> list[float]:
 
 def main() -> None:
     session = requests.Session()
-    session.headers["User-Agent"] = "ClimaScope-Trishuli/0.3 (ashish.dutta@hutton.ac.uk)"
+    session.headers["User-Agent"] = "flood-trishuli/0.3 (meashishdutta@gmail.com)"
 
     usgs = session.get(USGS_URL, timeout=30)
     usgs.raise_for_status()
