@@ -71,10 +71,10 @@ Current public brief
 --------------------
 https://climascope.hutton.ac.uk/trishuli/report
 
-Methods and structured contributions
-------------------------------------
-https://github.com/Ashish-Dutta007/climascope/tree/main/analysis/trishuli
-https://github.com/Ashish-Dutta007/climascope/issues/new?template=trishuli-observation.yml
+Methods and contributions
+-------------------------
+Method, sources and limits are described in this file. Send structured
+observations to the author at ashish.dutta@hutton.ac.uk.
 
 Please send corrections, dated local observations and reuse questions to the
 author. Contributions will be attributed and kept distinct from mapped
