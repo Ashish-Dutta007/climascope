@@ -1,11 +1,13 @@
 {
   "schema_version": "1.0",
-  "brief_version": "0.4.0",
-  "generated_at_utc": "2026-08-27T09:44:33+00:00",
+  "brief_version": "0.4.1",
+  "generated_at_utc": "2026-08-27T13:02:48+00:00",
   "event": {
     "id": "us7000tbwb",
     "catalogue_class": "landslide",
     "catalogue_title": "M 5.2 Landslide - 55 km NW of Kod\u0101ri\u0307\u0304, Nepal",
+    "catalogue_updated_utc": "2026-08-26T18:57:38.963000+00:00",
+    "review_summary": "USGS determined from nearby seismic stations, long-period waves and satellite imagery that the event was a glacial collapse and debris flow, and that no earthquake occurred.",
     "magnitude": 5.2,
     "time_utc": "2026-08-26T02:52:10+00:00",
     "time_npt": "2026-08-26T08:37:10+05:45",
@@ -104,11 +106,18 @@
           "minutes_after_mass_movement": 3
         }
       ],
+      "duplicate_timestamp_count": 0,
       "last_sample": {
         "time_npt": "2026-08-26T08:40:00+05:45",
         "level_m": 1.62,
         "minutes_after_mass_movement": 3
-      }
+      },
+      "latest_returned_sample": {
+        "time_npt": "2026-08-26T08:40:00+05:45",
+        "level_m": 1.62,
+        "minutes_after_mass_movement": 3
+      },
+      "continued_after_event_window": false
     },
     {
       "id": 191,
@@ -199,11 +208,18 @@
           "minutes_after_mass_movement": 13
         }
       ],
+      "duplicate_timestamp_count": 0,
       "last_sample": {
         "time_npt": "2026-08-26T08:50:00+05:45",
         "level_m": 3.8,
         "minutes_after_mass_movement": 13
-      }
+      },
+      "latest_returned_sample": {
+        "time_npt": "2026-08-26T08:50:00+05:45",
+        "level_m": 3.8,
+        "minutes_after_mass_movement": 13
+      },
+      "continued_after_event_window": false
     },
     {
       "id": 190,
@@ -294,11 +310,18 @@
           "minutes_after_mass_movement": 13
         }
       ],
+      "duplicate_timestamp_count": 0,
       "last_sample": {
         "time_npt": "2026-08-26T08:50:00+05:45",
         "level_m": 2.81,
         "minutes_after_mass_movement": 13
-      }
+      },
+      "latest_returned_sample": {
+        "time_npt": "2026-08-26T08:50:00+05:45",
+        "level_m": 2.81,
+        "minutes_after_mass_movement": 13
+      },
+      "continued_after_event_window": false
     },
     {
       "id": 4657,
@@ -311,6 +334,122 @@
       "latitude": 28.098163,
       "source_url": "https://dhm.gov.np/hydrology/hms-Single/4657",
       "samples": [
+        {
+          "time_npt": "2026-08-26T01:00:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T01:10:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T01:20:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T01:30:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T01:40:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T01:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T02:00:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T02:10:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T02:20:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T02:30:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T02:40:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T02:50:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T03:00:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T03:10:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T03:20:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T03:30:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T03:40:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T03:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T04:00:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T04:10:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T04:20:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T04:30:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T04:40:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T04:50:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T05:00:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T05:10:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T05:20:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T05:30:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T05:40:00+05:45",
+          "level_m": 2.38
+        },
         {
           "time_npt": "2026-08-26T05:50:00+05:45",
           "level_m": 2.41
@@ -397,15 +536,245 @@
         },
         {
           "time_npt": "2026-08-26T09:20:00+05:45",
-          "level_m": 2.4,
-          "minutes_after_mass_movement": 43
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T09:30:00+05:45",
+          "level_m": 2.39,
+          "minutes_after_mass_movement": 53
+        },
+        {
+          "time_npt": "2026-08-26T09:40:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T09:50:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T10:00:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T10:10:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T10:20:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T10:30:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T10:40:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T10:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T11:00:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-26T11:10:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T11:20:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T11:30:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T11:40:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T11:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T12:00:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T12:10:00+05:45",
+          "level_m": 2.38
+        },
+        {
+          "time_npt": "2026-08-26T12:20:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T12:30:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T12:40:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-26T12:50:00+05:45",
+          "level_m": 2.39
+        },
+        {
+          "time_npt": "2026-08-27T01:00:00+05:45",
+          "level_m": 2.43
+        },
+        {
+          "time_npt": "2026-08-27T01:10:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T01:20:00+05:45",
+          "level_m": 2.43
+        },
+        {
+          "time_npt": "2026-08-27T01:30:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T01:40:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T01:50:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T02:00:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T02:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T02:20:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T02:30:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-27T02:40:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T02:50:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T03:00:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T03:10:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T03:20:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T03:30:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T03:40:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T03:50:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T04:00:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T04:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T04:20:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-27T04:30:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T04:40:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T04:50:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T05:00:00+05:45",
+          "level_m": 2.4
+        },
+        {
+          "time_npt": "2026-08-27T05:10:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T05:20:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T05:30:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T05:40:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T12:00:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T12:10:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T12:20:00+05:45",
+          "level_m": 2.41
+        },
+        {
+          "time_npt": "2026-08-27T12:30:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T12:40:00+05:45",
+          "level_m": 2.42
+        },
+        {
+          "time_npt": "2026-08-27T12:50:00+05:45",
+          "level_m": 2.43
         }
       ],
+      "duplicate_timestamp_count": 37,
       "last_sample": {
-        "time_npt": "2026-08-26T09:20:00+05:45",
-        "level_m": 2.4,
-        "minutes_after_mass_movement": 43
-      }
+        "time_npt": "2026-08-26T09:30:00+05:45",
+        "level_m": 2.39,
+        "minutes_after_mass_movement": 53
+      },
+      "latest_returned_sample": {
+        "time_npt": "2026-08-27T12:50:00+05:45",
+        "level_m": 2.43
+      },
+      "continued_after_event_window": true
     },
     {
       "id": 52,
@@ -508,18 +877,25 @@
           "minutes_after_mass_movement": 43
         }
       ],
+      "duplicate_timestamp_count": 0,
       "last_sample": {
         "time_npt": "2026-08-26T09:20:00+05:45",
         "level_m": 3.55,
         "minutes_after_mass_movement": 43
-      }
+      },
+      "latest_returned_sample": {
+        "time_npt": "2026-08-26T09:20:00+05:45",
+        "level_m": 3.55,
+        "minutes_after_mass_movement": 43
+      },
+      "continued_after_event_window": false
     }
   ],
   "observations": [
     {
       "id": "obs-usgs-landslide",
       "tier": "retrieved observation",
-      "statement": "USGS classifies the seismic source as an M 5.2 landslide, not an earthquake.",
+      "statement": "USGS determined from nearby seismic stations, long-period waves and satellite imagery that the event was a glacial collapse and debris flow, and that no earthquake occurred.",
       "source": "USGS",
       "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
     },
@@ -533,7 +909,7 @@
     {
       "id": "obs-gauge-silence",
       "tier": "retrieved observation",
-      "statement": "Five DHM gauges in the corridor ceased transmitting between 08:40 and 09:20 NPT; their displayed warning status does not describe the flood peak.",
+      "statement": "Four of five returned DHM gauge series end between 08:40 and 09:20 NPT; Dhunche continues beyond the event window. Displayed warning status does not describe the flood peak.",
       "source": "Nepal DHM station observations",
       "source_url": "https://dhm.gov.np/hydrology/realtime-stream"
     }

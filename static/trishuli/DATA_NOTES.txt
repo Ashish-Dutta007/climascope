@@ -1,5 +1,5 @@
 TRISHULI FLOOD EVENT EVIDENCE AND PRE-EVENT BASELINE
-Version 0.4.0 - 27 August 2026, 12:25 UTC
+Version 0.4.1 - 27 August 2026, 12:55 UTC
 
 Author
 ------
@@ -20,14 +20,20 @@ event_evidence.json contains the reviewed USGS landslide time and location,
 Copernicus DEM endpoint measurements, attributed event observations and a
 snapshot of five Nepal DHM gauge series retrieved for 26 August 2026.
 
-event_observations.geojson contains the USGS seismic-source point and five DHM
+event_observations.geojson contains the USGS source point and five DHM
 station points. Evidence-tier and source URL fields are retained. The source
-point is not a collapse polygon; gauge telemetry cessation is not a flood-wave
-arrival time.
+point is not a collapse polygon. Four returned gauge series end between 08:40
+and 09:20 NPT; Dhunche continues beyond the event window. A series ending is
+not a flood-wave arrival time.
 
 The USGS catalogue record is mutable. Event us7000tbwb was first returned as
 an mb 4.4 earthquake at 02:52:47 UTC and was subsequently revised to a reviewed
-M 5.2 Landslide at 02:52:10 UTC. Version 0.4.0 uses the later reviewed product.
+M 5.2 Landslide at 02:52:10 UTC. Version 0.4.1 uses the later reviewed product.
+USGS key points state that nearby seismic stations, long-period waves and
+satellite imagery led to its determination of a glacial collapse and debris
+flow, and that no earthquake occurred. USGS says the source location was
+estimated from satellite images. That establishes the source classification,
+not the complete downstream flood sequence or water balance.
 
 districts.geojson contains the Rasuwa and Nuwakot ADM2 polygons from the Nepal
 Common Operational Dataset for Administrative Boundaries (COD-AB). Source:
@@ -92,7 +98,8 @@ Analytical limits
   the direct slope, relief and gradient fields.
 - The public figure includes a post-event Sentinel-2 derivative; no original
   post-event image product or field validation is included in the downloads.
-- DHM gauge samples end during the event window and do not capture the peak.
+- Four DHM gauge series end during the event window and do not capture the
+  peak; Dhunche continues and is shown as such.
 - Proximity to the channel does not imply that a feature was flooded,
   damaged or inaccessible.
 

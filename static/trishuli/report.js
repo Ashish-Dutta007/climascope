@@ -120,15 +120,17 @@
     gauges.forEach(function (g, i) {
       var yy = T + i*rowH + 14;
       var last = minutes(g.last_sample.time_npt);
+      var continues = Boolean(g.continued_after_event_window);
       var colour = g.role === 'mainstem' ? 'var(--accent)' : 'var(--amber)';
       label(svg, g.name, {x:L-12, y:yy+4, fill:'var(--ink-2)', 'font-size':11, 'text-anchor':'end', 'font-family':'Archivo, sans-serif'});
-      svg.appendChild(mk('line', {x1:x(start), x2:x(last), y1:yy, y2:yy, stroke:colour, 'stroke-width':5}));
-      svg.appendChild(mk('rect', {x:x(last), y:yy-5, width:Math.max(0,x(end)-x(last)), height:10, fill:'var(--line-soft)'}));
-      svg.appendChild(mk('circle', {cx:x(last), cy:yy, r:6, fill:colour, stroke:'var(--panel)', 'stroke-width':2}));
-      label(svg, clock(g.last_sample.time_npt, false)+'  '+g.last_sample.level_m.toFixed(2)+' m', {x:Math.min(x(last)+9,W-R-95), y:yy+4, fill:'var(--ink)', 'font-size':10, 'font-family':'Plex Mono, monospace'});
+      var endpoint = continues ? end : last;
+      svg.appendChild(mk('line', {x1:x(start), x2:x(endpoint), y1:yy, y2:yy, stroke:colour, 'stroke-width':5}));
+      if (!continues) svg.appendChild(mk('rect', {x:x(last), y:yy-5, width:Math.max(0,x(end)-x(last)), height:10, fill:'var(--line-soft)'}));
+      svg.appendChild(mk('circle', {cx:x(endpoint), cy:yy, r:6, fill:colour, stroke:'var(--panel)', 'stroke-width':2}));
+      label(svg, continues ? 'continues' : clock(g.last_sample.time_npt, false)+'  '+g.last_sample.level_m.toFixed(2)+' m', {x:continues ? x(end)-8 : Math.min(x(last)+9,W-R-95), y:yy+4, fill:'var(--ink)', 'font-size':10, 'text-anchor':continues ? 'end' : 'start', 'font-family':'Plex Mono, monospace'});
     });
     label(svg, 'received samples', {x:L, y:H-10, fill:'var(--accent-ink)', 'font-size':9.5, 'font-family':'Archivo, sans-serif'});
-    label(svg, 'no later sample in DHM response', {x:W-R, y:H-10, fill:'var(--muted)', 'font-size':9.5, 'text-anchor':'end', 'font-family':'Archivo, sans-serif'});
+    label(svg, 'event-window end', {x:W-R, y:H-10, fill:'var(--muted)', 'font-size':9.5, 'text-anchor':'end', 'font-family':'Archivo, sans-serif'});
     root.appendChild(svg);
   }
 

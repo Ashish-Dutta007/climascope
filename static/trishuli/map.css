@@ -38,6 +38,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:7px 0 0}
 .event-grp{background:var(--accent-soft)}
 .event-jump{width:100%;margin-top:8px;text-align:left;font-family:inherit;cursor:pointer;background:var(--panel)}
 .event-fact{font-size:10.5px;line-height:1.45;color:var(--ink-2);margin:9px 0 0}
+.event-fact b{color:var(--ink)}
+.evidence-link{display:inline-block;margin-top:8px;color:var(--accent-ink);font-size:10.5px;font-weight:600}
 .event-label{font-family:var(--ui);white-space:nowrap;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none}
 .event-label b,.event-label span{display:block}
 .event-label b{font-size:12px}
@@ -47,6 +49,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:7px 0 0}
   text-transform:uppercase;color:#fff;white-space:nowrap;pointer-events:none;
   text-shadow:0 1px 3px rgba(0,0,0,.92),0 0 8px rgba(0,0,0,.75)}
 .note a{color:var(--accent-ink)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 main{position:relative;min-width:0}
 #map{position:absolute;inset:0}
 .maplibregl-popup-content{background:var(--panel);color:var(--ink);border:1px solid var(--line);
