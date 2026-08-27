@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trishuli Corridor Map | ClimaScope</title>
-<meta name="description" content="Pre-event baseline map of the Bhote Koshi and Trishuli corridor, Rasuwa to Nuwakot, Nepal. Terrain screening and exposure layers for the 26 August 2026 flood response.">
+<title>Trishuli Flood Evidence Map | ClimaScope</title>
+<meta name="description" content="Open evidence map for the 26 August 2026 Bhote Koshi–Trishuli flood: reviewed landslide source, DHM gauge telemetry, terrain and pre-event corridor context.">
 <meta name="author" content="Ashish Dutta">
 <link rel="canonical" href="https://climascope.hutton.ac.uk/trishuli">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ClimaScope">
-<meta property="og:title" content="Bhote Koshi–Trishuli Pre-event GIS Baseline">
-<meta property="og:description" content="Explore terrain and mapped assets along the flood corridor. Exposure baseline only; no flood extent or damage is shown.">
+<meta property="og:title" content="Bhote Koshi–Trishuli Flood Evidence Map">
+<meta property="og:description" content="Inspect the reviewed landslide source, DHM gauge telemetry and pre-event corridor context. No flood extent or damage is inferred.">
 <meta property="og:url" content="https://climascope.hutton.ac.uk/trishuli">
 <meta property="og:image" content="https://climascope.hutton.ac.uk/static/trishuli/social-card.png">
 <meta property="og:image:width" content="1200">
@@ -26,17 +26,24 @@
   <div class="sitebar">
     <img src="{{ url_for('static', filename='hutton_logo.svg') }}" alt="James Hutton Institute">
     <a href="/">ClimaScope</a><span class="sep">/</span>
-    <span>Trishuli corridor</span><span class="sep">/</span>
-    <a href="/trishuli/report">Evidence brief</a>
-    <span class="grow">Version 0.2 &middot; OSM 24 Aug 2026</span>
+    <span>Trishuli flood</span><span class="sep">/</span>
+    <a href="/trishuli/report">Event reconstruction</a>
+    <span class="grow">Version 0.3 &middot; evidence 26 Aug 2026</span>
   </div>
 
   <div class="app">
   <aside>
     <div class="brand">
-      <div class="eyebrow">Pre-event baseline</div>
-      <h1>Trishuli Corridor Map</h1>
-      <p>Bhote Koshi and Trishuli, Rasuwagadhi to Bidur. Terrain and mapped assets predate the 26 Aug 2026 flood.</p>
+      <div class="eyebrow">Open event evidence</div>
+      <h1>Trishuli Flood Evidence Map</h1>
+      <p>Reviewed mass-movement source, public gauge telemetry and pre-event corridor context for 26 August 2026.</p>
+    </div>
+
+    <div class="grp event-grp">
+      <h2>Event reconstruction</h2>
+      <label class="row"><input type="checkbox" id="l-event" checked><span class="sw" style="background:#962c24"></span><span>Source and DHM gauges</span></label>
+      <button type="button" id="source" class="dl event-jump"><b>Go to source</b>USGS M 5.2 landslide &middot; 08:37:10 NPT</button>
+      <p class="event-fact"><b>3,838 m</b> endpoint relief to Rasuwagadhi. The mapped source is a seismic location, not a collapse polygon.</p>
     </div>
 
     <div class="grp">
@@ -52,22 +59,22 @@
 
     <div class="grp">
       <h2>Terrain context</h2>
-      <label class="row"><input type="checkbox" id="l-slope" checked><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
+      <label class="row"><input type="checkbox" id="l-slope"><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
       <input type="range" id="slopeop" min="0" max="100" value="62" aria-label="Slope overlay opacity">
     </div>
 
     <div class="grp">
-      <h2>Layers</h2>
+      <h2>Pre-event context</h2>
       <label class="row"><input type="checkbox" id="l-stem" checked><span class="sw" style="background:#b8392e"></span><span>River, nearby steep terrain</span></label>
       <label class="row"><input type="checkbox" id="l-trib" checked><span class="sw" style="background:#2b8fab"></span><span>Tributaries</span><span class="ct">187</span></label>
-      <label class="row"><input type="checkbox" id="l-rmaj" checked><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
+      <label class="row"><input type="checkbox" id="l-rmaj"><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
       <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct">400</span></label>
-      <label class="row"><input type="checkbox" id="l-bldg" checked><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct">17,167</span></label>
-      <label class="row"><input type="checkbox" id="l-brg" checked><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct">69</span></label>
-      <label class="row"><input type="checkbox" id="l-edu" checked><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct">58</span></label>
-      <label class="row"><input type="checkbox" id="l-hlth" checked><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
-      <label class="row"><input type="checkbox" id="l-heli" checked><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct">15</span></label>
-      <label class="row"><input type="checkbox" id="l-plc" checked><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct">223</span></label>
+      <label class="row"><input type="checkbox" id="l-bldg"><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct">17,167</span></label>
+      <label class="row"><input type="checkbox" id="l-brg"><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct">69</span></label>
+      <label class="row"><input type="checkbox" id="l-edu"><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct">58</span></label>
+      <label class="row"><input type="checkbox" id="l-hlth"><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
+      <label class="row"><input type="checkbox" id="l-heli"><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct">15</span></label>
+      <label class="row"><input type="checkbox" id="l-plc"><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct">223</span></label>
       <label class="row"><input type="checkbox" id="l-buf"><span class="sw" style="background:#a9d3e0"></span><span>Approx. 250 m channel zone</span></label>
       <button type="button" id="fit" class="dl" style="margin-top:9px;cursor:pointer;width:100%;text-align:left;font-family:inherit"><b>Reset view</b>Fit the whole corridor</button>
     </div>
@@ -79,6 +86,7 @@
 
     <div class="grp">
       <h2>Download</h2>
+      <a class="dl" href="{{ url_for('static', filename='trishuli/event_observations.geojson') }}" download><b>Event observations, GeoJSON</b>USGS source and DHM gauges with evidence tiers.</a>
       <a class="dl" href="{{ url_for('static', filename='trishuli/trishuli_corridor.gpkg') }}" download><b>GeoPackage, 5.3 MB</b>10 baseline layers for QGIS or ArcGIS Pro.</a>
       <a class="dl secondary" href="{{ url_for('static', filename='trishuli/DATA_NOTES.txt') }}"><b>Data notes</b>Sources, fields, licence and analytical limits.</a>
     </div>
@@ -97,7 +105,7 @@
 
   <main>
     <div id="map"></div>
-    <div class="banner"><b>Pre-event baseline.</b> Nothing here shows flood extent or damage. Markers show mapped assets near the channel.</div>
+    <div class="banner"><b>Event evidence + pre-event context.</b> Nothing here shows flood extent, depth or confirmed damage.</div>
     <div id="legend">
       <h3>Nearby terrain &gt;45&deg;</h3>
       <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>

@@ -16,6 +16,16 @@ filters; inspect data availability; and export data for further analysis.
 
 **Live application:** <https://climascope.hutton.ac.uk/>
 
+**Trishuli rapid event reconstruction:**
+<https://climascope.hutton.ac.uk/trishuli/report>
+
+The Trishuli work is a separate open evidence workflow for the 26 August 2026
+Bhote Koshi-Trishuli flood. It publishes a reviewed seismic source, terrain
+measurements, a Nepal DHM gauge-telemetry audit, competing mechanism tests and
+machine-readable observations. Contributions use the repository's structured
+Trishuli evidence issue template so direct observations remain distinct from
+interpretation.
+
 > **Status:** public research and decision-support prototype. The source code is
 > available for transparency and technical review. Runtime datasets are not
 > included in this repository.

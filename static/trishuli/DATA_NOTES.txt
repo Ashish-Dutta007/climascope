@@ -1,5 +1,5 @@
-TRISHULI CORRIDOR PRE-EVENT BASELINE
-Version 0.2 - 26 August 2026, 19:38 UTC
+TRISHULI FLOOD EVENT EVIDENCE AND PRE-EVENT BASELINE
+Version 0.3 - 26 August 2026, 20:55 UTC
 
 Author
 ------
@@ -9,13 +9,24 @@ ashish.dutta@hutton.ac.uk
 
 Purpose
 -------
-This package supports orientation and subsequent imagery or field review of
-the Bhote Koshi-Trishuli corridor from Rasuwagadhi to below Bidur, Nepal.
-It is a pre-event baseline. It is not a flood extent, damage assessment,
-hazard model, evacuation map or official emergency product.
+This package supports an open source-to-impact reconstruction and subsequent
+imagery or field review of the Bhote Koshi-Trishuli flood. It is not a flood
+extent, damage assessment, hazard model, evacuation map or official emergency
+product.
 
-Package
--------
+Event evidence
+--------------
+event_evidence.json contains the reviewed USGS landslide time and location,
+Copernicus DEM endpoint measurements, attributed event observations and a
+snapshot of five Nepal DHM gauge series retrieved for 26 August 2026.
+
+event_observations.geojson contains the USGS seismic-source point and five DHM
+station points. Evidence-tier and source URL fields are retained. The source
+point is not a collapse polygon; gauge telemetry cessation is not a flood-wave
+arrival time.
+
+Pre-event package
+-----------------
 trishuli_corridor.gpkg contains ten EPSG:4326 layers:
 
   main_stem       mapped river centreline
@@ -46,13 +57,20 @@ Analytical limits
 - The BSI field is an experimental, uncalibrated composite retained from the
   rapid build. Do not interpret it as blockage probability or hazard. Prefer
   the direct slope, relief and gradient fields.
-- No post-event imagery, gauge observation or field validation is included.
+- No post-event image pixels or field validation are included. Licensed
+  PlanetScope interpretation is attributed by link only.
+- DHM gauge samples end during the event window and do not capture the peak.
 - Proximity to the channel does not imply that a feature was flooded,
   damaged or inaccessible.
 
 Current public brief
 --------------------
 https://climascope.hutton.ac.uk/trishuli/report
+
+Methods and structured contributions
+------------------------------------
+https://github.com/Ashish-Dutta007/climascope/tree/main/analysis/trishuli
+https://github.com/Ashish-Dutta007/climascope/issues/new?template=trishuli-observation.yml
 
 Please send corrections, dated local observations and reuse questions to the
 author. Contributions will be attributed and kept distinct from mapped
