@@ -1,5 +1,5 @@
 TRISHULI FLOOD EVENT EVIDENCE AND PRE-EVENT BASELINE
-Version 0.3 - 26 August 2026, 20:55 UTC
+Version 0.3.1 - 27 August 2026, 09:45 UTC
 
 Author
 ------
@@ -57,8 +57,7 @@ Analytical limits
 - The BSI field is an experimental, uncalibrated composite retained from the
   rapid build. Do not interpret it as blockage probability or hazard. Prefer
   the direct slope, relief and gradient fields.
-- No post-event image pixels or field validation are included. Licensed
-  PlanetScope interpretation is attributed by link only.
+- No post-event image pixels or field validation are included.
 - DHM gauge samples end during the event window and do not capture the peak.
 - Proximity to the channel does not imply that a feature was flooded,
   damaged or inaccessible.

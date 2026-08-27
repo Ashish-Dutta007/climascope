@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "brief_version": "0.3",
-  "generated_at_utc": "2026-08-26T20:58:07+00:00",
+  "brief_version": "0.3.1",
+  "generated_at_utc": "2026-08-27T09:44:33+00:00",
   "event": {
     "id": "us7000tbwb",
     "catalogue_class": "landslide",
@@ -524,14 +524,6 @@
       "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
     },
     {
-      "id": "obs-planet-change",
-      "tier": "expert image interpretation",
-      "statement": "A PlanetScope 25/26 August comparison shows a major new high-altitude surface disturbance near the seismic source.",
-      "source": "Dan Shugar, PlanetScope comparison",
-      "source_url": "https://www.linkedin.com/posts/dan-shugar-39217813_the-cause-of-the-horrific-floods-in-nepal-ugcPost-7498343111895556096-93RO",
-      "licence_note": "Linked evidence only; Planet imagery is not redistributed here."
-    },
-    {
       "id": "obs-dhm-blockage",
       "tier": "official preliminary interpretation",
       "statement": "DHM officials reported imagery indicating a temporary debris blockage about 20 km upstream of Miteri Bridge and a subsequent breach.",
@@ -544,19 +536,6 @@
       "statement": "Five DHM gauges in the corridor ceased transmitting between 08:40 and 09:20 NPT; their displayed warning status does not describe the flood peak.",
       "source": "Nepal DHM station observations",
       "source_url": "https://dhm.gov.np/hydrology/realtime-stream"
-    }
-  ],
-  "related_work": [
-    {
-      "title": "PlanetScope before/after source-area comparison",
-      "authors": "Dan Shugar",
-      "url": "https://www.linkedin.com/posts/dan-shugar-39217813_the-cause-of-the-horrific-floods-in-nepal-ugcPost-7498343111895556096-93RO"
-    },
-    {
-      "title": "Rasuwa suspected-flood susceptibility tool and open deposit",
-      "authors": "Narayan Thapa and Suman Sanjel",
-      "url": "https://ee-narayanthapa.projects.earthengine.app/view/rasuwasuscepectedflood",
-      "data_url": "https://zenodo.org/uploads/22111526"
     }
   ]
 }
