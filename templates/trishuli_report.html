@@ -53,8 +53,10 @@
   <section id="channel" class="finding">
     <div class="section-head"><span>Finding 1</span><h2>The channel is wider in the first usable image</h2></div>
     <figure>
-      <img src="{{ url_for('static', filename='trishuli/s2_prepost.jpg') }}" alt="Sentinel-2 comparison of the Trishuli corridor on 12 and 27 August 2026, showing a wider channel on the later date" loading="eager">
-      <figcaption>Sentinel-2, 12 and 27 August. Both dates use the same image stretch; grey areas are cloud or cloud shadow.</figcaption>
+      <a class="figure-zoom" href="{{ url_for('static', filename='trishuli/s2_prepost.jpg') }}" aria-label="Open the channel comparison at full size" title="Open full-size figure">
+        <img src="{{ url_for('static', filename='trishuli/s2_prepost.jpg') }}" alt="Sentinel-2 comparison near Bidur and Betrawati on 12 and 27 August 2026. The after image shows a broader dark and pink river ribbon. Same-scale bars show median wetted width increasing from 60 to 120 metres across 46 clear cross-sections." loading="eager">
+      </a>
+      <figcaption>Sentinel-2, 12 and 27 August. The same scale and image stretch are used on both dates; grey areas cannot be read through cloud or shadow.</figcaption>
     </figure>
     <dl class="keyfacts three">
       <div><dt>Clear cross-sections</dt><dd>46</dd></div>

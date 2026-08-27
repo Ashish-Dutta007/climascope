@@ -26,6 +26,8 @@ section{margin:0 0 46px;scroll-margin-top:16px}
 
 figure{margin:0}
 figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:3px}
+.figure-zoom{display:block;cursor:zoom-in}
+.figure-zoom:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 #telemetrychart{background:var(--panel);border:1px solid var(--line);padding:10px;overflow:hidden}
 svg{display:block;width:100%;height:auto}
 figcaption{font-family:var(--ui);font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 0}
