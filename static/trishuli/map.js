@@ -217,9 +217,11 @@
     pts('brg', DATA.bridges, '#b8392e', 3.6);
 
     /* --- anchor labels, snapped to the mapped channel --- */
-    var ANCH = [[85.37700, 28.27805, 'Rasuwagadhi / Timure'], [85.32885, 28.15453, 'Syabrubesi'],
-                [85.17084, 27.96316, 'Betrawati'], [85.13577, 27.92623, 'Bidur'],
-                [85.11268, 27.86662, 'AOI limit']];
+    /* Anchors sit on the OSM name node where the extract has one; Syabrubesi has no
+       name node, so it keeps its position from the 1 km river chainage sample. */
+    var ANCH = [[85.37780, 28.27780, 'Rasuwagadhi / Timure'], [85.32885, 28.15453, 'Syabrubesi'],
+                [85.18600, 27.97310, 'Betrawati'], [85.14650, 27.89530, 'Bidur'],
+                [85.11010, 27.86000, 'Devighat']];
     ANCH.forEach(function (a) {
       var el = document.createElement('div');
       el.style.cssText = 'font:600 11.5px Archivo,sans-serif;color:#fff;white-space:nowrap;' +
@@ -264,7 +266,7 @@
         var f = e.features[0], p = f.properties, c = f.geometry.coordinates;
         var rows = p.kind === 'source' ? [
           ['Time', p.time_npt], ['Elevation', p.elevation_m + ' m'],
-          ['Evidence tier', p.evidence_tier], ['Geometry', 'Seismic source point, not collapse polygon']
+          ['Evidence tier', p.evidence_tier], ['Geometry', 'Seismic source point']
         ] : [
           ['Last sample', p.last_time_npt], ['Last level', Number(p.last_level_m).toFixed(2) + ' m'],
           ['Warning level', Number(p.warning_m).toFixed(2) + ' m'],

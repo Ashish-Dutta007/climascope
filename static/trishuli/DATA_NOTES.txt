@@ -5,7 +5,7 @@ Author
 ------
 Ashish Dutta, geospatial researcher
 The James Hutton Institute
-ashish.dutta@hutton.ac.uk
+meashishdutta@gmail.com
 
 Purpose
 -------
@@ -73,8 +73,13 @@ https://climascope.hutton.ac.uk/trishuli/report
 
 Methods and contributions
 -------------------------
-Method, sources and limits are described in this file. Send structured
-observations to the author at ashish.dutta@hutton.ac.uk.
+Method, sources and limits are described in this file. Code and structured
+contributions:
+
+https://github.com/Ashish-Dutta007/flood-trishuli
+https://github.com/Ashish-Dutta007/flood-trishuli/issues/new
+
+Corrections may also be sent to the author at meashishdutta@gmail.com.
 
 Please send corrections, dated local observations and reuse questions to the
 author. Contributions will be attributed and kept distinct from mapped
