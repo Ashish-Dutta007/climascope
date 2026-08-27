@@ -44,6 +44,7 @@
       <label class="row"><input type="checkbox" id="l-event" checked><span class="sw" style="background:#962c24"></span><span>Source and DHM gauges</span></label>
       <button type="button" id="source" class="dl event-jump"><b>Go to source</b>USGS M 5.2 landslide &middot; 08:37:10 NPT</button>
       <p class="event-fact"><b>3,838 m</b> endpoint relief to Rasuwagadhi. The mapped source is a seismic location.</p>
+      <p class="event-fact"><b data-clock="since-onset">&mdash;</b> since the flood. Next radar pass in <b data-clock="next-sar">&mdash;</b>, <span data-clock="next-sar-when">&mdash;</span>.</p>
     </div>
 
     <div class="grp">
@@ -71,7 +72,8 @@
       <label class="row"><input type="checkbox" id="l-trib" checked><span class="sw" style="background:#2b8fab"></span><span>Tributaries</span><span class="ct">187</span></label>
       <label class="row"><input type="checkbox" id="l-rmaj"><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
       <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct">400</span></label>
-      <label class="row"><input type="checkbox" id="l-bldg"><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct">17,167</span></label>
+      <label class="row"><input type="checkbox" id="l-bldg"><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct" id="osmcount">19,432</span></label>
+      <label class="row"><input type="checkbox" id="l-bldgnew" checked><span class="sw" style="background:#4de1a2"></span><span>Mapped since the flood</span><span class="ct" id="osmnew">2,866</span></label>
       <label class="row"><input type="checkbox" id="l-brg"><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct">69</span></label>
       <label class="row"><input type="checkbox" id="l-edu"><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct">58</span></label>
       <label class="row"><input type="checkbox" id="l-hlth"><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
@@ -100,7 +102,7 @@
         <b>Imagery</b> Esri World Imagery, live tiles. Source: Esri, Vantor, Earthstar Geographics.<br><br>
         <b>Terrain</b> Copernicus DEM GLO-30, slope computed at 27&times;31&nbsp;m and served as a georeferenced overlay.<br><br>
         <b>Districts</b> Nepal COD-AB, Survey Department of Nepal and UN Resident Coordinator&rsquo;s Office, CC BY-IGO.<br><br>
-        <b>Vectors</b> OpenStreetMap via the HOT extract <span class="mono">hot_flood_npl</span>, OSM data 24 Aug 2026, ODbL.<br><br>
+        <b>Vectors</b> OpenStreetMap, ODbL, cut live from HOT raw-data-api. OSM snapshot <span class="mono" id="osmwhen">&mdash;</span>. Volunteers are actively mapping this corridor through the <a href="https://tasks.hotosm.org/projects/62904">HOT Tasking Manager</a>; buildings digitised since 26 August are shown in green.<br><br>
         <b>River colours</b> share of terrain steeper than 45&deg; within 500&nbsp;m of each 1&nbsp;km river sample. This is descriptive terrain context, not hazard probability.<br><br>
         <b>Author</b> Ashish Dutta, geospatial researcher. Corrections: <a href="mailto:meashishdutta@gmail.com">email</a>.
       </p>
@@ -130,6 +132,7 @@
 
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"
         integrity="sha384-3WUbXI7T+/GIrWP/5MDMjhzLyHQ+0utF3PnJ7ozD7UeN1/bbZ96Hk+Vvd024VYfW" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='trishuli/clocks.js') }}?v={{ av('trishuli/clocks.js') }}"></script>
 <script src="{{ url_for('static', filename='trishuli/map.js') }}?v={{ av('trishuli/map.js') }}"
         data-base="{{ url_for('static', filename='trishuli/') }}"></script>
 </body>
