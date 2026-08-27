@@ -28,15 +28,15 @@
   <a href="/">ClimaScope</a><span class="sep">/</span>
   <a href="/trishuli">Evidence map</a><span class="sep">/</span>
   <span>Event reconstruction</span>
-  <span class="grow">Version 0.3 &middot; 26 Aug 2026, 20:55 UTC</span>
+  <span class="grow">Version 0.3.1 &middot; 27 Aug 2026, 09:45 UTC</span>
 </div>
 
 <header class="mast">
   <div class="mast-in">
     <div>
-      <div class="eyebrow">Open event reconstruction &middot; Evidence can be challenged</div>
+      <div class="eyebrow">A rapid geospatial research note</div>
       <h1>Bhote Koshi&ndash;Trishuli flood</h1>
-      <p class="sub">A source-to-impact reconstruction built from a reviewed seismic source, terrain, public river gauges and attributed satellite interpretation.</p>
+      <p class="sub">I am bringing together the reviewed mass-movement record, terrain and public river gauges to understand what happened on 26 August. This is a working account, and some important questions remain open.</p>
       <div class="byline">Ashish Dutta &middot; Geospatial researcher &middot; 26 August 2026</div>
     </div>
     <a class="map-cta" href="/trishuli"><span>Inspect the evidence</span><b>Open interactive map &rarr;</b></a>
@@ -45,23 +45,23 @@
 
 <main class="wrap">
   <section class="status" aria-label="Current assessment status">
-    <div><span>Source failure</span><strong>Observed</strong><small>USGS landslide + Planet change</small></div>
+    <div><span>Mass movement</span><strong>Recorded</strong><small>Reviewed USGS landslide event</small></div>
     <div><span>Flood cascade</span><strong>Unresolved</strong><small>Water source and breach sequence open</small></div>
     <div><span>Gauge peak</span><strong>Not recorded here</strong><small>Corridor telemetry stopped</small></div>
-    <div><span>Evidence process</span><strong>Open ledger</strong><small>Methods, data and review route</small></div>
+    <div><span>This page</span><strong>Open to correction</strong><small>Methods and data are available</small></div>
   </section>
 
   <div class="safety"><b>Not emergency guidance.</b> This is an independent reconstruction, not an official warning or damage assessment. Follow Nepal&rsquo;s authorities and local responders for safety information.</div>
 
   <section id="findings">
-    <div class="section-head"><span>01</span><div><h2>What this analysis adds</h2><p>Four measurements that can be checked, revised or rejected as better evidence arrives.</p></div></div>
+    <div class="section-head"><span>01</span><div><h2>What I can say so far</h2><p>Four observations that can be checked and revised as better evidence arrives.</p></div></div>
     <div class="finding-grid">
       <article><span>Mass-movement origin</span><strong id="event-time">08:37:10</strong><small>NPT, reviewed USGS record</small></article>
       <article><span>Source elevation</span><strong id="source-elevation">5,590 m</strong><small>Copernicus DEM at USGS point</small></article>
       <article><span>Relief to border gauge</span><strong id="source-relief">3,838 m</strong><small>Endpoint difference, not runout</small></article>
       <article><span>Reported blockage</span><strong>~20 km</strong><small>Upstream of Miteri Bridge, preliminary DHM account</small></article>
     </div>
-    <div class="finding-note"><b>The defensible finding:</b> a high-altitude mass failure is spatially and temporally tied to the event. The present public evidence does not yet resolve whether the destructive water came mainly from rapid ice transformation, a newly impounded and breached debris lake, another stored-water source, or a combination.</div>
+    <div class="finding-note"><b>My reading so far:</b> a high-altitude mass movement occurred at the right place and time to be part of this event. The public evidence does not yet tell us how much water came directly with that movement, from a temporary lake, from another stored-water source, or from a combination of these.</div>
   </section>
 
   <section id="reconstruction">
@@ -73,7 +73,7 @@
   </section>
 
   <section id="telemetry">
-    <div class="section-head"><span>03</span><div><h2>The gauges did not record the peak</h2><p>A public-data audit prevents stale dashboard labels from being mistaken for event conditions.</p></div></div>
+    <div class="section-head"><span>03</span><div><h2>The public gauge record stops before the peak</h2><p>The last dashboard values should not be mistaken for the flood itself.</p></div></div>
     <figure>
       <div id="telemetrychart"></div>
       <figcaption>Last samples retrieved from Nepal DHM for 26 August. The reviewed mass movement occurred at 08:37:10 NPT; ICIMOD reports rapid river rise from about 09:00. Several mainstem and tributary gauges then stopped transmitting. This may reflect instrument, power or communications failure and is not treated as a flood-arrival clock.</figcaption>
@@ -83,62 +83,56 @@
   </section>
 
   <section id="mechanisms">
-    <div class="section-head"><span>04</span><div><h2>Three mechanisms remain in play</h2><p>The useful question is not which story sounds best, but which new observation would discriminate among them.</p></div></div>
+    <div class="section-head"><span>04</span><div><h2>What may have happened</h2><p>These are working explanations, not conclusions. Each needs different evidence.</p></div></div>
     <div class="mechanism-grid">
       <article>
         <div class="mechanism-head"><span>A</span><h3>Direct rock&ndash;ice debris flow</h3></div>
-        <p><b>Supports:</b> reviewed landslide signal and a large new high-altitude disturbance in 25/26 August Planet imagery.</p>
-        <p><b>Missing:</b> displaced volume, ice fraction and evidence that direct transformation supplies the observed water volume.</p>
-        <p class="test"><b>Test:</b> map source scar, deposit continuity and volume from stereo/high-resolution imagery.</p>
+        <p><b>Why it fits:</b> USGS records a large, high-altitude landslide at 08:37 NPT.</p>
+        <p><b>What we do not know:</b> the displaced volume, ice fraction, or whether direct transformation could supply the observed water volume.</p>
+        <p class="test"><b>What would help:</b> mapping the scar, deposit continuity and volume from post-event imagery.</p>
       </article>
       <article>
         <div class="mechanism-head"><span>B</span><h3>Temporary dam and breach</h3></div>
-        <p><b>Supports:</b> DHM&rsquo;s preliminary account of debris blocking the river before a temporary lake released.</p>
-        <p><b>Missing:</b> mapped dam geometry, lake area, duration and breach timing.</p>
-        <p class="test"><b>Test:</b> identify a backwater/debris watermark and breach notch in independent post-event views.</p>
+        <p><b>Why it fits:</b> DHM&rsquo;s preliminary account describes debris blocking the river before a temporary lake released.</p>
+        <p><b>What we do not know:</b> the dam geometry, lake area, duration or breach timing.</p>
+        <p class="test"><b>What would help:</b> a backwater or debris watermark and breach notch visible in independent post-event views.</p>
       </article>
       <article>
         <div class="mechanism-head"><span>C</span><h3>Additional stored water</h3></div>
-        <p><b>Supports:</b> the water-volume question remains open, and several upstream lakes have been raised for inspection.</p>
-        <p><b>Missing:</b> evidence that any pre-existing lake drained or that a sub/englacial reservoir was connected.</p>
-        <p class="test"><b>Test:</b> compare lake shorelines and inspect upstream radar/optical change beyond the visible scar.</p>
+        <p><b>Why it fits:</b> the source of the reported water volume remains an open question.</p>
+        <p><b>What we do not know:</b> whether a pre-existing lake drained or a subglacial or englacial reservoir was connected.</p>
+        <p class="test"><b>What would help:</b> lake-shoreline comparisons and upstream radar or optical change beyond the source area.</p>
       </article>
     </div>
     <p class="boundary">These mechanisms are not mutually exclusive. A rock&ndash;ice avalanche can create a temporary blockage, entrain channel water and sediment, and interact with an upstream reservoir.</p>
   </section>
 
   <section id="next">
-    <div class="section-head"><span>05</span><div><h2>Observation plan</h2><p>Each acquisition has a declared job before anyone looks at the result.</p></div></div>
+    <div class="section-head"><span>05</span><div><h2>What I will check next</h2><p>The next satellite passes may help, but steep terrain makes a single radar image easy to misread.</p></div></div>
     <div class="observation-line">
       <div class="obs done"><span>Pre-event radar</span><b>16 Aug</b><small>Sentinel-1, orbit 85</small></div>
-      <div class="obs now"><span>Event evidence</span><b>26 Aug</b><small>USGS, DHM and Planet interpretation</small></div>
+      <div class="obs now"><span>Event records</span><b>26 Aug</b><small>USGS and Nepal DHM</small></div>
       <div class="obs next"><span>First radar test</span><b>28 Aug</b><small>Source scar, blockage and deposits</small></div>
       <div class="obs"><span>Second geometry</span><b>31 Aug</b><small>Reject shadow/layover artefacts</small></div>
     </div>
     <div class="next-grid">
       <div><span class="count-label">Next expected Sentinel-1 acquisition</span><strong id="nextpass">Calculating&hellip;</strong><small>28 Aug 12:21 UTC, projected from the repeat cycle</small></div>
-      <p><b>Promotion rule:</b> no candidate scar, deposit, blockage or flood edge enters the evidence layer from one radar view alone in steep terrain. It must survive the second geometry or be supported by licensed optical imagery or a geolocated field observation.</p>
+      <p><b>How I will use it:</b> I will not map a scar, deposit, blockage or flood edge from one radar view alone. It needs to remain visible from the second geometry, or be supported by licensed optical imagery or a geolocated field observation.</p>
     </div>
   </section>
 
   <section id="collaborate">
-    <div class="section-head"><span>06</span><div><h2>Built to be corrected</h2><p>Observations are attributed, machine-readable and kept separate from interpretation.</p></div></div>
+    <div class="section-head"><span>06</span><div><h2>Please challenge or add to this</h2><p>I will keep observations attributed and separate from my interpretation.</p></div></div>
     <div class="collab-grid">
       <a href="https://github.com/Ashish-Dutta007/climascope/issues/new?template=trishuli-observation.yml"><span>Contribute evidence</span><b>Open the structured review form &rarr;</b><small>Time, location, direct observation, source, licence and uncertainty are required.</small></a>
       <a href="{{ url_for('static', filename='trishuli/event_observations.geojson') }}" download><span>Reuse the spatial ledger</span><b>Download event GeoJSON &rarr;</b><small>USGS source and DHM gauge observations with evidence-tier fields.</small></a>
       <a href="https://github.com/Ashish-Dutta007/climascope/tree/main/analysis/trishuli"><span>Audit the method</span><b>View reproducible code &rarr;</b><small>Retrieval, parsing, DEM sampling and explicit claim boundaries.</small></a>
     </div>
-    <div class="contribute">Direct contact: <a href="mailto:ashish.dutta@hutton.ac.uk?subject=Trishuli%20evidence%20contribution">ashish.dutta@hutton.ac.uk</a>. Licensed imagery can be reviewed by link without redistribution. Accepted contributions retain their source and uncertainty notes.</div>
-
-    <h3 class="subhead">Related rapid work</h3>
-    <div class="related">
-      <article><span>Source-area imagery</span><h3>Dan Shugar</h3><p>A 25/26 August PlanetScope comparison shows the new high-altitude disturbance. The imagery is linked, not copied here.</p><a href="https://www.linkedin.com/posts/dan-shugar-39217813_the-cause-of-the-horrific-floods-in-nepal-ugcPost-7498343111895556096-93RO">View comparison &rarr;</a></article>
-      <article><span>Susceptibility and ward context</span><h3>Narayan Thapa &amp; Suman Sanjel</h3><p>An Earth Engine application and open deposit provide a complementary rapid susceptibility layer. Susceptibility and bridge overlays are not treated here as confirmed impact.</p><a href="https://ee-narayanthapa.projects.earthengine.app/view/rasuwasuscepectedflood">Open their tool &rarr;</a> <a href="https://zenodo.org/uploads/22111526">Data deposit &rarr;</a></article>
-    </div>
+    <div class="contribute">You can also write to me directly at <a href="mailto:ashish.dutta@hutton.ac.uk?subject=Trishuli%20evidence%20contribution">ashish.dutta@hutton.ac.uk</a>. I can review licensed imagery by link without republishing it, and I will retain the source and uncertainty with any accepted observation.</div>
   </section>
 
   <section id="method">
-    <div class="section-head"><span>07</span><div><h2>Sources and boundaries</h2><p>The concise story above is backed by an inspectable evidence snapshot.</p></div></div>
+    <div class="section-head"><span>07</span><div><h2>Sources, limits and downloads</h2><p>Everything used above is listed here, including what this work cannot establish.</p></div></div>
     <details open>
       <summary>Primary evidence</summary>
       <ul>
@@ -166,7 +160,7 @@
 
   <footer>
     <div><b>Prepared by Ashish Dutta</b><br>Geospatial researcher, The James Hutton Institute</div>
-    <div>Independent rapid reconstruction. Observations and interpretations are versioned separately. Version 0.3 &middot; 26 Aug 2026, 20:55 UTC.</div>
+    <div>A working research note. Observations and interpretations are versioned separately. Version 0.3.1 &middot; 27 Aug 2026, 09:45 UTC.</div>
   </footer>
 </main>
 
