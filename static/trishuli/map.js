@@ -58,7 +58,7 @@
   map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
 
   var DATA = null, EVENT = null, DISTRICTS = null, currentBase = 'img';
-  var districtMarkers = [];
+  var districtMarkers = [], eventMarkers = [];
 
   Promise.all([
     fetch(BASE + 'mapdata.json', {credentials: 'same-origin'}),
@@ -99,7 +99,7 @@
       type: 'image', url: BASE + 'slope.png',
       coordinates: [[T.W, T.N], [T.E, T.N], [T.E, T.S], [T.W, T.S]]
     });
-    map.addLayer({id: 'slope', type: 'raster', source: 'slope',
+    map.addLayer({id: 'slope', type: 'raster', source: 'slope', layout: {visibility: 'none'},
                   paint: {'raster-opacity': 0.62, 'raster-fade-duration': 0}});
 
     /* --- quiet district context: official Nepal COD ADM2 boundaries --- */
@@ -165,7 +165,7 @@
 
     map.addSource('rmaj', {type: 'geojson', data: fc(DATA.road_major.map(function (l) { return line(l); }))});
     map.addLayer({id: 'rmaj', type: 'line', source: 'rmaj',
-      layout: {'line-cap': 'round', 'line-join': 'round'},
+      layout: {'line-cap': 'round', 'line-join': 'round', visibility: 'none'},
       paint: {'line-color': '#e8a33d',
         'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.3, 16, 4.5]}});
 
@@ -192,6 +192,7 @@
               geometry: {type: 'Point', coordinates: [b[0], b[1]]}};
     }))});
     map.addLayer({id: 'bldg', type: 'circle', source: 'bldg', minzoom: 11,
+      layout: {visibility: 'none'},
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.1, 16, 3.4],
         'circle-color': ['step', ['get', 'd'], '#c9423a', 100, '#d68c36', 250, '#78848f'],
@@ -214,6 +215,7 @@
                 geometry: {type: 'Point', coordinates: [p.x, p.y]}};
       }))});
       map.addLayer({id: key, type: 'circle', source: key, minzoom: minz || 0,
+        layout: {visibility: 'none'},
         paint: {'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, radius * 0.6, 16, radius * 1.7],
           'circle-color': colour, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1,
           'circle-opacity': 0.95}});
@@ -244,9 +246,9 @@
       if (feature.properties.kind !== 'source') return;
       var el = document.createElement('div');
       el.className = 'event-label';
-      el.innerHTML = '<b>USGS landslide source</b><span>08:37:10 NPT · 5,590 m</span>';
-      new maplibregl.Marker({element: el, anchor: 'left', offset: [13, 0]})
-        .setLngLat(feature.geometry.coordinates).addTo(map);
+      el.innerHTML = '<b>USGS glacial-collapse source</b><span>08:37:10 NPT · 5,590 m</span>';
+      eventMarkers.push(new maplibregl.Marker({element: el, anchor: 'right', offset: [-13, 0]})
+        .setLngLat(feature.geometry.coordinates).addTo(map));
     });
 
     fitCorridor();
@@ -268,22 +270,27 @@
       rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>';
   }
 
+  function showEventPopup(feature, location) {
+    var p = feature.properties, c = feature.geometry.coordinates;
+    var rows = p.kind === 'source' ? [
+      ['Time', p.time_npt], ['Elevation', p.elevation_m + ' m'],
+      ['Evidence tier', p.evidence_tier], ['Geometry', 'Satellite-estimated source point']
+    ] : [
+      ['Last sample', p.last_time_npt], ['Last level', Number(p.last_level_m).toFixed(2) + ' m'],
+      ['Warning level', Number(p.warning_m).toFixed(2) + ' m'],
+      ['Interpretation', p.continued_after_event_window ?
+        'Transmission continues beyond chart window' : 'Peak unobserved; no later returned sample']
+    ];
+    new maplibregl.Popup({closeButton: true, maxWidth: '340px'}).setLngLat(location || c)
+      .setHTML(popupHTML(p.label, p.kind === 'source' ? 'USGS reviewed event' : 'Nepal DHM gauge', rows) +
+        '<a class="popup-source" href="' + esc(p.source_url) + '">Open source record</a>')
+      .addTo(map);
+  }
+
   function wirePopups() {
     ['event-source', 'event-gauges'].forEach(function (layer) {
       map.on('click', layer, function (e) {
-        var f = e.features[0], p = f.properties, c = f.geometry.coordinates;
-        var rows = p.kind === 'source' ? [
-          ['Time', p.time_npt], ['Elevation', p.elevation_m + ' m'],
-          ['Evidence tier', p.evidence_tier], ['Geometry', 'Seismic source point']
-        ] : [
-          ['Last sample', p.last_time_npt], ['Last level', Number(p.last_level_m).toFixed(2) + ' m'],
-          ['Warning level', Number(p.warning_m).toFixed(2) + ' m'],
-          ['Interpretation', 'Peak unobserved; later telemetry unavailable']
-        ];
-        new maplibregl.Popup({closeButton: true, maxWidth: '330px'}).setLngLat(c)
-          .setHTML(popupHTML(p.label, p.kind === 'source' ? 'Retrieved event observation' : 'Nepal DHM gauge', rows) +
-            '<a class="popup-source" href="' + esc(p.source_url) + '">Open source record</a>')
-          .addTo(map);
+        showEventPopup(e.features[0]);
       });
       map.on('mouseenter', layer, function () { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layer, function () { map.getCanvas().style.cursor = ''; });
@@ -368,22 +375,39 @@
     syncDistrictOpacity();
 
     var eventBox = $('l-event');
-    if (eventBox) eventBox.addEventListener('change', function () {
+    function syncEventLayer() {
+      var shown = !eventBox || eventBox.checked;
       ['event-source', 'event-gauges'].forEach(function (layer) {
-        map.setLayoutProperty(layer, 'visibility', eventBox.checked ? 'visible' : 'none');
+        map.setLayoutProperty(layer, 'visibility', shown ? 'visible' : 'none');
       });
-    });
+      eventMarkers.forEach(function (marker) {
+        marker.getElement().style.display = shown ? '' : 'none';
+      });
+    }
+    if (eventBox) eventBox.addEventListener('change', syncEventLayer);
+    syncEventLayer();
     var op = $('slopeop');
     if (op) op.addEventListener('input', function () {
       map.setPaintProperty('slope', 'raster-opacity', op.value / 100);
     });
     var osm = DATA.osm || {};
     var osmCount = $('osmcount');
-    if (osmCount && osm.buildings) osmCount.textContent = osm.buildings.toLocaleString();
+    if (osmCount && osm.buildings) osmCount.textContent = osm.buildings.toLocaleString('en-GB');
     var osmNew = $('osmnew');
-    if (osmNew && osm.buildings_new) osmNew.textContent = osm.buildings_new.toLocaleString();
+    if (osmNew && osm.buildings_new) osmNew.textContent = osm.buildings_new.toLocaleString('en-GB');
     var osmWhen = $('osmwhen');
     if (osmWhen && osm.snapshot) osmWhen.textContent = osm.snapshot.slice(0, 16) + ' UTC';
+    function setCount(id, value) {
+      var el = $(id);
+      if (el && value != null) el.textContent = Number(value).toLocaleString('en-GB');
+    }
+    setCount('roadmajorcount', osm.road_major != null ? osm.road_major : DATA.road_major.length);
+    setCount('roadminorcount', osm.road_minor != null ? osm.road_minor : DATA.road_minor.length);
+    setCount('bridgecount', osm.bridges != null ? osm.bridges : DATA.bridges.length);
+    setCount('educount', DATA.edu.length);
+    setCount('healthcount', DATA.health.length);
+    setCount('helicount', DATA.helipad.length);
+    setCount('placecount', DATA.places.length);
 
     var pct = $('slopepct');
     if (pct) pct.textContent = (DATA.terrain.pct_over35 * 100).toFixed(0) + '% of area';
@@ -415,6 +439,7 @@
     if (sourceBtn) sourceBtn.addEventListener('click', function () {
       var source = EVENT.features.filter(function (f) { return f.properties.kind === 'source'; })[0];
       map.flyTo({center: source.geometry.coordinates, zoom: 12.7, duration: 900});
+      map.once('moveend', function () { showEventPopup(source); });
     });
   }
 })();

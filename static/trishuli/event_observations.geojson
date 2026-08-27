@@ -6,7 +6,7 @@
       "id": "usgs-source",
       "properties": {
         "kind": "source",
-        "label": "USGS landslide source",
+        "label": "USGS glacial-collapse source",
         "time_npt": "08:37:10 NPT",
         "elevation_m": 5590,
         "evidence_tier": "retrieved observation",
@@ -30,6 +30,7 @@
         "last_time_npt": "08:40 NPT",
         "last_level_m": 1.62,
         "warning_m": 6.0,
+        "continued_after_event_window": false,
         "evidence_tier": "retrieved observation",
         "source_url": "https://dhm.gov.np/hydrology/hms-Single/4913"
       },
@@ -51,6 +52,7 @@
         "last_time_npt": "08:50 NPT",
         "last_level_m": 3.8,
         "warning_m": 5.5,
+        "continued_after_event_window": false,
         "evidence_tier": "retrieved observation",
         "source_url": "https://dhm.gov.np/hydrology/hms-Single/191"
       },
@@ -72,6 +74,7 @@
         "last_time_npt": "08:50 NPT",
         "last_level_m": 2.81,
         "warning_m": 3.75,
+        "continued_after_event_window": false,
         "evidence_tier": "retrieved observation",
         "source_url": "https://dhm.gov.np/hydrology/hms-Single/190"
       },
@@ -90,9 +93,10 @@
         "kind": "gauge",
         "role": "tributary",
         "label": "Dhunche",
-        "last_time_npt": "09:20 NPT",
-        "last_level_m": 2.4,
+        "last_time_npt": "09:30 NPT",
+        "last_level_m": 2.39,
         "warning_m": 3.2,
+        "continued_after_event_window": true,
         "evidence_tier": "retrieved observation",
         "source_url": "https://dhm.gov.np/hydrology/hms-Single/4657"
       },
@@ -114,6 +118,7 @@
         "last_time_npt": "09:20 NPT",
         "last_level_m": 3.55,
         "warning_m": 4.1,
+        "continued_after_event_window": false,
         "evidence_tier": "retrieved observation",
         "source_url": "https://dhm.gov.np/hydrology/hms-Single/52"
       },

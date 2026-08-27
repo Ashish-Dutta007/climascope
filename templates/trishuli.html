@@ -29,7 +29,7 @@
     <a href="/">ClimaScope</a><span class="sep">/</span>
     <span>Trishuli flood</span><span class="sep">/</span>
     <a href="/trishuli/report">Event reconstruction</a>
-    <span class="grow">Version 0.4.0 &middot; updated 27 Aug 2026</span>
+    <span class="grow">Version 0.4.1 &middot; updated 27 Aug 2026</span>
   </div>
 
   <div class="app">
@@ -42,10 +42,12 @@
     </div>
 
     <div class="grp event-grp">
-      <h2>Event reconstruction</h2>
+      <h2>Latest reviewed evidence</h2>
       <label class="row"><input type="checkbox" id="l-event" checked><span class="sw" style="background:#962c24"></span><span>Source and DHM gauges</span></label>
-      <button type="button" id="source" class="dl event-jump"><b>Go to source</b>USGS M 5.2 landslide &middot; 08:37:10 NPT</button>
-      <p class="event-fact"><b>3,838 m</b> endpoint relief to Rasuwagadhi. The mapped source is a seismic location.</p>
+      <button type="button" id="source" class="dl event-jump"><b>Go to revised source</b>USGS: M 5.2 glacial collapse + debris flow</button>
+      <p class="event-fact"><b>USGS revision:</b> no earthquake occurred; the source location was estimated from satellite images.</p>
+      <p class="event-fact"><b>First clear optical comparison:</b> median wetted width changed from 60 to 120&nbsp;m across 46 transects.</p>
+      <a class="evidence-link" href="/trishuli/report#channel">Open the controlled image comparison &rarr;</a>
       <p class="event-fact"><b data-clock="since-onset">&mdash;</b> since the flood. Next radar pass in <b data-clock="next-sar">&mdash;</b>, <span data-clock="next-sar-when">&mdash;</span>.</p>
     </div>
 
@@ -72,15 +74,15 @@
       <h2>Pre-event context</h2>
       <label class="row"><input type="checkbox" id="l-stem" checked><span class="sw" style="background:#b8392e"></span><span>River, nearby steep terrain</span></label>
       <label class="row"><input type="checkbox" id="l-trib" checked><span class="sw" style="background:#2b8fab"></span><span>Tributaries</span><span class="ct">187</span></label>
-      <label class="row"><input type="checkbox" id="l-rmaj"><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct">47</span></label>
-      <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct">400</span></label>
-      <label class="row"><input type="checkbox" id="l-bldg"><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct" id="osmcount">19,432</span></label>
-      <label class="row"><input type="checkbox" id="l-bldgnew" checked><span class="sw" style="background:#4de1a2"></span><span>Mapped since the flood</span><span class="ct" id="osmnew">2,866</span></label>
-      <label class="row"><input type="checkbox" id="l-brg"><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct">69</span></label>
-      <label class="row"><input type="checkbox" id="l-edu"><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct">58</span></label>
-      <label class="row"><input type="checkbox" id="l-hlth"><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct">6</span></label>
-      <label class="row"><input type="checkbox" id="l-heli"><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct">15</span></label>
-      <label class="row"><input type="checkbox" id="l-plc"><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct">223</span></label>
+      <label class="row"><input type="checkbox" id="l-rmaj"><span class="sw" style="background:#e8a33d"></span><span>Trunk / primary road</span><span class="ct" id="roadmajorcount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-rmin"><span class="sw" style="background:#8a94a0"></span><span>Minor roads</span><span class="ct" id="roadminorcount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-bldg"><span class="sw" style="background:#c9423a"></span><span>Buildings</span><span class="ct" id="osmcount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-bldgnew" checked><span class="sw" style="background:#4de1a2"></span><span>Mapped since the flood</span><span class="ct" id="osmnew">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-brg"><span class="sw" style="background:#b8392e"></span><span>Bridges</span><span class="ct" id="bridgecount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-edu"><span class="sw" style="background:#2b8fab"></span><span>Schools</span><span class="ct" id="educount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-hlth"><span class="sw" style="background:#2f7a5c"></span><span>Health facilities</span><span class="ct" id="healthcount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-heli"><span class="sw" style="background:#d99a2b"></span><span>Helipads / aeroway</span><span class="ct" id="helicount">&mdash;</span></label>
+      <label class="row"><input type="checkbox" id="l-plc"><span class="sw" style="background:#3b4956"></span><span>Settlements</span><span class="ct" id="placecount">&mdash;</span></label>
       <label class="row"><input type="checkbox" id="l-buf"><span class="sw" style="background:#a9d3e0"></span><span>Approx. 250 m channel zone</span></label>
       <button type="button" id="fit" class="dl" style="margin-top:9px;cursor:pointer;width:100%;text-align:left;font-family:inherit"><b>Reset view</b>Fit the whole corridor</button>
     </div>
@@ -113,7 +115,7 @@
 
   <main>
     <div id="map"></div>
-    <div class="banner"><b>Event evidence + pre-event context.</b> Nothing here shows flood extent, depth or confirmed damage.</div>
+    <div class="banner"><b>Reviewed evidence + screening context.</b> Nothing here shows flood extent, depth or confirmed damage.</div>
     <div id="legend">
       <h3>Nearby terrain &gt;45&deg;</h3>
       <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
@@ -127,6 +129,7 @@
       <div class="li"><i style="background:#c9423a"></i>within 100 m of channel</div>
       <div class="li"><i style="background:#d68c36"></i>100 to 250 m</div>
       <div class="li"><i style="background:#78848f"></i>beyond 250 m</div>
+      <div class="li"><i style="background:#4de1a2;border:1px solid #08301f"></i>mapped since the flood</div>
     </div>
   </main>
   </div>

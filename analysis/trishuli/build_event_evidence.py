@@ -27,6 +27,7 @@ DEM_URL = (
     "Copernicus_DSM_COG_10_N28_00_E085_00_DEM.tif"
 )
 RASUWAGADHI = (85.377649, 28.271297)
+EVENT_WINDOW_END = datetime(2026, 8, 26, 9, 30, tzinfo=NPT)
 
 STATIONS = [
     {"id": 4913, "series_id": 23251, "name": "Rasuwagadhi", "role": "mainstem", "warning_m": 6.0},
@@ -68,7 +69,16 @@ def dhm_station(session: requests.Session, station: dict) -> dict:
     for date_text, value_text in zip(cells[0::2], cells[1::2]):
         observed = datetime.strptime(date_text, "%a, %b %d, %Y ,%H:%M").replace(tzinfo=NPT)
         samples.append({"time_npt": observed.isoformat(), "level_m": float(value_text)})
+    raw_sample_count = len(samples)
+    samples = list({sample["time_npt"]: sample for sample in samples}.values())
     samples.sort(key=lambda row: row["time_npt"])
+    event_samples = [
+        sample for sample in samples
+        if datetime.fromisoformat(sample["time_npt"]) <= EVENT_WINDOW_END
+    ]
+    if not event_samples:
+        raise RuntimeError(f"No event-window samples for DHM station {station['id']}")
+    latest = samples[-1]
     return {
         **station,
         "station_index": metadata.get("stationIndex"),
@@ -76,7 +86,12 @@ def dhm_station(session: requests.Session, station: dict) -> dict:
         "latitude": metadata["latitude"],
         "source_url": page_url,
         "samples": samples,
-        "last_sample": samples[-1],
+        "duplicate_timestamp_count": raw_sample_count - len(samples),
+        "last_sample": event_samples[-1],
+        "latest_returned_sample": latest,
+        "continued_after_event_window": (
+            datetime.fromisoformat(latest["time_npt"]) > EVENT_WINDOW_END
+        ),
     }
 
 
@@ -92,12 +107,19 @@ def sample_dem(points: list[tuple[float, float]]) -> list[float]:
 
 def main() -> None:
     session = requests.Session()
-    session.headers["User-Agent"] = "Trishuli-Flood-2026/0.3 (meashishdutta@gmail.com)"
+    session.headers["User-Agent"] = "Trishuli-Flood-2026/0.4 (meashishdutta@gmail.com)"
 
     usgs = session.get(USGS_URL, timeout=30)
     usgs.raise_for_status()
     event = usgs.json()
     props = event["properties"]
+    review_products = props.get("products", {}).get("general-text", [])
+    review_markup = ""
+    if review_products:
+        review_product = max(review_products, key=lambda product: product["updateTime"])
+        review_markup = review_product.get("contents", {}).get("", {}).get("bytes", "")
+    if "glacial collapse and debris flow" not in review_markup:
+        raise RuntimeError("USGS reviewed glacial-collapse statement is unavailable")
     source_lon, source_lat, _ = event["geometry"]["coordinates"]
     event_utc = datetime.fromtimestamp(props["time"] / 1000, timezone.utc)
     event_npt = event_utc.astimezone(NPT)
@@ -118,12 +140,20 @@ def main() -> None:
     generated = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     evidence = {
         "schema_version": "1.0",
-        "brief_version": "0.3.1",
+        "brief_version": "0.4.1",
         "generated_at_utc": generated,
         "event": {
             "id": EVENT_ID,
             "catalogue_class": props["type"],
             "catalogue_title": props["title"],
+            "catalogue_updated_utc": datetime.fromtimestamp(
+                props["updated"] / 1000, timezone.utc
+            ).isoformat(),
+            "review_summary": (
+                "USGS determined from nearby seismic stations, long-period "
+                "waves and satellite imagery that the event was a glacial "
+                "collapse and debris flow, and that no earthquake occurred."
+            ),
             "magnitude": props["mag"],
             "time_utc": event_utc.isoformat(),
             "time_npt": event_npt.isoformat(),
@@ -141,7 +171,11 @@ def main() -> None:
             {
                 "id": "obs-usgs-landslide",
                 "tier": "retrieved observation",
-                "statement": "USGS classifies the seismic source as an M 5.2 landslide, not an earthquake.",
+                "statement": (
+                    "USGS determined from nearby seismic stations, long-period "
+                    "waves and satellite imagery that the event was a glacial "
+                    "collapse and debris flow, and that no earthquake occurred."
+                ),
                 "source": "USGS",
                 "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb",
             },
@@ -155,7 +189,11 @@ def main() -> None:
             {
                 "id": "obs-gauge-silence",
                 "tier": "retrieved observation",
-                "statement": "Five DHM gauges in the corridor ceased transmitting between 08:40 and 09:20 NPT; their displayed warning status does not describe the flood peak.",
+                "statement": (
+                    "Four of five returned DHM gauge series end between 08:40 "
+                    "and 09:20 NPT; Dhunche continues beyond the event window. "
+                    "Displayed warning status does not describe the flood peak."
+                ),
                 "source": "Nepal DHM station observations",
                 "source_url": "https://dhm.gov.np/hydrology/realtime-stream",
             },
@@ -168,7 +206,7 @@ def main() -> None:
             "id": "usgs-source",
             "properties": {
                 "kind": "source",
-                "label": "USGS landslide source",
+                "label": "USGS glacial-collapse source",
                 "time_npt": event_npt.strftime("%H:%M:%S NPT"),
                 "elevation_m": source_elevation,
                 "evidence_tier": "retrieved observation",
@@ -189,6 +227,7 @@ def main() -> None:
                     "last_time_npt": datetime.fromisoformat(gauge["last_sample"]["time_npt"]).strftime("%H:%M NPT"),
                     "last_level_m": gauge["last_sample"]["level_m"],
                     "warning_m": gauge["warning_m"],
+                    "continued_after_event_window": gauge["continued_after_event_window"],
                     "evidence_tier": "retrieved observation",
                     "source_url": gauge["source_url"],
                 },
