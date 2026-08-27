@@ -6,10 +6,6 @@
   var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
   var $ = function (id) { return document.getElementById(id); };
 
-  /* All four services publish to LOD 23, so one source maxzoom covers the set.
-     World_Terrain_Base, NatGeo_World_Map and World_Physical_Map are deliberately
-     absent: over Nepal they return Esri's "map data not yet available" placeholder
-     from roughly z10, so they render as an empty grey field at corridor scale. */
   /* maxzoom is the deepest level that returns real tiles OVER THIS CORRIDOR, not the
      service's advertised LOD. Past it Esri serves a "map data not yet available"
      placeholder, so the source stops there and MapLibre upsamples the last good tile.
