@@ -6,7 +6,6 @@ aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto
 .brand .eyebrow{font-size:9.5px;font-weight:600;letter-spacing:0;text-transform:uppercase;color:var(--accent-ink)}
 .brand h1{font-size:18px;font-weight:700;letter-spacing:0;margin:5px 0 4px}
 .brand p{margin:0;font-size:11.5px;color:var(--muted);line-height:1.45}
-.map-byline{margin-top:8px;font-size:10.5px;font-weight:600;color:var(--ink-2)}
 .grp{padding:13px 18px;border-bottom:1px solid var(--line-soft)}
 .grp:last-child{border-bottom:0}
 .grp h2{font-size:9.5px;font-weight:600;letter-spacing:0;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
