@@ -397,6 +397,12 @@
     if (osmNew && osm.buildings_new) osmNew.textContent = osm.buildings_new.toLocaleString('en-GB');
     var osmWhen = $('osmwhen');
     if (osmWhen && osm.snapshot) osmWhen.textContent = osm.snapshot.slice(0, 16) + ' UTC';
+    var trackerOsmWhen = $('tracker-osmwhen');
+    if (trackerOsmWhen && osm.snapshot) trackerOsmWhen.textContent = osm.snapshot.slice(0, 16) + ' UTC';
+    var evidenceWhen = $('evidencewhen');
+    if (evidenceWhen && EVENT.generated_at_utc) {
+      evidenceWhen.textContent = EVENT.generated_at_utc.slice(0, 16).replace('T', ' ') + ' UTC';
+    }
     function setCount(id, value) {
       var el = $(id);
       if (el && value != null) el.textContent = Number(value).toLocaleString('en-GB');
