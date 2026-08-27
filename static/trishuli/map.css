@@ -40,6 +40,13 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:7px 0 0}
 .event-fact{font-size:10.5px;line-height:1.45;color:var(--ink-2);margin:9px 0 0}
 .event-fact b{color:var(--ink)}
 .evidence-link{display:inline-block;margin-top:8px;color:var(--accent-ink);font-size:10.5px;font-weight:600}
+.update-tracker{margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,91,119,.22)}
+.tracker-title{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--ink)}
+.tracker-title>span{display:flex;align-items:center;gap:5px;color:var(--accent-ink);font-size:9.5px;text-transform:uppercase}
+.tracker-title i{width:6px;height:6px;border-radius:50%;background:#2f7a5c;box-shadow:0 0 0 2px rgba(47,122,92,.18)}
+.update-tracker dl{display:grid;grid-template-columns:auto 1fr;gap:3px 9px;margin:7px 0 0;font-size:10px;line-height:1.35}
+.update-tracker dt{color:var(--muted)}
+.update-tracker dd{margin:0;color:var(--ink-2);font-family:var(--mono);text-align:right}
 .event-label{font-family:var(--ui);white-space:nowrap;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none}
 .event-label b,.event-label span{display:block}
 .event-label b{font-size:12px}
