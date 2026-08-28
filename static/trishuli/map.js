@@ -197,8 +197,8 @@
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.1, 16, 3.4],
         'circle-color': ['step', ['get', 'd'], '#c9423a', 100, '#d68c36', 250, '#78848f'],
         'circle-opacity': 0.85}});
-    /* Buildings volunteers digitised since the flood, drawn over the rest so the
-       live mapping effort is visible rather than buried in the base count. */
+    /* Building features last edited since the flood, drawn over the rest so the
+       live mapping effort stays visible without implying damage or feature age. */
     map.addLayer({id: 'bldg-new', type: 'circle', source: 'bldg', minzoom: 10,
       filter: ['==', ['get', 'fresh'], 1],
       paint: {
