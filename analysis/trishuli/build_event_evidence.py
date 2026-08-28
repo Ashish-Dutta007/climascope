@@ -294,7 +294,12 @@ def main() -> None:
             }
         )
 
-    geojson = {"type": "FeatureCollection", "features": features}
+    geojson = {
+        "type": "FeatureCollection",
+        "generated_at_utc": generated,
+        "brief_version": evidence["brief_version"],
+        "features": features,
+    }
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "event_evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
     (OUT / "event_observations.geojson").write_text(json.dumps(geojson, indent=2) + "\n")

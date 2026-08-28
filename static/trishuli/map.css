@@ -86,5 +86,6 @@ main{position:relative;min-width:0}
   .sitebar .grow{display:none}
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
   aside{border-right:0;border-bottom:1px solid var(--line);max-height:44vh}
+  .event-label{display:none}
   .banner,#legend{display:none}
 }

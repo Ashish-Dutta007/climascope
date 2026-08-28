@@ -1,5 +1,7 @@
 {
   "type": "FeatureCollection",
+  "generated_at_utc": "2026-08-28T09:51:56+00:00",
+  "brief_version": "0.5.1",
   "features": [
     {
       "type": "Feature",
