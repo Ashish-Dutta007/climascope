@@ -31,7 +31,7 @@
     <a href="/">ClimaScope</a><span class="sep">/</span>
     <span>Trishuli flood</span><span class="sep">/</span>
     <a href="/trishuli/report">Working evidence note</a>
-    <span class="grow">Version 0.5.1 &middot; updated 28 Aug 2026</span>
+    <span class="grow">Version 0.6.0 &middot; updated 28 Aug 2026</span>
   </div>
 
   <div class="app">
@@ -41,6 +41,20 @@
       <h1>Trishuli Flood Evidence Map</h1>
       <p class="author">Ashish Dutta &middot; Geospatial researcher</p>
       <p>Reviewed event evidence, live mapping context and terrain along the 26 August 2026 flood corridor.</p>
+    </div>
+
+    <div class="grp view-grp">
+      <h2>Map view</h2>
+      <div class="seg view-tabs" role="group" aria-label="Map view">
+        <button type="button" id="v-evidence" aria-pressed="true">Evidence</button>
+        <button type="button" id="v-hot" aria-pressed="false">HOT activity</button>
+        <button type="button" id="v-terrain" aria-pressed="false">Terrain</button>
+      </div>
+      <div class="view-summary" aria-live="polite">
+        <b id="view-title">Event evidence</b>
+        <p id="view-copy">Reviewed source and gauge observations, with the mapped river as geographic context.</p>
+        <div id="view-stats" class="view-stats"></div>
+      </div>
     </div>
 
     <div class="grp event-grp">
@@ -76,7 +90,7 @@
       <h2>Terrain context</h2>
       <label class="row"><input type="checkbox" id="l-district" checked><span class="sw district-sw"></span><span>Districts</span><span class="ct" id="districtpct">9%</span></label>
       <input type="range" id="districtop" min="0" max="40" value="9" aria-label="District fill opacity">
-      <label class="row"><input type="checkbox" id="l-slope"><span>Slope &gt; 30&deg;</span><span class="ct" id="slopepct"></span></label>
+      <label class="row"><input type="checkbox" id="l-slope"><span>Slope overlay</span><span class="ct" id="slopepct"></span></label>
       <input type="range" id="slopeop" min="0" max="100" value="62" aria-label="Slope overlay opacity">
     </div>
 
@@ -116,7 +130,7 @@
         <b>Imagery</b> Esri World Imagery, live tiles. Source: Esri, Vantor, Earthstar Geographics.<br><br>
         <b>Terrain</b> Copernicus DEM GLO-30, slope computed at 27&times;31&nbsp;m and served as a georeferenced overlay.<br><br>
         <b>Districts</b> Nepal COD-AB, Survey Department of Nepal and UN Resident Coordinator&rsquo;s Office, CC BY-IGO.<br><br>
-        <b>Vectors</b> OpenStreetMap, ODbL, cut live from HOT raw-data-api. OSM snapshot <span class="mono" id="osmwhen">&mdash;</span>. Volunteers are actively mapping this corridor through the <a href="https://tasks.hotosm.org/projects/62904">HOT Tasking Manager</a>; building features last edited since 26 August are shown in green. This includes updates to existing features, not only new additions.<br><br>
+        <b>Vectors</b> OpenStreetMap, ODbL, cut live from HOT raw-data-api. OSM snapshot <span class="mono" id="osmwhen">&mdash;</span>. Volunteers are actively mapping this corridor through several <a href="https://tasks.hotosm.org/explore">HOT Tasking Manager</a> projects; the green grid counts building features last edited after flood onset. This includes updates to existing features, not only new additions.<br><br>
         <b>River colours</b> share of terrain steeper than 45&deg; within 500&nbsp;m of each 1&nbsp;km river sample. This is descriptive terrain context, not hazard probability.<br><br>
         <b>Author</b> Ashish Dutta, geospatial researcher. Corrections: <a href="mailto:meashishdutta@gmail.com">email</a>.
       </p>
@@ -125,21 +139,33 @@
 
   <main>
     <div id="map"></div>
-    <div class="banner"><b>Reviewed evidence + screening context.</b> Nothing here shows flood extent, depth or confirmed damage.</div>
+    <div class="banner" id="map-banner"><b id="banner-title">Evidence view.</b> <span id="banner-copy">Reviewed observations; no flood extent, depth or confirmed damage.</span></div>
     <div id="legend">
-      <h3>Nearby terrain &gt;45&deg;</h3>
-      <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
-      <div class="rl"><span>&lt;10%</span><span>40%+</span></div>
-      <div style="height:8px"></div>
-      <h3>Slope</h3>
-      <div class="ramp"><span style="background:#fad678"></span><span style="background:#f6aa50"></span><span style="background:#e9783a"></span><span style="background:#ce422d"></span><span style="background:#961c1e"></span></div>
-      <div class="rl"><span>30&deg;</span><span>50&deg;+</span></div>
-      <div style="height:8px"></div>
-      <h3>Buildings</h3>
-      <div class="li"><i style="background:#c9423a"></i>within 100 m of channel</div>
-      <div class="li"><i style="background:#d68c36"></i>100 to 250 m</div>
-      <div class="li"><i style="background:#78848f"></i>beyond 250 m</div>
-      <div class="li"><i style="background:#4de1a2;border:1px solid #08301f"></i>OSM edited since flood</div>
+      <div data-legend="evidence">
+        <h3>Reviewed observations</h3>
+        <div class="li"><i style="background:#962c24;border:2px solid #fff"></i>USGS source estimate</div>
+        <div class="li"><i style="background:#131c25;border:2px solid #fff"></i>DHM gauge station</div>
+        <h3 class="legend-gap">River colour</h3>
+        <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
+        <div class="rl"><span>&lt;10% steep</span><span>40%+</span></div>
+      </div>
+      <div data-legend="hot" hidden>
+        <h3>OSM building edits / 2 km cell</h3>
+        <div class="ramp"><span style="background:#274c44"></span><span style="background:#2f7a5c"></span><span style="background:#42b883"></span><span style="background:#7de2b8"></span></div>
+        <div class="rl"><span>1&ndash;24</span><span>250+</span></div>
+        <div class="li legend-gap"><i class="line-key" style="background:#69c6dc"></i>river reference</div>
+        <div class="li"><i class="line-key" style="background:#e8a33d"></i>trunk / primary road</div>
+        <div class="li"><i style="background:#b8392e"></i>mapped bridge</div>
+        <p class="legend-note">Edit activity, not observed damage.</p>
+      </div>
+      <div data-legend="terrain" hidden>
+        <h3>Nearby terrain &gt;45&deg;</h3>
+        <div class="ramp"><span style="background:#7d8b98"></span><span style="background:#2b8fab"></span><span style="background:#d99a2b"></span><span style="background:#b8392e"></span></div>
+        <div class="rl"><span>&lt;10%</span><span>40%+</span></div>
+        <h3 class="legend-gap">Slope overlay</h3>
+        <div class="ramp"><span style="background:#fad678"></span><span style="background:#f6aa50"></span><span style="background:#e9783a"></span><span style="background:#ce422d"></span><span style="background:#961c1e"></span></div>
+        <div class="rl"><span>30&deg;</span><span>50&deg;+</span></div>
+      </div>
     </div>
   </main>
   </div>

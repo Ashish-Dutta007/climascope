@@ -34,6 +34,14 @@
     map.addSource('base', rasterSource(key));
     map.addLayer({id: 'base', type: 'raster', source: 'base'}, below ? below.id : undefined);
   }
+  function selectBasemap(key) {
+    if (currentBase !== key) setBasemap(key);
+    var buttons = {img: 'b-img', topo: 'b-topo', hs: 'b-hs', canvas: 'b-canvas'};
+    Object.keys(buttons).forEach(function (name) {
+      var button = $(buttons[name]);
+      if (button) button.setAttribute('aria-pressed', String(name === key));
+    });
+  }
   var steepCol = function (v) {
     return v >= 40 ? '#b8392e' : v >= 25 ? '#d99a2b' : v >= 10 ? '#2b8fab' : '#7d8b98';
   };
@@ -186,9 +194,31 @@
       paint: {'line-color': ['get', 'col'],
         'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.2, 13, 5, 17, 11]}});
 
+    /* HOT building-edit density. The 2 km cells make the spatial pattern legible
+       at corridor scale; individual timestamped centroids only appear on zoom. */
+    var editCells = (DATA.edit_grid || []).map(function (cell) {
+      return {type: 'Feature', properties: {
+        n: cell.n, n250: cell.n250, latest: cell.latest
+      }, geometry: {type: 'Polygon', coordinates: [cell.p]}};
+    });
+    map.addSource('edit-grid', {type: 'geojson', data: fc(editCells)});
+    map.addLayer({id: 'edit-grid-fill', type: 'fill', source: 'edit-grid',
+      layout: {visibility: 'none'},
+      paint: {
+        'fill-color': ['step', ['get', 'n'], '#274c44', 25, '#2f7a5c', 100, '#42b883', 250, '#7de2b8'],
+        'fill-opacity': 0.62
+      }});
+    map.addLayer({id: 'edit-grid-line', type: 'line', source: 'edit-grid',
+      layout: {visibility: 'none'},
+      paint: {'line-color': '#b9f3db', 'line-opacity': 0.55, 'line-width': 0.8}});
+    map.addLayer({id: 'channel-ref', type: 'line', source: 'stem',
+      layout: {'line-cap': 'round', 'line-join': 'round', visibility: 'none'},
+      paint: {'line-color': '#69c6dc', 'line-opacity': 0.95,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2, 14, 4.5]}});
+
     /* --- buildings, coloured by distance to channel --- */
     map.addSource('bldg', {type: 'geojson', data: fc(DATA.bldg.map(function (b) {
-      return {type: 'Feature', properties: {d: b[2], fresh: b[3] || 0},
+      return {type: 'Feature', properties: {d: b[2], fresh: b[3] || 0, edited: b[4] || ''},
               geometry: {type: 'Point', coordinates: [b[0], b[1]]}};
     }))});
     map.addLayer({id: 'bldg', type: 'circle', source: 'bldg', minzoom: 11,
@@ -199,8 +229,9 @@
         'circle-opacity': 0.85}});
     /* Building features last edited since the flood, drawn over the rest so the
        live mapping effort stays visible without implying damage or feature age. */
-    map.addLayer({id: 'bldg-new', type: 'circle', source: 'bldg', minzoom: 10,
+    map.addLayer({id: 'bldg-new', type: 'circle', source: 'bldg', minzoom: 13,
       filter: ['==', ['get', 'fresh'], 1],
+      layout: {visibility: 'none'},
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.4, 16, 4],
         'circle-color': '#4de1a2', 'circle-opacity': 0.95,
@@ -251,7 +282,6 @@
         .setLngLat(feature.geometry.coordinates).addTo(map));
     });
 
-    fitCorridor();
     wireUI();
     wirePopups();
   }
@@ -310,6 +340,29 @@
       map.on('mouseenter', p[0], function () { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', p[0], function () { map.getCanvas().style.cursor = ''; });
     });
+    map.on('click', 'edit-grid-fill', function (e) {
+      var pr = e.features[0].properties;
+      new maplibregl.Popup({closeButton: true, maxWidth: '310px'}).setLngLat(e.lngLat)
+        .setHTML(popupHTML('2 km activity cell', 'HOT / OpenStreetMap', [
+          ['Building features edited', Number(pr.n).toLocaleString('en-GB')],
+          ['Centroids within 250 m', Number(pr.n250).toLocaleString('en-GB')],
+          ['Latest edit', pr.latest]
+        ]) + '<p class="popup-note">These are OpenStreetMap edit timestamps. They show mapping activity, not building age, exposure or damage.</p>')
+        .addTo(map);
+    });
+    map.on('mouseenter', 'edit-grid-fill', function () { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'edit-grid-fill', function () { map.getCanvas().style.cursor = ''; });
+    map.on('click', 'bldg-new', function (e) {
+      var pr = e.features[0].properties, c = e.features[0].geometry.coordinates;
+      new maplibregl.Popup({closeButton: true, maxWidth: '300px'}).setLngLat(c)
+        .setHTML(popupHTML('Edited building feature', 'OpenStreetMap', [
+          ['Last edited', pr.edited],
+          ['Centroid to channel', Number(pr.d).toLocaleString('en-GB') + ' m']
+        ]) + '<p class="popup-note">A recent edit may be a new trace or a correction to an existing feature. It is not a damage observation.</p>')
+        .addTo(map);
+    });
+    map.on('mouseenter', 'bldg-new', function () { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'bldg-new', function () { map.getCanvas().style.cursor = ''; });
     map.on('click', 'stem', function (e) {
       var pr = e.features[0].properties;
       new maplibregl.Popup({closeButton: true, maxWidth: '300px'}).setLngLat(e.lngLat)
@@ -328,13 +381,11 @@
     Object.keys(segs).forEach(function (id) {
       var el = $(id); if (!el) return;
       el.addEventListener('click', function () {
-        setBasemap(segs[id]);
-        Object.keys(segs).forEach(function (j) {
-          var b = $(j); if (b) b.setAttribute('aria-pressed', String(j === id));
-        });
+        selectBasemap(segs[id]);
       });
     });
-    var boxes = {'l-district': ['district-fill', 'district-line'], 'l-bldgnew': 'bldg-new',
+    var boxes = {'l-district': ['district-fill', 'district-line'],
+                 'l-bldgnew': ['edit-grid-fill', 'edit-grid-line', 'bldg-new'],
                  'l-slope': 'slope', 'l-stem': 'stem', 'l-trib': 'trib', 'l-rmaj': 'rmaj',
                  'l-rmin': 'rmin', 'l-bldg': 'bldg', 'l-brg': 'brg', 'l-edu': 'edu',
                  'l-hlth': 'hlth', 'l-heli': 'heli', 'l-plc': 'plc', 'l-buf': 'buf'};
@@ -417,7 +468,7 @@
     setCount('placecount', DATA.places.length);
 
     var pct = $('slopepct');
-    if (pct) pct.textContent = (DATA.terrain.pct_over35 * 100).toFixed(0) + '% of area';
+    if (pct) pct.textContent = (DATA.terrain.pct_over35 * 100).toFixed(0) + '% >35°';
 
     var top = DATA.reach.slice().sort(function (a, b) { return b[5] - a[5]; }).slice(0, 5);
     var NAMES = {16.1: 'At Syabrubesi', 21.2: 'Below Syabrubesi', 27.2: 'Mid gorge',
@@ -448,5 +499,75 @@
       map.flyTo({center: source.geometry.coordinates, zoom: 12.7, duration: 900});
       map.once('moveend', function () { showEventPopup(source); });
     });
+
+    function setBox(id, checked) {
+      var box = $(id);
+      if (!box) return;
+      box.checked = checked;
+      box.dispatchEvent(new Event('change'));
+    }
+    function setEvent(checked) {
+      if (!eventBox) return;
+      eventBox.checked = checked;
+      eventBox.dispatchEvent(new Event('change'));
+    }
+    function stat(value, label) {
+      return '<div class="view-stat"><b>' + esc(value) + '</b><span>' + esc(label) + '</span></div>';
+    }
+    function renderMode(mode) {
+      var title = $('view-title'), copy = $('view-copy'), stats = $('view-stats');
+      var campaign = (DATA.osm || {}).campaign || {};
+      if (mode === 'hot') {
+        if (title) title.textContent = 'HOT / OpenStreetMap activity';
+        if (copy) copy.textContent = 'Two-kilometre cells aggregate building features last edited after flood onset. Zoom in for individual edit points.';
+        if (stats) stats.innerHTML =
+          stat(Number((DATA.osm || {}).buildings_new || 0).toLocaleString('en-GB'), 'building features') +
+          stat(Number(campaign.mappers || 0).toLocaleString('en-GB'), 'mappers') +
+          stat(Number(campaign.changesets || 0).toLocaleString('en-GB'), 'changesets');
+      } else if (mode === 'terrain') {
+        if (title) title.textContent = 'Terrain screening';
+        if (copy) copy.textContent = 'Slope and nearby relief describe the corridor geometry. They are not a landslide probability or flood-hazard model.';
+        if (stats) stats.innerHTML = stat(DATA.reach.length, 'sampled reaches') +
+          stat('45°', 'steep threshold') + stat('500 m', 'reach context');
+      } else {
+        if (title) title.textContent = 'Event evidence';
+        if (copy) copy.textContent = 'Red is the satellite-estimated USGS source point; outlined circles are DHM gauges. River colour is terrain context, not flood extent.';
+        if (stats) stats.innerHTML = stat('08:37', 'first signal, NPT') +
+          stat('+188 min', 'second signal') +
+          stat(EVENT.features.filter(function (f) { return f.properties.kind === 'gauge'; }).length, 'DHM gauges');
+      }
+      Array.prototype.forEach.call(document.querySelectorAll('#legend [data-legend]'), function (el) {
+        el.hidden = el.getAttribute('data-legend') !== mode;
+      });
+      var banners = {
+        evidence: ['Evidence view.', 'Reviewed observations; no flood extent, depth or confirmed damage.'],
+        hot: ['HOT activity view.', 'OSM edits show volunteer mapping effort, not observed damage.'],
+        terrain: ['Terrain view.', 'Screening context only; colours do not show landslide probability.']
+      };
+      if ($('banner-title')) $('banner-title').textContent = banners[mode][0];
+      if ($('banner-copy')) $('banner-copy').textContent = banners[mode][1];
+    }
+    function applyMode(mode) {
+      var active = {
+        evidence: {'l-district': 1, 'l-stem': 1},
+        hot: {'l-district': 1, 'l-bldgnew': 1, 'l-rmaj': 1, 'l-brg': 1},
+        terrain: {'l-stem': 1, 'l-trib': 1, 'l-slope': 1}
+      }[mode];
+      Object.keys(boxes).forEach(function (id) { setBox(id, Boolean(active[id])); });
+      setEvent(mode === 'evidence');
+      map.setLayoutProperty('channel-ref', 'visibility', mode === 'hot' ? 'visible' : 'none');
+      selectBasemap(mode === 'hot' ? 'canvas' : mode === 'terrain' ? 'hs' : 'img');
+      ['evidence', 'hot', 'terrain'].forEach(function (name) {
+        var button = $('v-' + name);
+        if (button) button.setAttribute('aria-pressed', String(name === mode));
+      });
+      renderMode(mode);
+      fitCorridor();
+    }
+    ['evidence', 'hot', 'terrain'].forEach(function (mode) {
+      var button = $('v-' + mode);
+      if (button) button.addEventListener('click', function () { applyMode(mode); });
+    });
+    applyMode('evidence');
   }
 })();
