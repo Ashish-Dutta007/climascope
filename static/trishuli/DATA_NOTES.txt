@@ -1,5 +1,5 @@
 TRISHULI FLOOD EVENT EVIDENCE AND PRE-EVENT BASELINE
-Version 0.4.1 - 27 August 2026, 12:55 UTC
+Version 0.5.1 - 28 August 2026
 
 Author
 ------
@@ -22,13 +22,17 @@ snapshot of five Nepal DHM gauge series retrieved for 26 August 2026.
 
 event_observations.geojson contains the USGS source point and five DHM
 station points. Evidence-tier and source URL fields are retained. The source
-point is not a collapse polygon. Four returned gauge series end between 08:40
+point is not a collapse polygon. USGS added a second low-frequency signal about
+three hours later with characteristics consistent with a landslide. Because it
+could not be located precisely, its catalogue position was fixed to the first
+event and it is not drawn as a separate point. Four returned gauge series end between 08:40
 and 09:20 NPT; Dhunche continues beyond the event window. A series ending is
 not a flood-wave arrival time.
 
 The USGS catalogue record is mutable. Event us7000tbwb was first returned as
 an mb 4.4 earthquake at 02:52:47 UTC and was subsequently revised to a reviewed
-M 5.2 Landslide at 02:52:10 UTC. Version 0.4.1 uses the later reviewed product.
+M 5.2 Landslide at 02:52:10 UTC. Version 0.5.1 uses the later reviewed product
+and records the second USGS landslide-like signal at 06:00:35 UTC.
 USGS key points state that nearby seismic stations, long-period waves and
 satellite imagery led to its determination of a glacial collapse and debris
 flow, and that no earthquake occurred. USGS says the source location was
@@ -70,8 +74,8 @@ before onset and 0.1-0.3 mm in the final 24 hours. This is a coarse model-grid
 screen, not a rain-gauge result, and may miss local orographic precipitation.
 
 The Planet Crisis Response collection on source.coop was visually reviewed.
-The post-event SkySat acquisitions are approximately 0.8 m, but opaque cloud at
-Rasuwagadhi and valley haze at Syabrubesi obscure the target channel. The
+Post-event SkySat and Pelican acquisitions are approximately 0.8 m and 0.5 m,
+respectively, but cloud and haze obscure much of the target corridor. The
 PlanetScope pre/post assets also mix surface-reflectance and top-of-atmosphere
 products. No quantitative Planet change result is produced.
 

@@ -10,7 +10,10 @@
         "time_npt": "08:37:10 NPT",
         "elevation_m": 5590,
         "evidence_tier": "retrieved observation",
-        "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
+        "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb",
+        "second_event_time_npt": "11:45:35 NPT",
+        "second_event_source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tc90",
+        "second_event_location_note": "Fixed to the first event; not independently located"
       },
       "geometry": {
         "type": "Point",

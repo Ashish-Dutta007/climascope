@@ -246,7 +246,7 @@
       if (feature.properties.kind !== 'source') return;
       var el = document.createElement('div');
       el.className = 'event-label';
-      el.innerHTML = '<b>USGS glacial-collapse source</b><span>08:37:10 NPT · 5,590 m</span>';
+      el.innerHTML = '<b>USGS glacial-collapse source</b><span>08:37:10 NPT · satellite-estimated point</span>';
       eventMarkers.push(new maplibregl.Marker({element: el, anchor: 'right', offset: [-13, 0]})
         .setLngLat(feature.geometry.coordinates).addTo(map));
     });
@@ -274,7 +274,8 @@
     var p = feature.properties, c = feature.geometry.coordinates;
     var rows = p.kind === 'source' ? [
       ['Time', p.time_npt], ['Elevation', p.elevation_m + ' m'],
-      ['Evidence tier', p.evidence_tier], ['Geometry', 'Satellite-estimated source point']
+      ['Evidence tier', p.evidence_tier], ['Geometry', 'Satellite-estimated source point'],
+      ['Second signal', p.second_event_time_npt + '; location fixed here']
     ] : [
       ['Last sample', p.last_time_npt], ['Last level', Number(p.last_level_m).toFixed(2) + ' m'],
       ['Warning level', Number(p.warning_m).toFixed(2) + ' m'],

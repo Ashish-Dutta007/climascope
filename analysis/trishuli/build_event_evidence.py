@@ -19,7 +19,8 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "static" / "trishuli"
 NPT = timezone(timedelta(hours=5, minutes=45))
 EVENT_ID = "us7000tbwb"
-USGS_URL = f"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventid={EVENT_ID}"
+SECOND_EVENT_ID = "us7000tc90"
+USGS_QUERY = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventid={}"
 DHM_BASE = "https://dhm.gov.np"
 DEM_URL = (
     "/vsicurl/https://copernicus-dem-30m.s3.amazonaws.com/"
@@ -109,7 +110,7 @@ def main() -> None:
     session = requests.Session()
     session.headers["User-Agent"] = "Trishuli-Flood-2026/0.4 (meashishdutta@gmail.com)"
 
-    usgs = session.get(USGS_URL, timeout=30)
+    usgs = session.get(USGS_QUERY.format(EVENT_ID), timeout=30)
     usgs.raise_for_status()
     event = usgs.json()
     props = event["properties"]
@@ -120,9 +121,27 @@ def main() -> None:
         review_markup = review_product.get("contents", {}).get("", {}).get("bytes", "")
     if "glacial collapse and debris flow" not in review_markup:
         raise RuntimeError("USGS reviewed glacial-collapse statement is unavailable")
+
+    second_response = session.get(USGS_QUERY.format(SECOND_EVENT_ID), timeout=30)
+    second_response.raise_for_status()
+    second_event = second_response.json()
+    second_props = second_event["properties"]
+    second_products = second_props.get("products", {}).get("general-header", [])
+    second_markup = ""
+    if second_products:
+        second_product = max(second_products, key=lambda product: product["updateTime"])
+        second_markup = second_product.get("contents", {}).get("", {}).get("bytes", "")
+    required_second_phrases = (
+        "characteristics consistent with a landslide",
+        "precise location could not be determined",
+    )
+    if not all(phrase in second_markup for phrase in required_second_phrases):
+        raise RuntimeError("USGS second-landslide interpretation is unavailable")
     source_lon, source_lat, _ = event["geometry"]["coordinates"]
     event_utc = datetime.fromtimestamp(props["time"] / 1000, timezone.utc)
     event_npt = event_utc.astimezone(NPT)
+    second_event_utc = datetime.fromtimestamp(second_props["time"] / 1000, timezone.utc)
+    second_event_npt = second_event_utc.astimezone(NPT)
 
     source_elevation, border_elevation = sample_dem(
         [(source_lon, source_lat), RASUWAGADHI]
@@ -140,7 +159,7 @@ def main() -> None:
     generated = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     evidence = {
         "schema_version": "1.0",
-        "brief_version": "0.4.1",
+        "brief_version": "0.5.1",
         "generated_at_utc": generated,
         "event": {
             "id": EVENT_ID,
@@ -166,6 +185,28 @@ def main() -> None:
             "reported_blockage_distance_upstream_km": 20,
             "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb",
         },
+        "second_event": {
+            "id": SECOND_EVENT_ID,
+            "catalogue_class": second_props["type"],
+            "catalogue_title": second_props["title"],
+            "catalogue_updated_utc": datetime.fromtimestamp(
+                second_props["updated"] / 1000, timezone.utc
+            ).isoformat(),
+            "review_summary": (
+                "USGS identified a second low-frequency seismic signal about "
+                "three hours later with characteristics consistent with a "
+                "landslide. Its plotted location was fixed to the first event "
+                "because a precise location could not be determined."
+            ),
+            "magnitude": second_props["mag"],
+            "time_utc": second_event_utc.isoformat(),
+            "time_npt": second_event_npt.isoformat(),
+            "minutes_after_first_event": round(
+                (second_event_utc - event_utc).total_seconds() / 60
+            ),
+            "location_is_fixed_to_first_event": True,
+            "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tc90",
+        },
         "gauges": gauges,
         "observations": [
             {
@@ -185,6 +226,18 @@ def main() -> None:
                 "statement": "DHM officials reported imagery indicating a temporary debris blockage about 20 km upstream of Miteri Bridge and a subsequent breach.",
                 "source": "DHM official quoted by The Kathmandu Post",
                 "source_url": "https://kathmandupost.com/national/2026/08/26/ice-avalanche-debris-lake-may-have-triggered-bhotekoshi-flood",
+            },
+            {
+                "id": "obs-usgs-second-landslide",
+                "tier": "retrieved observation",
+                "statement": (
+                    "USGS identified a second low-frequency seismic signal "
+                    "about three hours after the first event with characteristics "
+                    "consistent with a landslide. Its catalogue location was "
+                    "fixed to the first event, not independently located."
+                ),
+                "source": "USGS",
+                "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tc90",
             },
             {
                 "id": "obs-gauge-silence",
@@ -211,6 +264,9 @@ def main() -> None:
                 "elevation_m": source_elevation,
                 "evidence_tier": "retrieved observation",
                 "source_url": evidence["event"]["source_url"],
+                "second_event_time_npt": second_event_npt.strftime("%H:%M:%S NPT"),
+                "second_event_source_url": evidence["second_event"]["source_url"],
+                "second_event_location_note": "Fixed to the first event; not independently located",
             },
             "geometry": {"type": "Point", "coordinates": [source_lon, source_lat]},
         }

@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "brief_version": "0.4.1",
-  "generated_at_utc": "2026-08-27T13:02:48+00:00",
+  "brief_version": "0.5.1",
+  "generated_at_utc": "2026-08-28T09:44:16+00:00",
   "event": {
     "id": "us7000tbwb",
     "catalogue_class": "landslide",
     "catalogue_title": "M 5.2 Landslide - 55 km NW of Kod\u0101ri\u0307\u0304, Nepal",
-    "catalogue_updated_utc": "2026-08-26T18:57:38.963000+00:00",
+    "catalogue_updated_utc": "2026-08-28T06:58:30.526000+00:00",
     "review_summary": "USGS determined from nearby seismic stations, long-period waves and satellite imagery that the event was a glacial collapse and debris flow, and that no earthquake occurred.",
     "magnitude": 5.2,
     "time_utc": "2026-08-26T02:52:10+00:00",
@@ -19,6 +19,19 @@
     "straight_distance_to_rasuwagadhi_km": 13.5,
     "reported_blockage_distance_upstream_km": 20,
     "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tbwb"
+  },
+  "second_event": {
+    "id": "us7000tc90",
+    "catalogue_class": "landslide",
+    "catalogue_title": "M 4.2 Landslide - 55 km NW of Kod\u0101ri\u0307\u0304, Nepal",
+    "catalogue_updated_utc": "2026-08-27T23:22:09.676000+00:00",
+    "review_summary": "USGS identified a second low-frequency seismic signal about three hours later with characteristics consistent with a landslide. Its plotted location was fixed to the first event because a precise location could not be determined.",
+    "magnitude": 4.2,
+    "time_utc": "2026-08-26T06:00:35+00:00",
+    "time_npt": "2026-08-26T11:45:35+05:45",
+    "minutes_after_first_event": 188,
+    "location_is_fixed_to_first_event": true,
+    "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tc90"
   },
   "gauges": [
     {
@@ -905,6 +918,13 @@
       "statement": "DHM officials reported imagery indicating a temporary debris blockage about 20 km upstream of Miteri Bridge and a subsequent breach.",
       "source": "DHM official quoted by The Kathmandu Post",
       "source_url": "https://kathmandupost.com/national/2026/08/26/ice-avalanche-debris-lake-may-have-triggered-bhotekoshi-flood"
+    },
+    {
+      "id": "obs-usgs-second-landslide",
+      "tier": "retrieved observation",
+      "statement": "USGS identified a second low-frequency seismic signal about three hours after the first event with characteristics consistent with a landslide. Its catalogue location was fixed to the first event, not independently located.",
+      "source": "USGS",
+      "source_url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tc90"
     },
     {
       "id": "obs-gauge-silence",
