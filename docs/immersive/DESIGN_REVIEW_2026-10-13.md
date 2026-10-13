@@ -1,6 +1,6 @@
 # ClimaScope on the immersive wall
 
-Initial design review and implementation brief, 13 October 2026, written before the implementation. Subsequent work is recorded in [INCREMENT_1_2026-10-13.md](INCREMENT_1_2026-10-13.md) and [PHONE_REMOTE_2026-10-13.md](PHONE_REMOTE_2026-10-13.md). Deployment remains pending.
+Initial design review and implementation brief, 13 October 2026, written before the implementation. Subsequent work is recorded in [INCREMENT_1_2026-10-13.md](INCREMENT_1_2026-10-13.md), [PHONE_REMOTE_2026-10-13.md](PHONE_REMOTE_2026-10-13.md) and [DEPLOYMENT_2026-10-13.md](DEPLOYMENT_2026-10-13.md).
 
 ## Recommendation
 

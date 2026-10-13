@@ -4,7 +4,9 @@
 [INCREMENT_1_2026-10-13.md](INCREMENT_1_2026-10-13.md) with a phone controller.
 The ordinary desktop viewer at `/` remains separate.
 
-## Using it after deployment
+The combined version is deployed; see [DEPLOYMENT_2026-10-13.md](DEPLOYMENT_2026-10-13.md) for the image and live checks.
+
+## Using the live version
 
 1. Keep `https://climascope.hutton.ac.uk/immersive` on the computer feeding the
    suite's one shared display source.
