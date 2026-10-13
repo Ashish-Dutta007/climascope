@@ -61,7 +61,7 @@ class ImmersivePhoneFlow(unittest.TestCase):
             wall.on("requestfinished", finish)
             wall.on("requestfailed", finish)
             try:
-                wall.goto(BASE + "/immersive?fresh=1")
+                wall.goto(BASE + "/immersive?fresh=1&scene=overview")
                 wait(lambda: "July" in wall.locator(".ctx-sel").first.inner_text() and
                      not wall.locator(".ctx-chip").first.inner_text(), "initial real-data frame")
                 self.assertEqual(wall.locator("canvas").count(), 9)

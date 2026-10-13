@@ -12,7 +12,23 @@
 
   <div id="status"><span class="status-dot"></span><span id="status-text">Looking for the wall…</span></div>
 
+  <div class="section-label">Scene</div>
+  <div class="scene-grid" id="scene-grid"></div>
+  <p class="hint" id="scene-description"></p>
+  <label class="focus-select-label"><span class="region-sublabel">Metric for ensemble agreement</span>
+    <select id="focus-select" class="region-select">
+      <option value="CWBPT">Climate water balance</option>
+      <option value="Prec_sum">Precipitation</option>
+      <option value="Tmax_mean">Mean daily maximum temperature</option>
+    </select>
+  </label>
+
   <div class="section-label">Playback</div>
+  <div class="tour-row">
+    <button id="btn-tour" class="ctrl-btn" type="button">▶ Guided tour</button>
+    <button id="btn-annual" class="ctrl-btn" type="button">▶ Annual cycle</button>
+    <span id="tour-progress" aria-live="polite"></span>
+  </div>
   <div class="play-row">
     <button id="btn-prev" class="ctrl-btn" type="button">◀ Prev month</button>
     <button id="btn-play" class="ctrl-btn btn-play" type="button">▶ Play</button>
@@ -22,7 +38,7 @@
       <select id="dwell-select" class="region-select dwell-select"></select>
     </label>
   </div>
-  <p class="hint">The wall runs playback itself. Choosing a month, member or region pauses it; press Play to resume from there.</p>
+  <p class="hint">The guided tour explains eight scenes for the selected area. The annual cycle advances through the months in the current scene. Any manual selection pauses playback; Play resumes it.</p>
 
   <div class="section-label">Month</div>
   <div class="btn-grid" id="month-grid"></div>
@@ -49,6 +65,8 @@
     </div>
   </div>
 
+  <p class="hint"><a href="/immersive/preview" target="_blank" rel="noopener">Open the separate wall preview</a></p>
+  <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
   <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
   <script src="/static/immersive/control.js?v={{ av('immersive/control.js') }}"></script>
 </body>

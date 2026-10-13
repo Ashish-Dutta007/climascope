@@ -11,7 +11,7 @@
    *
    * Every change is staged: map values, regional summaries and region geometry
    * are loaded first, then committed together with the month / region /
-   * ensemble labels. A frame counts as ready only once all nine maps have
+   * ensemble labels. A frame counts as ready only once all visible maps have
    * rendered; playback dwell starts from that point. On failure the previous
    * frame stays up with its own labels, and playback pauses with a message.
    *
@@ -54,6 +54,9 @@
   var CHANNEL_NAME  = 'climascope-immersive';
   var STORE_KEY     = 'climascope-immersive-wall-v2';
   var READY_TIMEOUT_MS = 20000;
+  var SCENES = window.ClimaScopeScenes;
+  var SCENE_BASE = '/static/immersive/summaries/scenes-v1/';
+  var SCENE_V = document.body.getAttribute('data-scenes-v') || '0';
 
   var SCOTLAND_BOUNDS = [[-7.7, 54.6], [-0.7, 60.9]];
   var BG_COLOR     = '#0d0f1a';
@@ -77,6 +80,11 @@
   var SCOTLAND_REGION = { kind: null, name: 'All Scotland', bounds: null, geometry: null };
 
   var params = new URLSearchParams(window.location.search);
+  var PREVIEW = params.get('preview') || '';
+  if (PREVIEW) {
+    STORE_KEY += '-preview-' + PREVIEW;
+    CHANNEL_NAME += '-preview-' + PREVIEW;
+  }
   function numParam(name, dflt, lo, hi) {
     var v = parseFloat(params.get(name));
     return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : dflt;
@@ -301,6 +309,10 @@
     region:  SCOTLAND_REGION,
     playing: false,
     dwell:   6,
+    scene: 'focus-water',
+    focus: 'CWBPT',
+    playback: 'months',
+    tourIndex: 0,
   };
   var _status = { kind: 'loading', message: '' };   // loading | ready | warning | error
   var _shown  = null;      // committed frame {month, member, region, rid, subs, missing, annualReset}
@@ -314,6 +326,7 @@
 
   // Regional summaries: the mean is kept; one member file at a time (bounded).
   var _sum = { mean: null, memberId: null, member: null, pending: {} };
+  var _extra = { mean: null, memberId: null, member: null, agreementId: null, agreement: null, pending: {} };
 
   // Council geometry for the locator, region resolution and overlay tests.
   var _councilGeom = {};
@@ -336,6 +349,7 @@
   }
 
   function persist() {
+    if (PREVIEW) return;
     try {
       window.localStorage.setItem(STORE_KEY, JSON.stringify({
         v: 2,
@@ -347,6 +361,10 @@
           : null,
         playing: _state.playing,
         dwell: _state.dwell,
+        scene: _state.scene,
+        focus: _state.focus,
+        playback: _state.playback,
+        tourIndex: _state.tourIndex,
       }));
     } catch (e) { /* storage unavailable: state simply is not restored */ }
   }
@@ -369,9 +387,23 @@
       }
       _state.playing = !!saved.playing;
       if (saved.dwell >= 2 && saved.dwell <= 60) _state.dwell = saved.dwell;
+      if (SCENES.valid(saved.scene)) _state.scene = saved.scene;
+      if (PANELS.some(function (p) { return p.id === saved.focus; })) _state.focus = saved.focus;
+      if (saved.playback === 'tour') _state.playback = 'tour';
+      if (Number.isInteger(saved.tourIndex) && saved.tourIndex >= 0 && saved.tourIndex < SCENES.tour.length) _state.tourIndex = saved.tourIndex;
     }
     if (params.has('dwell')) _state.dwell = numParam('dwell', 6, 2, 60);
     if (params.get('autoplay') === '1') _state.playing = true;
+    if (SCENES.valid(params.get('scene'))) _state.scene = params.get('scene');
+    if (PANELS.some(function (p) { return p.id === params.get('focus'); })) _state.focus = params.get('focus');
+    _state.focus = SCENES.metric(_state.scene, _state.focus);
+    var month = Number(params.get('month'));
+    if (month >= 1 && month <= 12 && Number.isInteger(month)) _state.month = month;
+    var member = params.get('member');
+    if (member === 'mean' || VALID_MEMBERS.indexOf(member) >= 0) _state.member = member;
+    if (params.get('region') && ['council', 'catchment'].indexOf(params.get('kind')) >= 0) {
+      _state.region = { kind: params.get('kind'), name: params.get('region'), geometry: null, bounds: null };
+    }
   }
 
   // ── Reporting to the controller ────────────────────────────────────
@@ -382,8 +414,7 @@
   }
 
   function report() {
-    if (!_channel) return;
-    _channel.postMessage({
+    var message = {
       type: 'wall',
       rev: _state.rev,
       state: {
@@ -392,12 +423,21 @@
         region: { kind: _state.region.kind, name: _state.region.name },
         playing: _state.playing,
         dwell: _state.dwell,
+        scene: _state.scene,
+        focus: _state.focus,
+        playback: _state.playback,
+        tourIndex: _state.tourIndex,
       },
       status: _status.kind,
       message: _status.message,
-      shown: _shown ? { month: _shown.month, member: _shown.member, region: _shown.region.name } : null,
+      shown: _shown ? { month: _shown.month, member: _shown.member, region: _shown.region.name,
+                       scene: _shown.scene, focus: _shown.focus } : null,
       heapMB: heapMB(),
-    });
+    };
+    if (_channel) _channel.postMessage(message);
+    if (PREVIEW && window.parent !== window) {
+      window.parent.postMessage({ type: 'climascope-preview-report', token: PREVIEW, report: message }, location.origin);
+    }
   }
 
   function setStatus(kind, message) {
@@ -425,6 +465,7 @@
       })
       .then(function (j) {
         if (!j || !j.regions || !j._meta) throw new Error('summaries for ' + ens + ' malformed');
+        if (j._meta.ensemble !== ens) throw new Error('Summary ensemble does not match the selection');
         if (ens === 'mean') {
           _sum.mean = j;
         } else {
@@ -444,7 +485,7 @@
   function seriesFor(frame, metric, periodId) {
     var useMean = periodId === BASELINE_ID || frame.member === 'mean' ||
                   frame.subs.indexOf(metric + '|' + periodId) >= 0;
-    var file = useMean ? _sum.mean : _sum.member;
+    var file = frame.summary ? (useMean ? frame.summary.mean : frame.summary.member) : (useMean ? _sum.mean : _sum.member);
     var r = file && file.regions[frame.rid];
     var m = r && r[metric];
     return (m && m[periodId]) || null;
@@ -453,6 +494,56 @@
   function cellCount(frame, metric) {
     var n = _sum.mean && _sum.mean.n_cells && _sum.mean.n_cells[frame.rid];
     return n && n[metric] ? n[metric][frame.month - 1] : null;
+  }
+
+  function loadSceneFile(name) {
+    if (name === 'mean' && _extra.mean) return Promise.resolve(_extra.mean);
+    if (name === _extra.memberId) return Promise.resolve(_extra.member);
+    if (name === _extra.agreementId) return Promise.resolve(_extra.agreement);
+    if (_extra.pending[name]) return _extra.pending[name];
+    var file = name === 'mean' || name.indexOf('agreement_') === 0 ? name + '.json' : 'member_' + name + '.json';
+    var promise = fetch(SCENE_BASE + file + '?v=' + encodeURIComponent(SCENE_V)).then(function (r) {
+      if (!r.ok) throw new Error('Scene summaries unavailable (HTTP ' + r.status + ')');
+      return r.json();
+    }).then(function (j) {
+      if (!j || !j._meta || !j.regions || j._meta.climate_version !== _sum.mean._meta.data_version) {
+        throw new Error('Scene summaries do not match the climate data');
+      }
+      if (name === 'mean') _extra.mean = j;
+      else if (name.indexOf('agreement_') === 0) { _extra.agreementId = name; _extra.agreement = j; }
+      else { _extra.memberId = name; _extra.member = j; }
+      return j;
+    });
+    _extra.pending[name] = promise;
+    promise.then(function () { delete _extra.pending[name]; }, function () { delete _extra.pending[name]; });
+    return promise;
+  }
+
+  function loadSceneData(target) {
+    var kind = SCENES.get(target.scene).kind;
+    if (kind === 'extent' || kind === 'landscape') {
+      return loadSummary('mean').then(function () {
+        return Promise.all([loadSceneFile('mean'), target.member === 'mean' ? null : loadSceneFile(target.member)]);
+      }).then(function (items) {
+        if (items[1] && items[1]._meta.data_version !== items[0]._meta.data_version) throw new Error('Land-cover summaries do not share one data version');
+        return { mean: items[0], member: items[1] };
+      });
+    }
+    if (kind === 'agreement') {
+      return loadSummary('mean').then(function () { return loadSceneFile('agreement_' + target.focus); })
+        .then(function (item) { return { agreement: item }; });
+    }
+    return Promise.resolve(null);
+  }
+
+  function thresholdSeries(frame, period) {
+    var data = frame.extra;
+    if (!data || !data.mean) return null;
+    var useMean = period === BASELINE_ID || frame.member === 'mean' || frame.subs.indexOf('CWBPT|' + period) >= 0;
+    var r = (useMean ? data.mean : data.member).regions[frame.rid];
+    var base = data.mean.regions[frame.rid];
+    if (!r || !base) return null;
+    return r.below[period].map(function (v, i) { return base.n_cells[i] ? 100 * v / base.n_cells[i] : null; });
   }
 
   // ── Map payloads: one request in flight, one next frame cached ─────
@@ -508,12 +599,14 @@
 
   function prefetchNext() {
     if (!_state.playing || _inflight) return;
-    var month = _state.month % 12 + 1;
+    function nextMonth() { return _state.playback === 'tour' ? SCENES.tour[(_state.tourIndex + 1) % SCENES.tour.length].month : _state.month % 12 + 1; }
+    var month = nextMonth();
+    if (month === _state.month) return;
     var key = payloadKey(month, _state.member);
     if (_nextCache && _nextCache.key === key) return;
     _nextCache = null;
     startFetch(month, _state.member).then(function (data) {
-      if (payloadKey(_state.month % 12 + 1, _state.member) === key) _nextCache = { key: key, data: data };
+      if (payloadKey(nextMonth(), _state.member) === key) _nextCache = { key: key, data: data };
     }, function (e) {
       console.warn('[immersive] prefetch failed:', e);
     });
@@ -632,10 +725,16 @@
       'top-center':   [(W - w) / 2, m],
     };
     var best = null;
+    var reserved = Array.prototype.slice.call(box.parentElement.querySelectorAll('.legend.placed,.locator.placed'))
+      .filter(function (other) { return other !== el; });
     for (var c = 0; c < candidates.length; c++) {
       var xy = pos[candidates[c]];
       if (!xy || xy[0] < 0 || xy[1] < 0) continue;
       var hits = 0;
+      reserved.forEach(function (other) {
+        if (xy[0] < other.offsetLeft + other.offsetWidth + m && xy[0] + w + m > other.offsetLeft &&
+            xy[1] < other.offsetTop + other.offsetHeight + m && xy[1] + h + m > other.offsetTop) hits += 100;
+      });
       for (var i = 0; i < 7; i++) {
         for (var j = 0; j < 4; j++) {
           var ll = map.unproject([xy[0] + w * (i + 0.5) / 7, xy[1] + h * (j + 0.5) / 4]);
@@ -654,15 +753,18 @@
   }
 
   function placeOverlays() {
-    var rings = _state.region.geometry ? indexRings([_state.region.geometry]) : _scotlandRings;
+    var region = _shown ? _shown.region : _state.region;
+    var rings = region.geometry ? indexRings([region.geometry]) : _scotlandRings;
     _panels.forEach(function (ps) {
-      if (ps.maps[1]) {
-        placeOverlay(ps.maps[1], ps.legendEl,
+      var legendIndex = ps.support ? 2 : 1;
+      var locatorIndex = ps.support ? 2 : 0;
+      if (ps.maps[legendIndex]) {
+        placeOverlay(ps.maps[legendIndex], ps.legendEl,
           ['top-left', 'left-mid', 'top-right', 'right-mid', 'bottom-right', 'bottom-left', 'top-center'], rings);
       }
-      if (ps.maps[0] && ps.locatorEl.classList.contains('active')) {
+      if (ps.maps[locatorIndex] && ps.locatorEl.classList.contains('active')) {
         // bottom-left is reserved for the scale bar
-        placeOverlay(ps.maps[0], ps.locatorEl,
+        placeOverlay(ps.maps[locatorIndex], ps.locatorEl,
           ['top-left', 'top-right', 'right-mid', 'left-mid', 'bottom-right'], rings);
       }
     });
@@ -685,6 +787,7 @@
     var vals = [];
     o.series.forEach(function (s) {
       (s.values || []).forEach(function (v) { if (v != null && isFinite(v)) vals.push(v); });
+      [s.low, s.high].forEach(function (a) { (a || []).forEach(function (v) { if (v != null && isFinite(v)) vals.push(v); }); });
     });
     var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
 
@@ -712,6 +815,7 @@
     if (mx === mn) { mx += 1; mn -= 1; }
     var step = niceStep(mx - mn, 4);
     var lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
+    if (o.domain) { lo = o.domain[0]; hi = o.domain[1]; step = niceStep(hi - lo, 4); }
     function yAt(v) { return T + (1 - (v - lo) / (hi - lo)) * ph; }
 
     for (var t = lo; t <= hi + step * 1e-6; t += step) {
@@ -730,6 +834,28 @@
     var sw = Math.max(2, 5 * u);
     o.series.forEach(function (s) {
       if (!s.values) return;
+      if (o.bars) {
+        var si = o.series.indexOf(s), bw = band * 0.30;
+        s.values.forEach(function (v, i) {
+          if (v == null || !isFinite(v)) return;
+          var bx = xAt(i) + (si ? 0.03 : -0.33) * band;
+          svg += '<rect x="' + bx.toFixed(1) + '" y="' + Math.min(yAt(0), yAt(v)).toFixed(1) + '" width="' + bw.toFixed(1) +
+            '" height="' + Math.max(1.5, Math.abs(yAt(v) - yAt(0))).toFixed(1) + '" fill="' + s.color + '"/>';
+        });
+        return;
+      }
+      if (s.low && s.high) {
+        var segment = [];
+        function ribbon() {
+          if (!segment.length) return;
+          var points = segment.map(function (i) { return xAt(i).toFixed(1) + ',' + yAt(s.high[i]).toFixed(1); });
+          points = points.concat(segment.slice().reverse().map(function (i) { return xAt(i).toFixed(1) + ',' + yAt(s.low[i]).toFixed(1); }));
+          svg += '<polygon points="' + points.join(' ') + '" fill="' + s.color + '" fill-opacity="0.18"/>';
+          segment = [];
+        }
+        s.values.forEach(function (v, i) { if (v == null) ribbon(); else segment.push(i); });
+        ribbon();
+      }
       var d = '', pen = false;
       for (var i = 0; i < 12; i++) {
         var v = s.values[i];
@@ -744,7 +870,7 @@
              (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
     });
     var r = Math.max(3, 9 * u);
-    o.series.forEach(function (s) {
+    (o.bars ? [] : o.series).forEach(function (s) {
       var v = s.values ? s.values[o.sel] : null;
       if (v == null || !isFinite(v)) return;
       svg += '<circle cx="' + xAt(o.sel).toFixed(1) + '" cy="' + yAt(v).toFixed(1) + '" r="' + r.toFixed(1) +
@@ -762,6 +888,7 @@
   }
 
   function renderCharts(ps, frame) {
+    if (ps.support) return;
     var mi = frame.month - 1;
     var abs = PERIODS.map(function (p) {
       return { values: seriesFor(frame, ps.panel.id, p.id), color: p.color, dash: p.dash };
@@ -777,6 +904,28 @@
       }
       return { values: vals, color: p.color, dash: p.dash };
     });
+    var scene = SCENES.get(frame.scene), special = scene.kind !== 'overview' && ps.panel.id === frame.focus;
+    ps.absName.textContent = 'Seasonal values';
+    ps.absSub.textContent = 'Monthly climatology · ' + ps.panel.units;
+    ps.absKey.innerHTML = keyHTML(PERIODS);
+    ps.deltaName.textContent = 'Change from observed baseline';
+    ps.deltaSub.textContent = 'Future − baseline · ' + ps.panel.units;
+    ps.deltaKey.innerHTML = keyHTML(FUTURES);
+    if (special && scene.kind === 'agreement') { renderAgreementCharts(ps, frame); return; }
+    if (special && (scene.kind === 'extent' || scene.kind === 'landscape')) {
+      var threshold = PERIODS.map(function (p) { return { values: thresholdSeries(frame, p.id), color: p.color, dash: p.dash }; });
+      if (scene.kind === 'landscape') {
+        ps.absName.textContent = 'Cells with water balance below zero';
+        ps.absSub.textContent = '% of valid climate cells';
+        ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: threshold, sel: mi, domain: [0, 100] });
+        renderLandcoverChart(ps, frame);
+        return;
+      }
+      delta = threshold;
+      ps.deltaName.textContent = 'How widespread is negative balance?';
+      ps.deltaSub.textContent = '% of valid climate cells · CWB < 0';
+      ps.deltaKey.innerHTML = keyHTML(PERIODS);
+    }
     [[ps.absPlot, abs, false], [ps.deltaPlot, delta, true]].forEach(function (c) {
       var el = c[0];
       var W = el.clientWidth, H = el.clientHeight;
@@ -784,12 +933,168 @@
       el.innerHTML = buildChart({
         W: W, H: H, series: c[1], sel: mi,
         zero: ps.panel.type === 'balance' || c[2],
-        signed: c[2],
+        signed: c[2] && !(special && scene.kind === 'extent'),
+        bars: special && scene.kind === 'focus' && c[2],
+        domain: special && scene.kind === 'extent' && c[2] ? [0, 100] : null,
       });
     });
   }
 
-  // ── Context line (repeated in every group) ─────────────────────────
+  function renderLandcoverChart(ps, frame) {
+    var data = frame.extra, base = data.mean.regions[frame.rid], mi = frame.month - 1;
+    ps.deltaName.textContent = 'Negative balance within land-cover classes';
+    ps.deltaSub.textContent = 'Five largest mapped classes · existing cover held fixed';
+    ps.deltaKey.innerHTML = keyHTML([PERIODS[0], PERIODS[2]]);
+    var classes = data.mean._meta.classes.filter(function (c) { return base.landcover[c.code].weight[mi] > 0; })
+      .sort(function (a, b) { return base.landcover[b.code].weight[mi] - base.landcover[a.code].weight[mi]; }).slice(0, 5);
+    var W = ps.deltaPlot.clientWidth, H = ps.deltaPlot.clientHeight, f = 25 * _u, L = 24 * _u, R = 85 * _u;
+    var top = 8 * _u, bottom = 42 * _u, band = (H - top - bottom) / Math.max(1, classes.length), pw = W - L - R;
+    var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+    classes.forEach(function (c, i) {
+      var y = top + band * i, denom = base.landcover[c.code].weight[mi];
+      svg += '<text x="' + L + '" y="' + (y + f) + '" fill="#e6ecfb" font-size="' + f + '">' + esc(c.name) + '</text>';
+      [PERIODS[0], PERIODS[2]].forEach(function (p, j) {
+        var useMean = p.id === BASELINE_ID || frame.member === 'mean' || frame.subs.indexOf('CWBPT|' + p.id) >= 0;
+        var region = (useMean ? data.mean : data.member).regions[frame.rid];
+        var v = 100 * region.landcover[c.code].below[p.id][mi] / denom;
+        var by = y + f * 1.3 + j * (band - f * 1.7) / 2, bh = Math.max(3 * _u, (band - f * 1.7) / 2 - 3 * _u);
+        svg += '<rect x="' + L + '" y="' + by + '" width="' + pw + '" height="' + bh + '" fill="#ffffff09"/>' +
+          '<rect x="' + L + '" y="' + by + '" width="' + (pw * Math.min(100, v) / 100) + '" height="' + bh + '" fill="' + p.color + '"/>' +
+          '<text x="' + (W - 8 * _u) + '" y="' + (by + bh) + '" text-anchor="end" fill="' + p.color + '" font-size="' + Math.min(f, bh + 3 * _u) + '">' + v.toFixed(0) + '%</text>';
+      });
+    });
+    svg += '<text x="' + L + '" y="' + (H - 10 * _u) + '" fill="#bccbdd" font-size="' + f + '">0%</text>' +
+      '<text x="' + (L + pw) + '" y="' + (H - 10 * _u) + '" text-anchor="end" fill="#bccbdd" font-size="' + f + '">100% within each class</text>';
+    if (!classes.length) svg += '<text x="' + L + '" y="' + (H / 2) + '" fill="#bccbdd" font-size="' + f + '">No mapped land cover on valid climate cells</text>';
+    ps.deltaPlot.innerHTML = svg + '</svg>';
+  }
+
+  function renderAgreementCharts(ps, frame) {
+    var file = frame.extra.agreement, data = file.regions[frame.rid], mi = frame.month - 1;
+    var series = FUTURES.map(function (p) {
+      var low = [], high = [], med = [];
+      data[p.id].forEach(function (row) {
+        var a = row.filter(function (v) { return v != null && isFinite(v); }).sort(function (a, b) { return a - b; });
+        low.push(a.length ? a[0] : null); high.push(a.length ? a[a.length - 1] : null);
+        med.push(a.length ? (a[Math.floor((a.length - 1) / 2)] + a[Math.ceil((a.length - 1) / 2)]) / 2 : null);
+      });
+      return { values: med, low: low, high: high, color: p.color, dash: p.dash };
+    });
+    ps.absName.textContent = 'Monthly change across available members';
+    ps.absSub.textContent = 'Full range shaded · line = median · ' + ps.panel.units;
+    ps.absKey.innerHTML = keyHTML(FUTURES);
+    ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: series, sel: mi, zero: true, signed: true });
+    ps.deltaName.textContent = MONTH_LONG[frame.month] + ' · each ensemble member';
+    ps.deltaSub.textContent = 'Regional change from baseline · ' + ps.panel.units;
+    var W = ps.deltaPlot.clientWidth, H = ps.deltaPlot.clientHeight, f = 25 * _u, L = 100 * _u, R = 32 * _u, T = 24 * _u, B = 55 * _u;
+    var vals = [0]; FUTURES.forEach(function (p) { data[p.id].forEach(function (row) { row.forEach(function (v) { if (v != null) vals.push(v); }); }); });
+    var step = niceStep(Math.max.apply(null, vals) - Math.min.apply(null, vals) || 1, 4);
+    var lo = Math.floor(Math.min.apply(null, vals) / step) * step, hi = Math.ceil(Math.max.apply(null, vals) / step) * step;
+    if (lo === hi) hi = lo + 1;
+    function x(v) { return L + (v - lo) / (hi - lo) * (W - L - R); }
+    var band = (H - T - B) / file._meta.members.length;
+    var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+    for (var t = lo; t <= hi + step / 100; t += step) svg += '<line x1="' + x(t) + '" x2="' + x(t) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="' + (Math.abs(t) < 1e-9 ? '#cbd9e8' : '#ffffff22') + '" stroke-width="' + (2 * _u) + '"/><text x="' + x(t) + '" y="' + (H - 15 * _u) + '" text-anchor="middle" fill="#cbd9e8" font-size="' + f + '">' + fmtTick(t, step, true) + '</text>';
+    file._meta.members.forEach(function (member, i) {
+      var y = T + (i + 0.5) * band;
+      svg += '<text x="' + (L - 18 * _u) + '" y="' + (y + f * 0.3) + '" text-anchor="end" fill="' + (member === frame.member ? '#ffffff' : '#bccbdd') + '" font-size="' + f + '">' + member + '</text>';
+      FUTURES.forEach(function (p, j) {
+        var v = data[p.id][mi][i];
+        if (v != null) svg += '<circle cx="' + x(v) + '" cy="' + (y + (j ? 1 : -1) * 4 * _u) + '" r="' + ((member === frame.member ? 9 : 6) * _u) + '" fill="' + p.color + '" stroke="' + (member === frame.member ? '#ffffff' : '#0a0c1b') + '" stroke-width="' + (2 * _u) + '"/>';
+      });
+    });
+    ps.deltaPlot.innerHTML = svg + '</svg>';
+  }
+
+  function activeMaps() {
+    var out = [];
+    _panels.forEach(function (ps) { ps.maps.forEach(function (map, j) { if (!ps.support || j === 2) out.push(map); }); });
+    return out;
+  }
+
+  var _layoutKey = '';
+  function applySceneLayout(frame) {
+    var key = frame.scene + '|' + frame.focus;
+    if (key === _layoutKey) return false;
+    _layoutKey = key;
+    var scene = SCENES.get(frame.scene), focused = scene.kind !== 'overview';
+    document.body.dataset.scene = frame.scene;
+    document.getElementById('panels').classList.toggle('focused', focused);
+    var sideOrder = 0;
+    _panels.forEach(function (ps) {
+      var primary = focused && ps.panel.id === frame.focus;
+      ps.support = focused && !primary;
+      ps.root.classList.toggle('focus-primary', primary);
+      ps.root.classList.toggle('focus-support', ps.support);
+      ps.root.style.order = primary ? '2' : focused ? String(sideOrder++ ? 3 : 1) : '';
+      ps.hero.hidden = !primary;
+      ps.supportSummary.hidden = !ps.support;
+      PERIODS.forEach(function (_, j) {
+        var hidden = ps.support && j !== 2;
+        [ps.periodEls[j], ps.mapCells[j], ps.numEls[j].root].forEach(function (node) {
+          node.hidden = hidden;
+          node.style.gridColumn = String(ps.support ? 1 : j + (primary ? 2 : 1));
+        });
+      });
+      ps.legendEl.classList.remove('placed');
+      ps.locatorEl.classList.remove('placed');
+      ps.mapCells[ps.support ? 2 : 1].appendChild(ps.legendEl);
+      ps.mapCells[ps.support ? 2 : 0].appendChild(ps.locatorEl);
+    });
+    activeMaps().forEach(function (m) { m.resize(); });
+    return true;
+  }
+
+  function renderSceneDetails(frame) {
+    var scene = SCENES.get(frame.scene), mi = frame.month - 1;
+    _panels.forEach(function (ps) {
+      var values = PERIODS.map(function (p) { var a = seriesFor(frame, ps.panel.id, p.id); return a ? a[mi] : null; });
+      ps.supportSummary.innerHTML = '<h3>' + esc(MONTH_LONG[frame.month]) + ' regional means</h3>' +
+        PERIODS.map(function (p, j) {
+          var substituted = frame.subs.indexOf(ps.panel.id + '|' + p.id) >= 0;
+          return '<div class="support-row"><span>' + p.short + (substituted ? ' · mean' : '') + '</span><strong>' + esc(fmtAbs(values[j])) +
+            (values[j] == null ? '' : ' ' + esc(ps.panel.units)) + '</strong></div>';
+        }).join('') + '<p class="support-note">' + (ps.panel.type === 'temperature' ? 'Monthly mean of daily maximum temperatures; not a hottest-day extreme.' :
+          ps.panel.type === 'balance' ? 'Negative monthly balance is an indicator; it does not establish hydrological drought.' : 'Read the monthly precipitation pattern alongside temperature and water balance.') + '</p>';
+      if (scene.kind === 'overview' || ps.support) return;
+      var change = values[2] == null || values[0] == null ? null : values[2] - values[0];
+      var questions = {
+        'focus-water': 'Where and when does water balance change?',
+        'focus-rain': 'How does the seasonal precipitation pattern change?',
+        'focus-heat': 'How much do monthly daily maxima change?',
+        'water-extent': 'How widespread is negative water balance?',
+        'landscape': 'Which land-cover classes coincide with negative water balance?',
+        'agreement': 'How consistently do members project the change?'
+      };
+      var question = questions[frame.scene] || scene.description, big = fmtDelta(change), unit = ps.panel.units;
+      var caption = '2050–2079 change from observed baseline';
+      var detail = esc(fmtAbs(values[0])) + ' → ' + esc(fmtAbs(values[2])) + ' ' + esc(ps.panel.units) + '<br>' + esc(MONTH_LONG[frame.month]) + ' regional mean';
+      var note = scene.kind === 'focus' ? 'The maps share one fixed colour scale for every month and period.' : '';
+      if (scene.kind === 'extent' || scene.kind === 'landscape') {
+        var base = thresholdSeries(frame, BASELINE_ID), later = thresholdSeries(frame, PERIODS[2].id);
+        var b = base && base[mi], f = later && later[mi];
+        big = f == null ? '—' : f.toFixed(1); unit = f == null ? '' : '%';
+        caption = 'of valid climate cells with CWB below zero in 2050–2079';
+        detail = b == null || f == null ? 'No valid climate cells in this region' : b.toFixed(1) + '% → ' + f.toFixed(1) + '%<br>' +
+          fmtDelta(f - b) + ' percentage points';
+        note = scene.kind === 'landscape' ? 'Existing land cover is held fixed. Fraction weights use whole intersecting cells, not clipped land area. This is indicator overlap, not predicted habitat loss.' :
+          'Cell share is not surveyed land area. Negative monthly balance is an indicator, not a diagnosis of drought.';
+      } else if (scene.kind === 'agreement') {
+        var row = frame.extra.agreement.regions[frame.rid][PERIODS[2].id][mi];
+        var valid = row.filter(function (v) { return v != null && isFinite(v); });
+        var positive = valid.filter(function (v) { return v > 0; }).length, negative = valid.filter(function (v) { return v < 0; }).length;
+        big = valid.length ? String(Math.max(positive, negative) || valid.length) : '—'; unit = valid.length ? '/ ' + valid.length : '';
+        caption = valid.length ? 'available members project ' + (positive + negative === 0 ? 'no change' : positive >= negative ? 'an increase' : 'a decrease') + ' in 2050–2079' : 'No member data in this region';
+        detail = valid.length ? 'Member changes range from<br>' + fmtDelta(Math.min.apply(null, valid)) + ' to ' + fmtDelta(Math.max.apply(null, valid)) + ' ' + ps.panel.units : '';
+        note = 'Regional statistics are computed for each member first. Available-member spread is not a probability or complete uncertainty.';
+      }
+      ps.hero.innerHTML = '<span class="scene-kicker">' + esc(scene.title) + '</span><h2>' + esc(question) + '</h2>' +
+        '<div class="insight-value">' + esc(big) + '<span>' + esc(unit) + '</span></div><p class="insight-caption">' + esc(caption) +
+        '</p><p class="insight-detail">' + detail + '</p><p class="insight-note">' + esc(note) + '</p>';
+    });
+  }
+
+  // Context is repeated within each viewing sector.
 
   function renderContext() {
     var frame = _shown;
@@ -805,7 +1110,7 @@
       }
       var chip = '', cls = '';
       if (_status.kind === 'loading') {
-        chip = 'Loading ' + MONTH_LONG[_state.month] + '…';
+        chip = 'Loading ' + (frame && frame.scene !== _state.scene ? SCENES.get(_state.scene).title : MONTH_LONG[_state.month]) + '…';
         cls = 'loading';
       } else if (_status.kind === 'error' || _status.kind === 'warning') {
         chip = _status.message;
@@ -816,7 +1121,9 @@
       }
       ps.ctxChip.textContent = chip;
       ps.ctxChip.className = 'ctx-chip ' + cls;
-      ps.ctxMode.textContent = _state.playing ? '▶ Auto · ' + _state.dwell + ' s per month' : '❚❚ Paused';
+      ps.ctxMode.textContent = _state.playback === 'tour'
+        ? (_state.playing ? '▶ Tour ' : '❚❚ Tour ') + (_state.tourIndex + 1) + '/' + SCENES.tour.length
+        : _state.playing ? '▶ Auto · ' + _state.dwell + ' s per month' : '❚❚ Paused';
       ps.ctxMode.classList.toggle('playing', _state.playing);
     });
   }
@@ -913,7 +1220,7 @@
   }
 
   function fitAll(bounds, duration) {
-    _maps.forEach(function (map) {
+    activeMaps().forEach(function (map) {
       map.fitBounds(bounds || SCOTLAND_BOUNDS, { padding: 20, duration: duration });
     });
   }
@@ -925,7 +1232,8 @@
     function isCurrent() { return seq === _stageSeq; }
     clearTimeout(_dwellTimer);
     startDwellBars(0);
-    var target = { month: _state.month, member: _state.member, region: _state.region };
+    var target = { month: _state.month, member: _state.member, region: _state.region,
+      scene: _state.scene, focus: _state.focus, tourIndex: _state.tourIndex };
     var needMaps = !_shown || _shown.month !== target.month || _shown.member !== target.member;
     var t0 = performance.now();
     setStatus('loading');
@@ -936,8 +1244,10 @@
       target.member !== 'mean' ? loadSummary(target.member) : null,
       needMaps ? getPayload(target.month, target.member, isCurrent) : null,
       resolveRegion(target.region),
+      loadSceneData(target),
     ]).then(function (res) {
       if (!isCurrent()) return null;
+      if (res[2] && res[2]._meta.data_version !== res[1]._meta.data_version) throw new Error('Regional summaries do not share one data version');
       var region = res[4];
       if (_state.region.name === region.name) _state.region = region;
       var payload = res[3];
@@ -950,11 +1260,16 @@
                       : (_shown ? _shown.subs : []),
         missing: payload ? missingMaps(payload) : (_shown ? _shown.missing : []),
         annualReset: _annualReset && target.month === 1,
+        scene: target.scene,
+        focus: target.focus,
+        tourIndex: target.tourIndex,
+        summary: { mean: res[1], member: res[2] },
+        extra: res[5],
       };
       _annualReset = false;
       var regionChanged = !_shown || _shown.region.name !== region.name;
       commit(frame, payload, region, regionChanged);
-      return Promise.all(_maps.map(waitIdle)).then(function (ok) {
+      return Promise.all(activeMaps().map(waitIdle)).then(function (ok) {
         return { frame: frame, slow: ok.indexOf(false) >= 0 };
       });
     }).then(function (r) {
@@ -984,10 +1299,13 @@
         _state.month = _shown.month;
         _state.member = _shown.member;
         _state.region = _shown.region;
+        _state.scene = _shown.scene;
+        _state.focus = _shown.focus;
+        _state.tourIndex = _shown.tourIndex;
       }
       _state.playing = false;
       bump();
-      setStatus('error', 'Could not show ' + MONTH_LONG[target.month] + ': ' +
+      setStatus('error', 'Could not show ' + SCENES.get(target.scene).title + ' for ' + MONTH_LONG[target.month] + ': ' +
         (err && err.message ? err.message : 'unknown error') + ' — playback paused');
       renderContext();
     });
@@ -1005,6 +1323,7 @@
   }
 
   function commit(frame, payload, region, regionChanged) {
+    var layoutChanged = applySceneLayout(frame);
     _shown = frame;
     var mi = frame.month - 1;
 
@@ -1054,11 +1373,12 @@
         var src = map.getSource('fog');
         if (src) src.setData(region.geometry ? buildMaskFeature(region.geometry) : FOG_FEATURE);
       });
-      fitAll(region.bounds, _firstCommitDone ? 1200 : 0);
       _panels.forEach(function (ps) {
         if (ps.scaleEl) ps.scaleEl.style.display = region.kind ? '' : 'none';
       });
     }
+    if (regionChanged || layoutChanged) fitAll(region.bounds, regionChanged && _firstCommitDone && !layoutChanged ? 1200 : 0);
+    renderSceneDetails(frame);
     _firstCommitDone = true;
     renderContext();
   }
@@ -1072,14 +1392,27 @@
       startDwellBars(0);
       return;
     }
-    startDwellBars(_state.dwell);
+    var seconds = _state.playback === 'tour' ? Math.max(10, _state.dwell * SCENES.tour[_state.tourIndex].hold) : _state.dwell;
+    startDwellBars(seconds);
     _dwellTimer = setTimeout(function () {
       if (!_state.playing) return;
-      _state.month = _state.month % 12 + 1;
-      if (_state.month === 1) _annualReset = true;
+      if (_state.playback === 'tour') {
+        _state.tourIndex = (_state.tourIndex + 1) % SCENES.tour.length;
+        applyTourStep();
+      } else {
+        _state.month = _state.month % 12 + 1;
+        if (_state.month === 1) _annualReset = true;
+      }
       bump();
       stage();
-    }, _state.dwell * 1000);
+    }, seconds * 1000);
+  }
+
+  function applyTourStep() {
+    var step = SCENES.tour[_state.tourIndex];
+    _state.scene = step.scene;
+    _state.focus = SCENES.metric(step.scene, step.focus || _state.focus);
+    _state.month = step.month;
   }
 
   // ── Commands from the controller ───────────────────────────────────
@@ -1090,6 +1423,16 @@
       case 'set': {
         // Any manual selection pauses playback so a presenter keeps control.
         _state.playing = false;
+        if (SCENES.valid(msg.scene) && msg.scene !== _state.scene) {
+          _state.scene = msg.scene;
+          _state.focus = SCENES.metric(msg.scene, _state.focus);
+          _state.playback = 'months';
+          restage = true;
+        }
+        if (PANELS.some(function (p) { return p.id === msg.focus; }) && msg.focus !== _state.focus) {
+          _state.focus = SCENES.metric(_state.scene, msg.focus);
+          restage = true;
+        }
         var m = parseInt(msg.month, 10);
         if (m >= 1 && m <= 12 && m !== _state.month) { _state.month = m; restage = true; }
         if (msg.member != null) {
@@ -1123,7 +1466,15 @@
         break;
       }
       case 'play':
+        if (msg.playback === 'months') _state.playback = 'months';
         _state.playing = true;
+        break;
+      case 'tour':
+        _state.playback = 'tour';
+        _state.tourIndex = 0;
+        _state.playing = true;
+        applyTourStep();
+        restage = true;
         break;
       case 'pause':
         _state.playing = false;
@@ -1141,7 +1492,7 @@
       stage();
     } else {
       if (_status.kind === 'ready' || _status.kind === 'warning') scheduleDwell();
-      if (_state.playing && _status.kind === 'error' && _shown) stage();
+      if (_state.playing && _status.kind === 'error') stage();
       renderContext();
       report();
     }
@@ -1172,8 +1523,10 @@
   function buildPanels() {
     var container = document.getElementById('panels');
     PANELS.forEach(function (panel, pi) {
-      var ps = { panel: panel, maps: [], mapIds: [], periodEls: [], numEls: [] };
+      var ps = { panel: panel, maps: [], mapIds: [], periodEls: [], numEls: [], mapCells: [], support: false };
       var root = el('section', 'group');
+      ps.root = root;
+      root.dataset.metric = panel.id;
 
       // Context: month · region · ensemble, month progress, playback mode.
       var ctx = el('div', 'ctx');
@@ -1220,6 +1573,7 @@
           wrap.appendChild(ps.legendEl);
         }
         root.appendChild(wrap);
+        ps.mapCells.push(wrap);
 
         var num = el('div', 'num' + (j === 0 ? ' baseline' : ''));
         num.style.gridColumn = String(j + 1);
@@ -1228,7 +1582,7 @@
         num.appendChild(value);
         num.appendChild(sub);
         root.appendChild(num);
-        ps.numEls.push({ value: value, sub: sub });
+        ps.numEls.push({ root: num, value: value, sub: sub });
       });
 
       var charts = el('div', 'charts');
@@ -1236,7 +1590,8 @@
         var box = el('div', 'chart-box');
         var head = el('div', 'chart-head');
         var t = el('div', 'chart-title');
-        t.appendChild(el('span', 'chart-name', titleText));
+        var name = el('span', 'chart-name', titleText);
+        t.appendChild(name);
         var sub = el('span', 'chart-sub');
         t.appendChild(sub);
         head.appendChild(t);
@@ -1247,7 +1602,7 @@
         box.appendChild(head);
         box.appendChild(plot);
         charts.appendChild(box);
-        return { plot: plot, sub: sub };
+        return { plot: plot, sub: sub, name: name, key: key };
       }
       var a = chartBox('Seasonal values', PERIODS);
       a.sub.textContent = 'Monthly climatology · ' + panel.units;
@@ -1255,7 +1610,16 @@
       d.sub.textContent = 'Future − baseline · ' + panel.units;
       ps.absPlot = a.plot;
       ps.deltaPlot = d.plot;
+      ps.absSub = a.sub; ps.deltaSub = d.sub;
+      ps.absName = a.name; ps.deltaName = d.name;
+      ps.absKey = a.key; ps.deltaKey = d.key;
       root.appendChild(charts);
+      ps.hero = el('aside', 'scene-insight');
+      ps.hero.hidden = true;
+      root.appendChild(ps.hero);
+      ps.supportSummary = el('aside', 'support-summary');
+      ps.supportSummary.hidden = true;
+      root.appendChild(ps.supportSummary);
 
       container.appendChild(root);
       _panels.push(ps);
@@ -1295,10 +1659,10 @@
     _resizeTimer = setTimeout(function () {
       applyScale();
       if (!_shown) return;
-      _maps.forEach(function (m) { m.resize(); });
-      fitAll(_state.region.bounds, 0);
+      activeMaps().forEach(function (m) { m.resize(); });
+      fitAll(_shown.region.bounds, 0);
       _panels.forEach(function (ps) { renderCharts(ps, _shown); });
-      Promise.all(_maps.map(waitIdle)).then(placeOverlays);
+      Promise.all(activeMaps().map(waitIdle)).then(placeOverlays);
     }, 250);
   }
 
@@ -1326,13 +1690,18 @@
 
   // Commands are accepted only once _mapsReady exists (stage() waits on it).
   try {
-    _channel = new (window.ClimaScopeRemoteChannel || window.BroadcastChannel)(CHANNEL_NAME);
+    var Channel = PREVIEW ? window.BroadcastChannel : (window.ClimaScopeRemoteChannel || window.BroadcastChannel);
+    _channel = new Channel(CHANNEL_NAME);
     _channel.onmessage = onMessage;
   } catch (e) {
     console.warn('[immersive] BroadcastChannel not available:', e);
   }
 
   window.addEventListener('resize', onResize);
+  window.addEventListener('message', function (ev) {
+    if (PREVIEW && ev.origin === location.origin && ev.source === window.parent && ev.data &&
+        ev.data.type === 'climascope-preview-command' && ev.data.token === PREVIEW) handleCommand(ev.data.command || {});
+  });
   setInterval(report, 10000);   // heartbeat so a controller notices a closed wall
   stage();
 })();

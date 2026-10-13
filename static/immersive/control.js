@@ -16,6 +16,7 @@
       return { id: id, label: 'Member ' + id };
     }));
   var DWELLS = [4, 6, 8, 10, 15, 20, 30];
+  var SCENES = window.ClimaScopeScenes;
 
   var _wall = null;          // last report from the wall
   var _channel = null;
@@ -44,6 +45,18 @@
     play.textContent = s && s.playing ? '❚❚ Pause' : '▶ Play';
     play.classList.toggle('active', !!(s && s.playing));
     if (s) {
+      document.querySelectorAll('.btn-scene').forEach(function (btn) {
+        var active = btn.dataset.scene === (s.scene || 'overview');
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+      document.getElementById('scene-description').textContent = SCENES.get(s.scene).description;
+      document.getElementById('focus-select').value = s.focus || 'CWBPT';
+      document.getElementById('focus-select').disabled = s.scene !== 'agreement';
+      document.getElementById('btn-tour').classList.toggle('active', s.playing && s.playback === 'tour');
+      document.getElementById('btn-annual').classList.toggle('active', s.playing && s.playback !== 'tour');
+      document.getElementById('tour-progress').textContent = s.playback === 'tour'
+        ? 'Scene ' + ((s.tourIndex || 0) + 1) + ' of ' + SCENES.tour.length + (s.playing ? '' : ' · paused') : '';
       var dwellSel = document.getElementById('dwell-select');
       if (DWELLS.indexOf(s.dwell) < 0) addDwellOption(s.dwell);
       dwellSel.value = String(s.dwell);
@@ -65,7 +78,8 @@
     var parts = [];
     parts.push(shown
       ? 'Wall shows ' + MONTH_LONG[shown.month] + ' · ' + (shown.region === 'All Scotland' ? 'Scotland' : shown.region) +
-        ' · ' + (shown.member === 'mean' ? 'ensemble mean' : 'member ' + shown.member)
+        ' · ' + (shown.member === 'mean' ? 'ensemble mean' : 'member ' + shown.member) +
+        ' · ' + SCENES.get(shown.scene).title
       : 'Wall starting');
     if (_wall.status === 'loading') parts.push('loading ' + MONTH_LONG[s.month] + '…');
     else if (_wall.status === 'ready') parts.push(s.playing ? 'playing, ' + s.dwell + ' s per month' : 'paused');
@@ -229,6 +243,19 @@
   document.getElementById('btn-next').addEventListener('click', function () { send({ cmd: 'step', delta: 1 }); });
   document.getElementById('btn-play').addEventListener('click', function () {
     send({ cmd: _wall && _wall.state.playing ? 'pause' : 'play' });
+  });
+  document.getElementById('btn-tour').addEventListener('click', function () { send({ cmd: 'tour' }); });
+  document.getElementById('btn-annual').addEventListener('click', function () { send({ cmd: 'play', playback: 'months' }); });
+  document.getElementById('focus-select').addEventListener('change', function (e) { send({ cmd: 'set', focus: e.target.value }); });
+  SCENES.catalog.forEach(function (scene) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ctrl-btn btn-scene';
+    btn.dataset.scene = scene.id;
+    btn.textContent = scene.title;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', function () { send({ cmd: 'set', scene: scene.id }); });
+    document.getElementById('scene-grid').appendChild(btn);
   });
 
   var dwellSel = document.getElementById('dwell-select');

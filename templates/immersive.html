@@ -9,8 +9,10 @@
           integrity="sha384-3WUbXI7T+/GIrWP/5MDMjhzLyHQ+0utF3PnJ7ozD7UeN1/bbZ96Hk+Vvd024VYfW" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/static/immersive/immersive.css?v={{ av('immersive/immersive.css') }}" />
   <link rel="stylesheet" href="/static/immersive/remote.css?v={{ av('immersive/remote.css') }}" />
+  <link rel="stylesheet" href="/static/immersive/scenes.css?v={{ av('immersive/scenes.css') }}" />
 </head>
-<body data-summary-v="{{ av('immersive/summaries/v2/mean.json') }}">
+<body data-summary-v="{{ av('immersive/summaries/v2/mean.json') }}"
+      data-scenes-v="{{ av('immersive/summaries/scenes-v1/mean.json') }}">
   <div id="wall">
     <div id="panels"></div>
     <footer id="wall-footer">
@@ -19,6 +21,7 @@
       <span class="footer-note" id="footer-method">Regional values: unweighted mean of valid 1 km climate cells</span>
     </footer>
   </div>
+  <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
   <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
   <script src="/static/immersive/immersive.js?v={{ av('immersive/immersive.js') }}"></script>
 </body>

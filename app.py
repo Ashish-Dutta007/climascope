@@ -133,6 +133,8 @@ def _security_headers(resp):
     # CSP still permits inline styles because MapLibre and the current UI set
     # style attributes dynamically. Scripts are version-pinned with SRI in the
     # templates and inline script execution remains disabled.
+    wall_preview = request.endpoint == "immersive" and bool(request.args.get("preview"))
+    ancestors = "'self'" if wall_preview else "'none'"
     resp.headers.setdefault(
         "Content-Security-Policy",
         "default-src 'self'; "
@@ -141,11 +143,11 @@ def _security_headers(resp):
         "img-src 'self' data: blob: https://server.arcgisonline.com; "
         "connect-src 'self' https://server.arcgisonline.com; "
         "font-src 'self' data:; worker-src 'self' blob:; "
-        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; "
+        f"object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors {ancestors}; "
         "upgrade-insecure-requests"
     )
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
-    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN" if wall_preview else "DENY")
     resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
@@ -628,6 +630,14 @@ def immersive():
 def immersive_control():
     from flask import render_template, make_response
     resp = make_response(render_template("immersive_control.html"))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/immersive/preview")
+def immersive_preview():
+    from flask import render_template, make_response
+    resp = make_response(render_template("immersive_preview.html"))
     resp.headers["Cache-Control"] = "no-store"
     return resp
 

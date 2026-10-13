@@ -217,6 +217,7 @@
     var selected = report.status === 'ready' && report.shown ? report.shown : report.state;
     var label = selected ? ' · ' + (months[selected.month] || '') + ' · ' +
       (typeof selected.region === 'string' ? selected.region : selected.region && selected.region.name || 'Scotland') : '';
+    if (selected && selected.scene && window.ClimaScopeScenes) label += ' · ' + window.ClimaScopeScenes.get(selected.scene).title;
     this.say((report.status === 'ready' ? 'Displayed' : report.status === 'error' ? 'Wall error' : report.status === 'loading' ? 'Updating wall' : 'Wall connected') +
       label + (report.message ? ' · ' + report.message : ''), report.status === 'error' ? 'error' : 'online');
   };

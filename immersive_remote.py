@@ -198,7 +198,7 @@ def _validate_message(payload):
         raise RemoteError("Message must be an object.")
     if not isinstance(payload.get("type"), str):
         raise RemoteError("Message type must be a string.")
-    if payload.get("type") == "command" and (not isinstance(payload.get("cmd"), str) or payload["cmd"] not in {"set", "step", "play", "pause", "dwell"}):
+    if payload.get("type") == "command" and (not isinstance(payload.get("cmd"), str) or payload["cmd"] not in {"set", "step", "play", "pause", "dwell", "tour"}):
         raise RemoteError("Unknown wall command.")
     if payload.get("type") in {"state", "command"}:
         if "month" in payload and (type(payload["month"]) is not int or not 1 <= payload["month"] <= 12):
@@ -207,6 +207,12 @@ def _validate_message(payload):
             raise RemoteError("Unknown ensemble member.")
         if "region" in payload and (not isinstance(payload["region"], dict) or not isinstance(payload["region"].get("name"), str)):
             raise RemoteError("Region must include its name.")
+        if "scene" in payload and (not isinstance(payload["scene"], str) or payload["scene"] not in {"overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "agreement"}):
+            raise RemoteError("Unknown wall scene.")
+        if "focus" in payload and (not isinstance(payload["focus"], str) or payload["focus"] not in {"CWBPT", "Prec_sum", "Tmax_mean"}):
+            raise RemoteError("Unknown focus metric.")
+        if "playback" in payload and (not isinstance(payload["playback"], str) or payload["playback"] not in {"months", "tour"}):
+            raise RemoteError("Unknown playback mode.")
     try:
         raw = json.dumps(payload, allow_nan=False)
     except (ValueError, TypeError):

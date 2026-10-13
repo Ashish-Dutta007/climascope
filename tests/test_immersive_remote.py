@@ -135,13 +135,30 @@ class RemoteTests(unittest.TestCase):
         phone = self.pair(room)
         for payload in [None, [], {"type": []}, {"type": "state", "month": True},
                         {"type": "state", "month": 13}, {"type": "state", "member": []},
-                        {"type": "command", "cmd": []}, {"type": "state", "region": "Scotland"}]:
+                        {"type": "command", "cmd": []}, {"type": "state", "region": "Scotland"},
+                        {"type": "command", "cmd": "set", "scene": []},
+                        {"type": "command", "cmd": "set", "scene": "unknown"},
+                        {"type": "command", "cmd": "set", "focus": "unknown"},
+                        {"type": "command", "cmd": "play", "playback": "unknown"}]:
             with self.subTest(payload=payload):
                 self.assertEqual(self.send(phone, payload).status_code, 400)
         self.assertEqual(self.phone.post(self.root + "/pair", json={"code": room["code"]},
                                         headers={"Origin": "https://different.example"}).status_code, 403)
         self.assertEqual(self.poll(room, -1).status_code, 400)
         self.assertEqual(self.wall.post(self.root + "/rooms", data="{}").status_code, 415)
+
+    def test_scene_selection_and_tour_cross_workers(self):
+        room = self.create()
+        phone = self.pair(room)
+        commands = [
+            {"type": "command", "cmd": "set", "scene": "landscape"},
+            {"type": "command", "cmd": "set", "scene": "agreement", "focus": "Tmax_mean"},
+            {"type": "command", "cmd": "tour"},
+            {"type": "command", "cmd": "play", "playback": "months"},
+        ]
+        for i, command in enumerate(commands):
+            self.assertEqual(self.send(phone, command, "scene-test-%04d" % i).status_code, 200)
+        self.assertEqual(self.poll(room).json["messages"], commands)
 
     def test_rate_limits_shared_across_workers(self):
         for i in range(30):

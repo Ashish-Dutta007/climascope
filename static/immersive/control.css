@@ -67,6 +67,14 @@ body {
   min-width: 200px;
 }
 
+.scene-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; margin-bottom: 14px; }
+.btn-scene { font-size: 20px; height: auto; min-height: 64px; padding: 12px 18px; text-align: left; }
+.focus-select-label { display: grid; gap: 8px; max-width: 640px; margin: 18px 0 32px; }
+.tour-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+#tour-progress { color: #c8d6ec; font-size: 17px; }
+.hint a { color: #a9c9ff; }
+@media(max-width:600px) { .scene-grid { grid-template-columns: 1fr 1fr; } .btn-scene { font-size: 17px; padding: 10px; } }
+
 #status {
   display: flex;
   align-items: center;
