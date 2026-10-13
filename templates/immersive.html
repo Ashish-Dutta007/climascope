@@ -8,17 +8,18 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"
           integrity="sha384-3WUbXI7T+/GIrWP/5MDMjhzLyHQ+0utF3PnJ7ozD7UeN1/bbZ96Hk+Vvd024VYfW" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/static/immersive/immersive.css?v={{ av('immersive/immersive.css') }}" />
+  <link rel="stylesheet" href="/static/immersive/remote.css?v={{ av('immersive/remote.css') }}" />
 </head>
-<body>
+<body data-summary-v="{{ av('immersive/summaries/v2/mean.json') }}">
   <div id="wall">
-    <div id="selection-strip"></div>
-    <div id="locator-inset" aria-hidden="true"></div>
     <div id="panels"></div>
     <footer id="wall-footer">
       <span class="footer-logo">ClimaScope</span>
-      <span class="footer-period">1990–2019 → 2020–2049 → 2050–2079</span>
+      <span class="footer-note">Monthly climatology: 30-year period means for each calendar month, not weather forecasts</span>
+      <span class="footer-note" id="footer-method">Regional values: unweighted mean of valid 1 km climate cells</span>
     </footer>
   </div>
+  <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
   <script src="/static/immersive/immersive.js?v={{ av('immersive/immersive.js') }}"></script>
 </body>
 </html>

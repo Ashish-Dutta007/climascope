@@ -1,79 +1,82 @@
 (function () {
   'use strict';
 
-  const MONTH_NAMES = ['','Jan','Feb','Mar','Apr','May','Jun',
-                       'Jul','Aug','Sep','Oct','Nov','Dec'];
-  const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
-  const MEMBERS = [
-    { id: 'mean', label: 'Ensemble mean' },
-    { id: '01',  label: 'Member 01' },
-    { id: '04',  label: 'Member 04' },
-    { id: '05',  label: 'Member 05' },
-    { id: '06',  label: 'Member 06' },
-    { id: '07',  label: 'Member 07' },
-    { id: '08',  label: 'Member 08' },
-    { id: '09',  label: 'Member 09' },
-    { id: '10',  label: 'Member 10' },
-    { id: '11',  label: 'Member 11' },
-    { id: '12',  label: 'Member 12' },
-    { id: '13',  label: 'Member 13' },
-    { id: '15',  label: 'Member 15' },
-  ];
+  // Wall controller. The wall (/immersive) owns state and playback; this page
+  // sends commands and mirrors whatever the wall reports back, so it can be
+  // closed, hidden or reloaded without disturbing what is on the wall.
+  // The paired relay reaches other devices; local mode uses BroadcastChannel.
 
-  var _state        = { month: 7, member: 'mean', region: { name: 'All Scotland', bounds: null, geometry: null } };
-  var _channel      = null;
-  var _councilItems = [];   // [{name, bounds, geometry}] sorted
-  var _catchItems   = [];   // [{name, bounds}] sorted (geometry fetched on demand)
-  var _catchGeom    = {};   // catchment name → geometry (cache)
+  var MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONTH_LONG  = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+  var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  var MEMBERS = [{ id: 'mean', label: 'Ensemble mean' }].concat(
+    ['01', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '15'].map(function (id) {
+      return { id: id, label: 'Member ' + id };
+    }));
+  var DWELLS = [4, 6, 8, 10, 15, 20, 30];
 
-  function broadcast() {
-    if (_channel) {
-      _channel.postMessage({
-        type:   'state',
-        month:  _state.month,
-        member: _state.member,
-        region: _state.region,
-      });
-    }
+  var _wall = null;          // last report from the wall
+  var _channel = null;
+  var _councilItems = [];    // [{name, bounds, geometry}] sorted
+  var _catchItems   = [];    // [{name, bounds}] sorted (geometry fetched on demand)
+  var _catchGeom    = {};    // catchment name → geometry (cache)
+  var _helloTimer   = null;
+  var _lastSeen     = 0;     // the wall reports at least every 10 s
+
+  function send(cmd) {
+    if (!_channel) return;
+    _channel.postMessage(Object.assign({ type: 'command' }, cmd));
   }
 
-  function updateStatus() {
-    var el = document.getElementById('status');
-    if (!el) return;
-    var mLabel  = MONTH_NAMES[_state.month] || 'Month ' + _state.month;
-    var mbLabel = _state.member === 'mean' ? 'Ensemble mean' : 'Member ' + _state.member;
-    el.innerHTML = '<span class="status-dot"></span>';
-    el.appendChild(document.createTextNode(
-      'Broadcasting: ' + mLabel + ' · ' + mbLabel + ' · ' + _state.region.name));
-  }
+  // ── Mirror the wall's reported state ─────────────────────────────
 
-  function highlight() {
+  function render() {
+    var s = _wall && _wall.state;
     document.querySelectorAll('.btn-month').forEach(function (btn) {
-      btn.classList.toggle('active', +btn.dataset.month === _state.month);
+      btn.classList.toggle('active', !!s && +btn.dataset.month === s.month);
     });
     document.querySelectorAll('.btn-member').forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.member === _state.member);
+      btn.classList.toggle('active', !!s && btn.dataset.member === s.member);
     });
-  }
+    var play = document.getElementById('btn-play');
+    play.textContent = s && s.playing ? '❚❚ Pause' : '▶ Play';
+    play.classList.toggle('active', !!(s && s.playing));
+    if (s) {
+      var dwellSel = document.getElementById('dwell-select');
+      if (DWELLS.indexOf(s.dwell) < 0) addDwellOption(s.dwell);
+      dwellSel.value = String(s.dwell);
+      var kind = s.region && s.region.kind;
+      _councilSel.value   = kind === 'council' ? s.region.name : '';
+      _catchmentSel.value = kind === 'catchment' ? s.region.name : '';
+      syncSelectStyles();
+    }
 
-  function setMonth(m) {
-    _state.month = m;
-    highlight();
-    updateStatus();
-    broadcast();
-  }
-
-  function setMember(mb) {
-    _state.member = mb;
-    highlight();
-    updateStatus();
-    broadcast();
+    var el = document.getElementById('status');
+    var text = document.getElementById('status-text');
+    el.className = '';
+    if (!_wall) {
+      el.classList.add('offline');
+      text.textContent = 'No wall display open in this browser. Open /immersive in another window of the same browser.';
+      return;
+    }
+    var shown = _wall.shown;
+    var parts = [];
+    parts.push(shown
+      ? 'Wall shows ' + MONTH_LONG[shown.month] + ' · ' + (shown.region === 'All Scotland' ? 'Scotland' : shown.region) +
+        ' · ' + (shown.member === 'mean' ? 'ensemble mean' : 'member ' + shown.member)
+      : 'Wall starting');
+    if (_wall.status === 'loading') parts.push('loading ' + MONTH_LONG[s.month] + '…');
+    else if (_wall.status === 'ready') parts.push(s.playing ? 'playing, ' + s.dwell + ' s per month' : 'paused');
+    if (_wall.message) parts.push(_wall.message);
+    parts.push('rev ' + _wall.rev + (_wall.heapMB ? ' · JS heap ' + _wall.heapMB + ' MB' : ''));
+    el.classList.add(_wall.status);
+    text.textContent = parts.join(' — ');
   }
 
   // ── Region selects ───────────────────────────────────────────────
 
-  // Compute WGS84 bbox from a GeoJSON geometry object.
-  // Returns [[minLng, minLat], [maxLng, maxLat]] or null if geometry is invalid.
   function geomBbox(geometry) {
     if (!geometry || !geometry.coordinates) return null;
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -96,18 +99,18 @@
 
   function saneBounds(name, bounds) {
     if (!bounds) return null;
+    // Widen tiny catchments to a minimum span instead of rejecting them.
+    var cx = (bounds[0][0] + bounds[1][0]) / 2, cy = (bounds[0][1] + bounds[1][1]) / 2;
+    var hx = Math.max(bounds[1][0] - bounds[0][0], 0.02) / 2, hy = Math.max(bounds[1][1] - bounds[0][1], 0.02) / 2;
+    bounds = [[cx - hx, cy - hy], [cx + hx, cy + hy]];
     var w = bounds[0][0], s = bounds[0][1], e = bounds[1][0], n = bounds[1][1];
-    var dLng = e - w, dLat = n - s;
     var ok = isFinite(w) && isFinite(s) && isFinite(e) && isFinite(n)
-             && dLng >= 0.01 && dLat >= 0.01
+             && (e - w) >= 0.01 && (n - s) >= 0.01
              && w >= SCOTLAND_EXTENT.w && e <= SCOTLAND_EXTENT.e
              && s >= SCOTLAND_EXTENT.s && n <= SCOTLAND_EXTENT.n;
     if (!ok) {
-      console.error('[control] bounds for "' + name + '" failed sanity check — '
-        + 'w=' + w + ' s=' + s + ' e=' + e + ' n=' + n
-        + ' spanLng=' + dLng.toFixed(4) + ' spanLat=' + dLat.toFixed(4)
-        + ' — falling back to All Scotland. '
-        + 'If values are 5–7 digit integers the source CRS is BNG (EPSG:27700), not WGS84.');
+      console.error('[control] bounds for "' + name + '" failed sanity check: ' + JSON.stringify(bounds) +
+        '. If values are 5–7 digit integers the source CRS is BNG (EPSG:27700), not WGS84.');
       return null;
     }
     return bounds;
@@ -121,27 +124,10 @@
     _catchmentSel.classList.toggle('has-value', !!_catchmentSel.value);
   }
 
-  function setRegion(name, bounds, geometry) {
-    var safeBounds = saneBounds(name, bounds);
-    if (bounds && !safeBounds) {
-      // Bounds failed sanity — reset the selects to avoid a misleading highlight
-      _councilSel.value   = '';
-      _catchmentSel.value = '';
-      name     = 'All Scotland';
-      geometry = null;
-    }
-    console.log('[control] setRegion:', name,
-      safeBounds
-        ? 'w=' + safeBounds[0][0].toFixed(4) + ' s=' + safeBounds[0][1].toFixed(4)
-          + ' e=' + safeBounds[1][0].toFixed(4) + ' n=' + safeBounds[1][1].toFixed(4)
-          + ' spanLng=' + (safeBounds[1][0] - safeBounds[0][0]).toFixed(4)
-          + ' spanLat=' + (safeBounds[1][1] - safeBounds[0][1]).toFixed(4)
-        : '(null — using All Scotland)',
-      geometry ? '(+' + geometry.type + ' mask)' : '(no mask)');
-    _state.region = { name: name, bounds: safeBounds, geometry: safeBounds ? (geometry || null) : null };
-    syncSelectStyles();
-    updateStatus();
-    broadcast();
+  function sendRegion(kind, name, bounds, geometry) {
+    var safe = saneBounds(name, bounds);
+    if (bounds && !safe) { resetRegion(); return; }
+    send({ cmd: 'set', region: { kind: kind, name: name, bounds: safe, geometry: safe ? geometry || null : null } });
   }
 
   function findItem(list, val) {
@@ -151,35 +137,33 @@
     return null;
   }
 
-  // Return to the full Scotland view: clear BOTH dropdowns so neither can show
-  // a stale region, and broadcast the region reset (bounds/geometry null).
   function resetRegion() {
     _councilSel.value   = '';
     _catchmentSel.value = '';
-    setRegion('All Scotland', null, null);
+    syncSelectStyles();
+    send({ cmd: 'set', region: { kind: null, name: 'All Scotland', bounds: null, geometry: null } });
   }
 
   _councilSel.addEventListener('change', function () {
     var val = _councilSel.value;
     if (!val) { resetRegion(); return; }
-    // Only one region active at a time — selecting a council clears the catchment.
-    _catchmentSel.value = '';
+    _catchmentSel.value = '';   // one region at a time
+    syncSelectStyles();
     var item = findItem(_councilItems, val);
-    // Council geometry is preloaded from /api/councils — broadcast immediately.
-    setRegion(val, item ? item.bounds : null, item ? item.geometry : null);
+    sendRegion('council', val, item ? item.bounds : null, item ? item.geometry : null);
   });
 
   _catchmentSel.addEventListener('change', function () {
     var val = _catchmentSel.value;
     if (!val) { resetRegion(); return; }
-    // Only one region active at a time — selecting a catchment clears the council.
     _councilSel.value = '';
+    syncSelectStyles();
     var item = findItem(_catchItems, val);
     if (!item) { resetRegion(); return; }
-    // Catchment geometry isn't in /api/catchments — fetch it (cached), then
-    // broadcast bounds + mask together so the wall fits and clips in one step.
+    // Catchment geometry isn't in /api/catchments — fetch it (cached) so the
+    // wall can fit and clip in one step. The wall fetches it itself if absent.
     if (_catchGeom[val] !== undefined) {
-      setRegion(val, item.bounds, _catchGeom[val]);
+      sendRegion('catchment', val, item.bounds, _catchGeom[val]);
       return;
     }
     fetch('/api/catchments/' + encodeURIComponent(val) + '/geometry')
@@ -187,42 +171,27 @@
       .then(function (fc) {
         var geom = (fc && fc.features && fc.features[0]) ? fc.features[0].geometry : null;
         _catchGeom[val] = geom;
-        if (!geom) console.warn('[control] no geometry for catchment "' + val + '" — camera only');
-        setRegion(val, item.bounds, geom);
+        sendRegion('catchment', val, item.bounds, geom);
       })
       .catch(function (e) {
         console.warn('[control] catchment geometry fetch failed:', e);
-        _catchGeom[val] = null;
-        setRegion(val, item.bounds, null);  // camera only, no mask
+        sendRegion('catchment', val, item.bounds, null);
       });
   });
 
-  var _resetBtn = document.getElementById('reset-region');
-  if (_resetBtn) _resetBtn.addEventListener('click', resetRegion);
+  document.getElementById('reset-region').addEventListener('click', resetRegion);
 
-  // Populate both selects from API
   Promise.all([
     fetch('/api/councils').then(function (r) { return r.ok ? r.json() : null; }),
     fetch('/api/catchments').then(function (r) { return r.ok ? r.json() : null; }),
   ]).then(function (results) {
     var councilsFC = results[0];
     var catchList  = results[1];
-
     if (councilsFC && councilsFC.features) {
-      var nullGeomCount = 0;
       councilsFC.features.forEach(function (f) {
         var name = f.properties && f.properties.council_name;
-        if (!name) return;
-        var bounds = null;
-        try {
-          bounds = geomBbox(f.geometry);
-        } catch (e) {
-          console.warn('[control] geomBbox threw for council "' + name + '":', e);
-          nullGeomCount++;
-          return;
-        }
-        if (!bounds) { nullGeomCount++; return; }
-        _councilItems.push({ name: name, bounds: bounds, geometry: f.geometry });
+        var bounds = name ? geomBbox(f.geometry) : null;
+        if (bounds) _councilItems.push({ name: name, bounds: bounds, geometry: f.geometry });
       });
       _councilItems.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
       _councilItems.forEach(function (c) {
@@ -231,38 +200,13 @@
         opt.textContent = c.name;
         _councilSel.appendChild(opt);
       });
-      if (nullGeomCount) {
-        console.warn('[control] ' + nullGeomCount + ' council(s) skipped (null/invalid geometry)');
-      }
-
-      // Debug: log bounds for a couple of known councils
-      ['Clackmannanshire', 'Highland'].forEach(function (target) {
-        var item = null;
-        for (var i = 0; i < _councilItems.length; i++) {
-          if (_councilItems[i].name === target) { item = _councilItems[i]; break; }
-        }
-        if (item) {
-          console.log('[control] ' + target + ' bounds:',
-            'w=' + item.bounds[0][0].toFixed(4), 's=' + item.bounds[0][1].toFixed(4),
-            'e=' + item.bounds[1][0].toFixed(4), 'n=' + item.bounds[1][1].toFixed(4),
-            'spanLng=' + (item.bounds[1][0] - item.bounds[0][0]).toFixed(4),
-            'spanLat=' + (item.bounds[1][1] - item.bounds[0][1]).toFixed(4));
-        } else {
-          console.warn('[control] ' + target + ' not found in council list');
-        }
-      });
-      console.log('[control] loaded', _councilItems.length, 'councils');
     } else {
       console.warn('[control] /api/councils response missing features:', councilsFC);
     }
-
     if (Array.isArray(catchList)) {
       catchList.forEach(function (c) {
         if (!c.name || !c.bbox) return;
-        _catchItems.push({
-          name:   c.name,
-          bounds: [[c.bbox.west, c.bbox.south], [c.bbox.east, c.bbox.north]],
-        });
+        _catchItems.push({ name: c.name, bounds: [[c.bbox.west, c.bbox.south], [c.bbox.east, c.bbox.north]] });
       });
       _catchItems.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
       _catchItems.forEach(function (c) {
@@ -271,15 +215,32 @@
         opt.textContent = c.name;
         _catchmentSel.appendChild(opt);
       });
-      console.log('[control] loaded', _catchItems.length, 'catchments');
     } else {
       console.warn('[control] /api/catchments response is not an array:', catchList);
     }
+    render();   // reapply the wall's region now that options exist
   }).catch(function (e) {
     console.warn('[control] failed to load region data:', e);
   });
 
-  // ── Month buttons ────────────────────────────────────────────────
+  // ── Playback, month and member controls ──────────────────────────
+
+  document.getElementById('btn-prev').addEventListener('click', function () { send({ cmd: 'step', delta: -1 }); });
+  document.getElementById('btn-next').addEventListener('click', function () { send({ cmd: 'step', delta: 1 }); });
+  document.getElementById('btn-play').addEventListener('click', function () {
+    send({ cmd: _wall && _wall.state.playing ? 'pause' : 'play' });
+  });
+
+  var dwellSel = document.getElementById('dwell-select');
+  function addDwellOption(sec) {
+    var opt = document.createElement('option');
+    opt.value = String(sec);
+    opt.textContent = sec + ' s';
+    dwellSel.appendChild(opt);
+  }
+  DWELLS.forEach(addDwellOption);
+  dwellSel.value = '6';
+  dwellSel.addEventListener('change', function () { send({ cmd: 'dwell', seconds: +dwellSel.value }); });
 
   var monthGrid = document.getElementById('month-grid');
   MONTHS.forEach(function (m) {
@@ -287,11 +248,9 @@
     btn.className     = 'ctrl-btn btn-month';
     btn.dataset.month = String(m);
     btn.textContent   = MONTH_NAMES[m];
-    btn.addEventListener('click', function () { setMonth(m); });
+    btn.addEventListener('click', function () { send({ cmd: 'set', month: m }); });
     monthGrid.appendChild(btn);
   });
-
-  // ── Member buttons ───────────────────────────────────────────────
 
   var memberGrid = document.getElementById('member-grid');
   MEMBERS.forEach(function (mb) {
@@ -299,25 +258,43 @@
     btn.className      = 'ctrl-btn btn-member' + (mb.id === 'mean' ? ' btn-mean' : '');
     btn.dataset.member = mb.id;
     btn.textContent    = mb.label;
-    btn.addEventListener('click', function () { setMember(mb.id); });
+    btn.addEventListener('click', function () { send({ cmd: 'set', member: mb.id }); });
     memberGrid.appendChild(btn);
   });
 
   // ── BroadcastChannel ─────────────────────────────────────────────
 
-  try {
-    _channel = new BroadcastChannel('climascope-immersive');
-    _channel.onmessage = function (ev) {
-      if (ev.data && ev.data.type === 'ping') broadcast();
-    };
-  } catch (e) {
-    console.warn('[control] BroadcastChannel not available:', e);
-    var statusEl = document.getElementById('status');
-    if (statusEl) statusEl.textContent = 'BroadcastChannel not supported in this browser.';
+  function hello() {
+    if (_channel) _channel.postMessage({ type: 'hello' });
+    clearTimeout(_helloTimer);
+    // No report within 2 s: assume no wall is open (it may appear later).
+    _helloTimer = setTimeout(function () { if (!_wall) render(); }, 2000);
   }
 
-  highlight();
-  updateStatus();
-  broadcast();
+  try {
+    _channel = new (window.ClimaScopeRemoteChannel || window.BroadcastChannel)('climascope-immersive');
+    _channel.onmessage = function (ev) {
+      var msg = ev.data;
+      if (!msg || msg.type !== 'wall') return;
+      _wall = msg;
+      _lastSeen = Date.now();
+      render();
+    };
+    hello();
+  } catch (e) {
+    console.warn('[control] BroadcastChannel not available:', e);
+    document.getElementById('status-text').textContent = 'BroadcastChannel not supported in this browser.';
+  }
 
+  setInterval(function () {
+    if (_wall && Date.now() - _lastSeen > 25000) {
+      _wall = null;
+      render();
+    }
+  }, 5000);
+
+  // Re-check when the controller tab becomes visible again.
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) hello();
+  });
 })();

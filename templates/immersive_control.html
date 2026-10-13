@@ -5,14 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ClimaScope — Wall Controller</title>
   <link rel="stylesheet" href="/static/immersive/control.css?v={{ av('immersive/control.css') }}" />
+  <link rel="stylesheet" href="/static/immersive/remote.css?v={{ av('immersive/remote.css') }}" />
 </head>
 <body>
   <p class="page-title">ClimaScope Wall Controller</p>
 
+  <div id="status"><span class="status-dot"></span><span id="status-text">Looking for the wall…</span></div>
+
+  <div class="section-label">Playback</div>
+  <div class="play-row">
+    <button id="btn-prev" class="ctrl-btn" type="button">◀ Prev month</button>
+    <button id="btn-play" class="ctrl-btn btn-play" type="button">▶ Play</button>
+    <button id="btn-next" class="ctrl-btn" type="button">Next month ▶</button>
+    <label class="dwell">
+      <span class="region-sublabel">Seconds per month</span>
+      <select id="dwell-select" class="region-select dwell-select"></select>
+    </label>
+  </div>
+  <p class="hint">The wall runs playback itself. Choosing a month, member or region pauses it; press Play to resume from there.</p>
+
   <div class="section-label">Month</div>
   <div class="btn-grid" id="month-grid"></div>
 
-  <div class="section-label">Ensemble Member</div>
+  <div class="section-label">Ensemble</div>
   <div class="btn-grid" id="member-grid"></div>
 
   <div class="region-head">
@@ -34,8 +49,7 @@
     </div>
   </div>
 
-  <div id="status"></div>
-
+  <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
   <script src="/static/immersive/control.js?v={{ av('immersive/control.js') }}"></script>
 </body>
 </html>

@@ -1,12 +1,29 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* All sizes are authored for a 1200 px tall wall; --u is 1px there and
+   scales down proportionally in smaller preview windows (set in JS).
+   --safe is the bottom band (wall px) kept free of essential text. */
+:root {
+  --u: 1px;
+  --safe: 56;
+  --bg: #0d0f1a;
+  --bg-deep: #080a17;
+  --bg-panel: #0a0c1b;
+  --rule: #1a1e38;
+  --text: #e6ecfb;
+  --text-2: rgba(205,217,242,0.82);
+  --text-3: rgba(180,200,255,0.55);
+  --warn: #ffc857;
+  --error: #ff7a6b;
+}
+
 html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #0d0f1a;
+  background: var(--bg);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: #e0e4f0;
+  color: var(--text);
 }
 
 #wall {
@@ -16,320 +33,395 @@ html, body {
   height: 100vh;
 }
 
-/* ── Selection strip (month · member) ────────────────────────────── */
-
-#selection-strip {
-  flex-shrink: 0;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  font-weight: 600;
-  color: #dce6ff;
-  background: #080a17;
-  border-bottom: 2px solid #1a1e38;
-  letter-spacing: 0.5px;
-}
-
-#locator-inset {
-  position: fixed;
-  top: 74px;
-  right: 30px;
-  z-index: 20;
-  width: 210px;
-  height: 260px;
-  padding: 14px;
-  border: 2px solid rgba(210,225,255,0.24);
-  background: rgba(8,10,23,0.82);
-  box-shadow: 0 10px 36px rgba(0,0,0,0.34);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-#locator-inset.active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-#locator-inset svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.locator-context {
-  fill: rgba(25,31,58,0.78);
-  stroke: rgba(210,225,255,0.42);
-  stroke-width: 0.75;
-}
-
-.locator-region {
-  fill: rgba(255,232,132,0.86);
-  stroke: #fff4ad;
-  stroke-width: 2.2;
-}
-
-.locator-dot {
-  fill: #ffffff;
-  stroke: #091022;
-  stroke-width: 2.5;
-}
-
-.locator-ring {
-  fill: none;
-  stroke: rgba(255,244,173,0.95);
-  stroke-width: 2;
-}
-
-/* ── Panel row ─────────────────────────────────────────────────────── */
-
 #panels {
-  display: flex;
-  flex-direction: row;
   flex: 1;
   min-height: 0;
-  gap: 6px;
+  display: flex;
+  gap: calc(8 * var(--u));
   background: #181c34;
 }
 
-.panel {
+/* ── One metric group: 3 equal map columns + 1 chart column ───────── */
+
+.group {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: #0d0f1a;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows:
+    calc(54 * var(--u))     /* context */
+    calc(72 * var(--u))     /* metric title */
+    calc(46 * var(--u))     /* period labels */
+    minmax(0, 1fr)          /* maps */
+    calc(128 * var(--u));   /* numbers */
+  column-gap: calc(4 * var(--u));
+  background: var(--bg);
 }
 
-/* ── Per-panel header: metric name (left) + shared legend (right) ─── */
-
-.panel-header {
-  flex-shrink: 0;
-  height: 84px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 0 26px;
-  background: #0b0d1c;
-  border-bottom: 2px solid #1a1e38;
-}
-
-.panel-metric {
-  font-size: 44px;
-  font-weight: 700;
-  color: #dce6ff;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Shared legend lives inline in the header */
-.panel-legend {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  min-width: 240px;
-  max-width: 340px;
-}
-
-.legend-ramp-wrap {
+/* Context line: repeated per group so each wall sector stands alone. */
+.ctx {
+  grid-column: 1 / -1;
+  grid-row: 1;
   position: relative;
-  height: 14px;
-  border-radius: 3px;
-  overflow: visible;
-}
-
-.legend-ramp {
-  width: 100%;
-  height: 14px;
-  border-radius: 3px;
-}
-
-.legend-zero {
-  position: absolute;
-  top: -5px;
-  width: 2px;
-  height: 24px;
-  background: rgba(255,255,255,0.7);
-  border-radius: 1px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.legend-minmax {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 28px;
-  color: rgba(180,200,255,0.6);
-  font-variant-numeric: tabular-nums;
+  gap: calc(22 * var(--u));
+  padding: 0 calc(26 * var(--u));
+  background: var(--bg-deep);
+  border-bottom: calc(2 * var(--u)) solid var(--rule);
+  font-size: calc(30 * var(--u));
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.legend-units {
-  font-size: 24px;
-  color: rgba(180,200,255,0.35);
-}
-
-/* ── Three maps side by side ─────────────────────────────────────── */
-
-.panel-maps-row {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: row;
-  gap: 3px;
-  background: #060810;
-}
-
-.map-col {
-  flex: 1;
+.ctx-sel {
+  font-weight: 650;
+  color: #dce6ff;
+  letter-spacing: calc(0.4 * var(--u));
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-.period-label {
+.ctx-chip {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: calc(26 * var(--u));
+  padding: calc(3 * var(--u)) calc(14 * var(--u));
+  border-radius: calc(6 * var(--u));
+}
+.ctx-chip:empty { display: none; }
+.ctx-chip.loading { color: var(--text-2); background: rgba(150,170,210,0.14); }
+.ctx-chip.cycle   { color: #0b0d1c; background: #f2c94c; font-weight: 700; }
+.ctx-chip.warning { color: #1a1300; background: var(--warn); font-weight: 650; }
+.ctx-chip.error   { color: #1c0705; background: var(--error); font-weight: 650; }
+
+.ctx-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: calc(22 * var(--u));
   flex-shrink: 0;
-  height: 46px;
+}
+
+.ctx-ticks { display: flex; gap: calc(5 * var(--u)); }
+
+.ctx-tick {
+  width: calc(30 * var(--u));
+  text-align: center;
+  font-size: calc(22 * var(--u));
+  font-weight: 600;
+  line-height: calc(30 * var(--u));
+  color: rgba(180,200,255,0.42);
+  border-radius: calc(4 * var(--u));
+}
+.ctx-tick.past { color: rgba(205,217,242,0.7); }
+.ctx-tick.on   { color: #0b0d1c; background: #e6ecfb; }
+
+.ctx-mode {
+  font-size: calc(24 * var(--u));
+  color: var(--text-3);
+  min-width: calc(250 * var(--u));
+  text-align: right;
+}
+.ctx-mode.playing { color: var(--text-2); }
+
+.ctx-bar-track {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: calc(4 * var(--u));
+}
+.ctx-bar {
+  height: 100%;
+  width: 0%;
+  background: rgba(230,236,251,0.55);
+}
+
+/* Metric title centred over the three-map span (chart column excluded). */
+.title {
+  grid-column: 1 / 4;
+  grid-row: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(22 * var(--u));
+  padding-top: calc(10 * var(--u));
+  background: var(--bg-panel);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.title-main {
+  font-size: calc(50 * var(--u));
+  font-weight: 700;
+  color: #eef2ff;
+}
+.title-code {
+  font-size: calc(28 * var(--u));
+  color: var(--text-3);
+}
+
+.plabel {
+  grid-row: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: calc(30 * var(--u));
   font-weight: 500;
-  color: rgba(180,200,255,0.5);
-  background: #0a0c1b;
-  border-bottom: 1px solid #141830;
-  letter-spacing: 0.5px;
+  color: rgba(190,206,245,0.72);
+  background: var(--bg-panel);
+  border-bottom: calc(1 * var(--u)) solid #141830;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.plabel.baseline { color: rgba(220,230,255,0.92); }
+.plabel.warn { color: var(--warn); }
 
-.period-label.baseline {
-  color: rgba(210,225,255,0.80);
-}
-
-.map-wrap {
-  flex: 1;
+.mapcell {
+  grid-row: 4;
   position: relative;
   overflow: hidden;
   min-height: 0;
-}
-
-/* Seasonal chart cell — same sizing as a map cell */
-.chart-col {
-  border-left: 2px solid #181c34;
-}
-
-.chart-wrap {
-  background: #0a0c1b;
-}
-
-.chart-wrap svg {
-  position: absolute;
-  inset: 0;
-  display: block;
+  background: var(--bg);
 }
 
 .map-canvas {
   position: absolute;
   inset: 0;
-  background: #0d0f1a;
+  background: var(--bg);
 }
 
-/* ── Stats strip ─────────────────────────────────────────────────── */
-
-.stats-strip {
-  flex-shrink: 0;
-  height: 122px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 14px 28px 0;
-  gap: 10px;
-  background: #0a0c1b;
-  border-top: 2px solid #1a1e38;
-}
-
-.stat-group {
+/* Numbers anchored to their map column. */
+.num {
+  grid-row: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  justify-content: flex-start;
+  padding-top: calc(12 * var(--u));
+  gap: calc(6 * var(--u));
+  background: var(--bg-panel);
+  border-top: calc(2 * var(--u)) solid var(--rule);
 }
-
-.stat-value {
-  font-size: 64px;
+.num-value {
+  font-size: calc(62 * var(--u));
   font-weight: 700;
-  color: #dce6ff;
   line-height: 1;
+  color: #eef2ff;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -1px;
+  white-space: nowrap;
+}
+.num-unit {
+  font-size: calc(34 * var(--u));
+  font-weight: 500;
+  color: var(--text-2);
+}
+.num-sub {
+  font-size: calc(27 * var(--u));
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.stat-period {
-  font-size: 28px;
-  font-weight: 400;
-  color: rgba(180,200,255,0.42);
-  letter-spacing: 0.3px;
+/* ── Chart column: two stacked charts spanning title → numbers ─────── */
+
+.charts {
+  grid-column: 4;
+  grid-row: 2 / 6;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+  background: #060810;
+  border-left: calc(2 * var(--u)) solid #181c34;
 }
 
-.stat-arrow {
-  font-size: 40px;
-  color: rgba(180,200,255,0.28);
+.chart-box {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+}
+
+.chart-head {
   flex-shrink: 0;
-  /* align arrow baseline with the number row */
-  line-height: 64px;
-  align-self: flex-start;
-  padding-top: 0;
+  padding: calc(12 * var(--u)) calc(22 * var(--u)) calc(4 * var(--u));
+}
+.chart-title {
+  display: flex;
+  align-items: baseline;
+  gap: calc(16 * var(--u));
+  white-space: nowrap;
+  overflow: hidden;
+}
+.chart-name {
+  font-size: calc(32 * var(--u));
+  font-weight: 700;
+  color: #eef2ff;
+}
+.chart-sub {
+  font-size: calc(23 * var(--u));
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chart-key {
+  display: flex;
+  gap: calc(26 * var(--u));
+  margin-top: calc(6 * var(--u));
+  font-size: calc(23 * var(--u));
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.key-item { display: inline-flex; align-items: center; gap: calc(8 * var(--u)); }
+.key-swatch { width: calc(48 * var(--u)); height: calc(12 * var(--u)); }
+
+.chart-plot {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.chart-plot svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-.stat-units {
-  font-size: 34px;
-  color: rgba(180,200,255,0.42);
+/* ── Shared legend: in the middle map's empty surround ─────────────── */
+
+.legend {
+  position: absolute;
+  z-index: 5;
+  width: calc(400 * var(--u));
+  padding: calc(12 * var(--u)) calc(22 * var(--u)) calc(10 * var(--u));
+  background: rgba(8,10,23,0.92);
+  border: calc(2 * var(--u)) solid rgba(210,225,255,0.28);
+  border-radius: calc(6 * var(--u));
+  pointer-events: none;
+  visibility: hidden;
+}
+.legend.placed { visibility: visible; }
+
+.lg-title {
+  font-size: calc(24 * var(--u));
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
+}
+.lg-subtitle {
+  font-size: calc(20 * var(--u));
+  color: var(--text-2);
+  margin-bottom: calc(10 * var(--u));
+  white-space: nowrap;
+}
+.lg-bar-wrap { position: relative; }
+.lg-bar {
+  height: calc(18 * var(--u));
+  border-radius: calc(3 * var(--u));
+}
+.lg-zero-mark {
+  position: absolute;
+  top: calc(-5 * var(--u));
+  width: calc(3 * var(--u));
+  height: calc(28 * var(--u));
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+.lg-cap {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: calc(9 * var(--u)) solid transparent;
+  border-bottom: calc(9 * var(--u)) solid transparent;
+}
+.lg-cap-l { left: calc(-13 * var(--u)); border-right: calc(13 * var(--u)) solid; }
+.lg-cap-r { right: calc(-13 * var(--u)); border-left: calc(13 * var(--u)) solid; }
+.lg-ticks {
+  position: relative;
+  height: calc(30 * var(--u));
+  margin-top: calc(4 * var(--u));
+  font-size: calc(22 * var(--u));
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.lg-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.lg-tick.lg-end   { transform: none; }
+.lg-tick.lg-right { transform: translateX(-100%); }
+.lg-tick.lg-zero  { font-weight: 700; }
+.lg-foot {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  margin-top: calc(4 * var(--u));
+  font-size: calc(19 * var(--u));
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.lg-nodata {
   flex-shrink: 0;
-  line-height: 64px;
-  align-self: flex-start;
+  display: inline-block;
+  width: calc(22 * var(--u));
+  height: calc(14 * var(--u));
+  background: #4a4f66;
+  border-radius: calc(2 * var(--u));
 }
+.lg-note { margin-left: auto; }
 
-/* ── Footer ──────────────────────────────────────────────────────── */
+/* ── Locator inset: baseline map, shown for a selected region ──────── */
+
+.locator {
+  position: absolute;
+  z-index: 5;
+  width: calc(196 * var(--u));
+  height: calc(246 * var(--u));
+  padding: calc(7 * var(--u));
+  border: calc(2 * var(--u)) solid rgba(210,225,255,0.28);
+  background: rgba(8,10,23,0.9);
+  border-radius: calc(6 * var(--u));
+  pointer-events: none;
+  visibility: hidden;
+}
+.locator.active.placed { visibility: visible; }
+.locator svg { display: block; width: 100%; height: 100%; }
+
+.locator-context { fill: rgba(25,31,58,0.78); stroke: rgba(210,225,255,0.42); stroke-width: 0.75; }
+.locator-region  { fill: rgba(255,232,132,0.86); stroke: #fff4ad; stroke-width: 2.2; }
+.locator-dot     { fill: #ffffff; stroke: #091022; stroke-width: 2.5; }
+.locator-ring    { fill: none; stroke: rgba(255,244,173,0.95); stroke-width: 2; }
+
+/* ── Footer: lives in the bottom safe band, non-essential text only ── */
 
 #wall-footer {
   flex-shrink: 0;
-  height: 38px;
+  height: calc(var(--safe) * var(--u));
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 24px;
-  padding: 0 32px;
+  align-items: flex-start;
+  gap: calc(40 * var(--u));
+  padding: calc(10 * var(--u)) calc(32 * var(--u)) 0;
   background: #0b0d1c;
-  border-top: 1px solid #181c34;
+  border-top: calc(1 * var(--u)) solid #181c34;
+  overflow: hidden;
+  white-space: nowrap;
 }
-
 .footer-logo {
-  font-size: 22px;
+  font-size: calc(22 * var(--u));
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: calc(3 * var(--u));
   text-transform: uppercase;
+  color: rgba(180,200,255,0.45);
+}
+.footer-note {
+  font-size: calc(20 * var(--u));
   color: rgba(180,200,255,0.4);
-}
-
-.footer-period {
-  font-size: 20px;
-  color: rgba(180,200,255,0.28);
-  letter-spacing: 0.3px;
-}
-
-/* ── Updating indicator ──────────────────────────────────────────── */
-
-.panel-maps-row {
-  transition: opacity 0.25s;
-}
-
-.panel.updating .panel-maps-row {
-  opacity: 0.45;
 }
 
 /* ── MapLibre overrides ──────────────────────────────────────────── */
@@ -338,19 +430,10 @@ html, body {
   font-size: 9px !important;
   background: rgba(10,12,24,0.6) !important;
 }
-
-.maplibregl-ctrl-bottom-right {
-  bottom: 4px !important;
-  right: 4px !important;
-}
-
-.maplibregl-ctrl-bottom-left {
-  bottom: 8px !important;
-  left: 8px !important;
-}
-
+.maplibregl-ctrl-bottom-right { bottom: 4px !important; right: 4px !important; }
+.maplibregl-ctrl-bottom-left  { bottom: 8px !important; left: 8px !important; }
 .maplibregl-ctrl-scale {
-  font-size: 22px !important;
+  font-size: calc(22 * var(--u)) !important;
   font-weight: 700 !important;
   line-height: 1.1 !important;
   padding: 3px 10px !important;

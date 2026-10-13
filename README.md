@@ -122,6 +122,16 @@ Precomputed monthly ensemble means are stored in partitions such as
 read only the relevant subset. Vector tiles are generated with Tippecanoe and
 served by Flask, with values joined client-side using MapLibre feature state.
 
+## Immersive wall and phone control
+
+The repository also includes an immersive wall display at `/immersive` and a
+separate controller at `/immersive/control`. The wall compares three climate
+metrics across three periods with seasonal charts and annual playback. A phone
+or tablet can pair using a temporary code and control the wall through the
+server; the normal desktop viewer remains separate. See the
+[wall and phone-control notes](docs/immersive/PHONE_REMOTE_2026-10-13.md) for
+deployment, pairing and validation.
+
 ## Runtime data
 
 Runtime data are intentionally excluded from Git because the collection is

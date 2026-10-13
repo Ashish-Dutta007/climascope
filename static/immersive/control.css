@@ -181,3 +181,43 @@ body {
   background: #13162a;
   color: #dce6ff;
 }
+
+/* ── Wall status and playback ─────────────────────────────────── */
+
+#status {
+  margin-bottom: 36px;
+}
+#status.offline .status-dot { background: #8a90a8; }
+#status.loading .status-dot { background: #f2c94c; }
+#status.warning .status-dot { background: #ffc857; }
+#status.error   .status-dot { background: #ff7a6b; }
+#status.error, #status.warning { color: #ffd9a8; }
+
+.play-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.btn-play {
+  min-width: 180px;
+}
+
+.dwell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 18px;
+}
+
+.dwell-select {
+  width: 150px;
+}
+
+.hint {
+  font-size: 17px;
+  color: rgba(180,200,255,0.45);
+  margin-bottom: 40px;
+}

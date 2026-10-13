@@ -91,6 +91,9 @@ app = Flask(__name__, static_url_path="/static", static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = MAX_JSON_BYTES
 Compress(app)
 
+from immersive_remote import init_remote
+init_remote(app)
+
 
 class InvalidSelection(ValueError):
     """A client supplied an unsupported climate data selector."""
@@ -2649,20 +2652,36 @@ _IMMERSIVE_PERIODS = (
 def get_immersive_values():
     """Batch endpoint for the wall display.
 
-    Returns all 4 metrics × 3 periods in one response:
-      {metric: {period: {id_1km_str: value}}}
+    Returns the requested metrics (default all 4) × 3 periods in one response:
+      {metric: {period: {id_1km_str: value}}, "_meta": {...}}
 
     Column logic mirrors /api/values with ?col= param:
       - 1990-2019  → obs_value  (absolute baseline)
       - 2020-2049, 2050-2079 → proj_value (absolute projected)
       - Specific member + future period + member parquet present → same absolute column from member parquet
 
-    Uses a single UNION ALL query across all 12 parquet files so DuckDB can
-    parallelise the reads (~1.2 s warm vs ~2.2 s serial).  flask_compress
-    (already active globally) brotli-compresses the ~27 MB JSON to ~7.8 MB.
+    ?metrics=CWBPT,Prec_sum limits the payload to the panels actually drawn.
+    "_meta" records, per metric and period, whether values are observed, the
+    ensemble mean or the member, and lists any member→mean substitution so the
+    wall never labels substituted values as the member.
+
+    Values are rounded to 0.01 (map colouring only; the wall's numbers and
+    charts come from the precomputed regional summaries), which roughly halves
+    the JSON. Uses a single UNION ALL query across the parquet files so DuckDB
+    can parallelise the reads. flask_compress (already active globally)
+    brotli-compresses the three wall metrics to ~3.6 MB for one month.
     """
     month  = request.args.get('month', str(_current_month()))
     member = request.args.get('member', None)
+
+    metrics_arg = request.args.get('metrics')
+    if metrics_arg:
+        metrics = tuple(m for m in _IMMERSIVE_PANELS if m in set(metrics_arg.split(',')))
+        unknown = set(metrics_arg.split(',')) - set(_IMMERSIVE_PANELS)
+        if unknown or not metrics:
+            return jsonify({'error': f'metrics must be drawn from {list(_IMMERSIVE_PANELS)}'}), 400
+    else:
+        metrics = _IMMERSIVE_PANELS
 
     try:
         month_int = int(month)
@@ -2681,34 +2700,45 @@ def get_immersive_values():
     # (validated above to be a digit 1–12, so safe to embed in filesystem paths).
     parts  = []   # SQL fragments for UNION ALL
     params = []   # positional params for metric/period labels and path
+    source = {m: {} for m in metrics}   # metric → period → observed|mean|member|missing
+    substituted = []
 
-    for metric in _IMMERSIVE_PANELS:
+    for metric in metrics:
         for period, default_col in _IMMERSIVE_PERIODS:
             col = default_col
-            if member and member != 'mean' and period != '1990-2019':
+            if period == '1990-2019':
+                path = _precomp_path(metric, period, month)
+                source[metric][period] = 'observed'
+            elif member and member != 'mean':
                 member_path = os.path.join(
                     PRECOMP_DIR, f"Metric={metric}", f"Period={period}",
                     f"Month={month}", f"Member={member}.parquet"
                 )
                 if os.path.exists(member_path):
                     path = member_path
+                    source[metric][period] = 'member'
                 else:
                     path = _precomp_path(metric, period, month)
+                    source[metric][period] = 'mean'
+                    substituted.append({'metric': metric, 'period': period})
             else:
                 path = _precomp_path(metric, period, month)
+                source[metric][period] = 'mean'
 
             if not os.path.exists(path):
+                source[metric][period] = 'missing'
                 continue
 
             # col comes from _IMMERSIVE_PERIODS (hardcoded); double-quote it for DuckDB.
             # metric, period and path are passed as ? params.
             parts.append(
-                f'SELECT ? AS metric, ? AS period, id_1km, "{col}" AS value'
+                f'SELECT ? AS metric, ? AS period, id_1km,'
+                f' round(CAST("{col}" AS DOUBLE), 2) AS value'
                 f' FROM read_parquet(?)'
             )
             params.extend([metric, period, path])
 
-    result = {m: {p: {} for p, _ in _IMMERSIVE_PERIODS} for m in _IMMERSIVE_PANELS}
+    result = {m: {p: {} for p, _ in _IMMERSIVE_PERIODS} for m in metrics}
 
     if parts:
         con = duckdb.connect(':memory:')
@@ -2719,6 +2749,13 @@ def get_immersive_values():
         finally:
             con.close()
 
+    result['_meta'] = {
+        'month': month_int,
+        'member': member if member and member != 'mean' else 'mean',
+        'metrics': list(metrics),
+        'source': source,
+        'substituted': substituted,
+    }
     resp = jsonify(result)
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
