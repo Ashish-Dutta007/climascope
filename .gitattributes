@@ -1,0 +1,2 @@
+# Keep the upstream licence text byte-identical.
+static/immersive/vendor/proj4-LICENSE.md -whitespace
