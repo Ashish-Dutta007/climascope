@@ -223,6 +223,9 @@ html, body {
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  max-width: calc(100% - 16 * var(--u));
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Chart column: two stacked charts spanning title → numbers ─────── */

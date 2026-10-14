@@ -1,5 +1,7 @@
 # Wall copy and Scotland locator, 14 October 2026
 
+Historical v4.2.1 record. The later [CC follow-up](CC_FOLLOWUP_2026-10-14.md) fixes Western Isles selection, shades only the later member range and supersedes the running-image details below.
+
 This is the follow-up to the compact v4.2 layout. The month/scene loops and data calculations are unchanged.
 
 ## What changed

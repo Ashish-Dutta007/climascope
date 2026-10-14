@@ -1,0 +1,24 @@
+F.tour 1 overview
+tour 2 focus-heat
+tour 3 focus-rain
+tour 4 focus-water
+tour 5 water-extent
+tour 6 landscape
+tour 7 agreement
+tour 8 focus-water
+.
+======================================================================
+FAIL: test_paired_phone_waits_for_wall_without_local_browser_advice (tests.test_immersive_scenes_flow.SceneFlows.test_paired_phone_waits_for_wall_without_local_browser_advice)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_scenes_flow.py", line 310, in test_paired_phone_waits_for_wall_without_local_browser_advice
+    self.assertEqual(phone.locator('#status-text').inner_text(), 'Wall offline — waiting for connection')
+AssertionError: 'Wall shows July · Scotland · ensemble mean · Water balance · loading July…' != 'Wall offline — waiting for connection'
+- Wall shows July · Scotland · ensemble mean · Water balance · loading July…
++ Wall offline — waiting for connection
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 167.272s
+
+FAILED (failures=1)

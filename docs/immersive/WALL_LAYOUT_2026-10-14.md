@@ -2,7 +2,7 @@
 
 This update follows both CC reviews. It replaces the layout described in the v4.1 scene notes. See the [release record](FINAL_DEPLOYMENT_2026-10-14.md) for deployment and rollback.
 
-The later [copy and locator update](READABILITY_2026-10-14.md) simplifies the analytical headlines and corrects the small Scotland inset.
+The later [copy and locator update](READABILITY_2026-10-14.md) simplifies the analytical headlines and corrects the small Scotland inset. The [CC follow-up](CC_FOLLOWUP_2026-10-14.md) fixes Western Isles selection, keeps locator markers inside their regions and shades only the later member range.
 
 ## Layout and controls
 

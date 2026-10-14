@@ -119,6 +119,17 @@ class SceneFlows(unittest.TestCase):
                 if scene == "landscape":
                     self.assertEqual(wall.locator(".focus-primary .scene-insight h2").inner_text(), "Mountain, heath & bog")
                     self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), "73.8%")
+                    self.assertEqual(wall.locator('.focus-primary .chart-key').last.locator('rect').count(), 2)
+                if scene.startswith('focus-'):
+                    self.assertEqual(wall.locator('.focus-primary .chart-key').last.locator('rect').count(), 2)
+                if scene == 'agreement':
+                    bands = wall.locator('.focus-primary .chart-plot').first.locator('polygon')
+                    self.assertEqual(bands.count(), 1)
+                    self.assertEqual(bands.get_attribute('fill'), '#ff6b35')
+                if scene in ['water-extent','landscape','agreement']:
+                    labels = wall.locator('.focus-primary .num:not(.change-num):visible .num-sub')
+                    self.assertIn('Scotland mean', labels.first.inner_text())
+                    self.assertEqual(labels.last.inner_text(), '')
                 if scene == "focus-water":
                     self.assertEqual(wall.locator('.focus-support:visible').evaluate_all('(els)=>els.map(e=>e.dataset.metric)'), ['Prec_sum', 'ETPT_sum'])
                     self.assertEqual(wall.locator(".focus-support .num:visible").count(), 0)
@@ -137,6 +148,10 @@ class SceneFlows(unittest.TestCase):
             self.wait(wall, lambda: ready("agreement", focus="Tmax_mean"), "agreement metric")
 
         phone.locator("#focus-select").select_option("Prec_sum")
+        phone.locator('#council-select').select_option('Na h-Eileanan Siar')
+        self.wait(wall, lambda: ready('agreement', focus='Prec_sum', region='Na h-Eileanan Siar'), 'Western Isles from phone')
+        self.assertEqual(phone.locator('#council-select').input_value(), 'Na h-Eileanan Siar')
+        self.assertTrue(wall.locator('.focus-primary .locator-region').get_attribute('d'))
         phone.locator("#council-select").select_option("Angus")
         self.wait(wall, lambda: ready("agreement", focus="Prec_sum", region="Angus"), "even member split")
         self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["6", "6"])
@@ -209,6 +224,12 @@ class SceneFlows(unittest.TestCase):
         self.assertEqual(page.locator('header p').count(), 0)
         frame = page.frame_locator("#wall-frame")
         self.assertEqual(frame.locator("body").evaluate("()=>[innerWidth,innerHeight,devicePixelRatio]"), [15360, 1200, 1])
+        page.select_option('#council-select', 'Na h-Eileanan Siar')
+        self.wait(page, lambda: ready('focus-water') and 'Na h-Eileanan Siar' in page.locator('#preview-status').inner_text(), 'Western Isles from preview')
+        self.assertEqual(page.locator('#council-select').input_value(), 'Na h-Eileanan Siar')
+        self.assertTrue(frame.locator('.focus-primary .locator-region').get_attribute('d'))
+        page.locator('#reset-region').click()
+        self.wait(page, lambda: ready('focus-water') and 'Scotland' in page.locator('#preview-status').inner_text(), 'national reset after Western Isles')
         sentinel = '{"v":2,"month":3,"scene":"overview"}'
         page.evaluate("""value=>{localStorage.setItem('climascope-immersive-wall-v2',value);
           window.mainMessages=[];window.beacon=new BroadcastChannel('climascope-immersive');
@@ -268,6 +289,30 @@ class SceneFlows(unittest.TestCase):
             "preview_did_not_write_wall_state": True, "failed_scene_kept_previous_frame": True, "stale_scene_ignored": True,
             "share_link_reloaded": True, "empty_catchment": True, "all_three_visible_maps_painted_after_reset_and_resize": True,
             "errors": self.errors}, indent=2))
+
+    def test_paired_phone_waits_for_wall_without_local_browser_advice(self):
+        wall = self.browser.new_context(viewport={'width':11514,'height':1200}).new_page()
+        phone = self.browser.new_context(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True).new_page()
+        self.watch(wall)
+        self.watch(phone)
+        wall.goto(BASE+'/immersive?fresh=1')
+        wall.get_by_role('button', name='Phone remote', exact=True).click()
+        self.wait(wall, lambda: len(wall.locator('.remote-code').inner_text().replace(' ',''))==8, 'phone pairing code')
+        phone.goto(BASE+'/immersive/control')
+        phone.locator('#remote-code').fill(wall.locator('.remote-code').inner_text())
+        phone.get_by_role('button', name='Connect', exact=True).click()
+        self.wait(phone, lambda: 'Wall shows' in phone.locator('#status-text').inner_text(), 'paired wall report')
+        phone.route('**/api/immersive/remote/rooms/*/messages?after=*', lambda route: route.fulfill(
+            status=200, content_type='application/json', body=json.dumps({'peer_online':False,'messages':[],'cursor':0})))
+        self.wait(phone, lambda: 'Wall offline' in phone.locator('.remote-status').inner_text(), 'relay reports offline')
+        phone.clock.install()
+        phone.clock.fast_forward(30000)
+        # The controller's existing interval was installed before the fake
+        # clock. Allow its next real tick to discard the stale wall report.
+        self.wait(phone, lambda: phone.locator('#status-text').inner_text() == 'Wall offline — waiting for connection', 'stale phone report clears', 10)
+        self.assertEqual(phone.locator('#status-text').inner_text(), 'Wall offline — waiting for connection')
+        self.assertNotIn('browser', phone.locator('#status-text').inner_text())
+        self.assertEqual(self.errors, [])
 
 
 if __name__ == "__main__":

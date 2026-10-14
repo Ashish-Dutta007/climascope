@@ -5,6 +5,7 @@ import subprocess
 import unittest
 
 from pyproj import Transformer
+from shapely.geometry import Point, Polygon, MultiPolygon, mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 NODE = ROOT / 'venv/lib/python3.12/site-packages/playwright/driver/node'
@@ -48,3 +49,33 @@ class LocatorProjection(unittest.TestCase):
         self.assertAlmostEqual(width / height, 400000 / 600000, delta=0.00001)
         self.assertGreater(pixels[0][1], pixels[3][1])
         self.assertTrue(all(8 - 0.01 <= x <= 174 + 0.01 and 8 - 0.01 <= y <= 224 + 0.01 for x, y in pixels))
+
+    def check_interiors(self, geometries):
+        script = r'''
+          const fs=require('fs'),vm=require('vm');
+          const context={window:{},proj4:require('./static/immersive/vendor/proj4-2.22.0.js')};
+          vm.runInNewContext(fs.readFileSync('./static/immersive/locator.js','utf8'),context);
+          const input=JSON.parse(fs.readFileSync(0,'utf8'));
+          process.stdout.write(JSON.stringify(input.map(context.window.ClimaScopeLocator.interiorPoint)));
+        '''
+        result = subprocess.run([str(NODE), '-e', script], cwd=ROOT,
+                                input=json.dumps([mapping(g) for g in geometries]),
+                                text=True, capture_output=True, check=True)
+        points = json.loads(result.stdout)
+        for i, (geom, point) in enumerate(zip(geometries, points)):
+            self.assertIsNotNone(point, i)
+            self.assertTrue(geom.contains(Point(point)), (i, point))
+
+    def test_marker_handles_concavity_holes_and_islands(self):
+        concave = Polygon([(0,0),(6,0),(6,1),(1,1),(1,5),(6,5),(6,6),(0,6)])
+        holed = Polygon([(0,0),(10,0),(10,10),(0,10)], [[(2,2),(8,2),(8,8),(2,8)]])
+        islands = MultiPolygon([Polygon([(20,20),(21,20),(21,21),(20,21)]), concave])
+        self.check_interiors([concave, holed, islands])
+
+    def test_markers_inside_all_councils_and_catchments(self):
+        import geopandas as gpd
+        councils = gpd.read_file(ROOT/'data/councils.gpkg').to_crs(4326).geometry.simplify(.001, preserve_topology=True)
+        catchments = gpd.read_file(ROOT/'data/catchments.gpkg').to_crs(4326).geometry
+        self.assertEqual(len(councils), 32)
+        self.assertEqual(len(catchments), 1026)
+        self.check_interiors(list(councils) + list(catchments))

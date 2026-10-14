@@ -1,0 +1,9 @@
+{
+  "tests_passed": 4,
+  "seconds": 2.836,
+  "councils_checked": 32,
+  "catchments_checked": 1026,
+  "interior_points_strictly_inside": true,
+  "synthetic_concave_hole_and_island_checks": true,
+  "projection_reference": "Pyproj EPSG:27700"
+}

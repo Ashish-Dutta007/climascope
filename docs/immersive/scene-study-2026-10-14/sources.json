@@ -12,6 +12,9 @@
     "CWBPT:mean:0": {
       "offset": 0,
       "mean": 24.274,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -19,6 +22,9 @@
     "CWBPT:mean:1": {
       "offset": 78820,
       "mean": 56.214,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -26,6 +32,9 @@
     "CWBPT:mean:2": {
       "offset": 157640,
       "mean": 6.663,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -33,6 +42,9 @@
     "CWBPT:mean:3": {
       "offset": 236460,
       "mean": 15.603,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -40,6 +52,9 @@
     "CWBPT:mean:4": {
       "offset": 315280,
       "mean": -19.089,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -47,6 +62,9 @@
     "CWBPT:mean:5": {
       "offset": 394100,
       "mean": -25.275,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -54,6 +72,9 @@
     "CWBPT:mean:6": {
       "offset": 472920,
       "mean": -28.113,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -61,6 +82,9 @@
     "CWBPT:mean:7": {
       "offset": 551740,
       "mean": -48.84,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -68,6 +92,9 @@
     "CWBPT:mean:8": {
       "offset": 630560,
       "mean": -55.713,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -75,6 +102,9 @@
     "CWBPT:mean:9": {
       "offset": 709380,
       "mean": -29.565,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -82,6 +112,9 @@
     "CWBPT:mean:10": {
       "offset": 788200,
       "mean": 1.502,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -89,6 +122,9 @@
     "CWBPT:mean:11": {
       "offset": 867020,
       "mean": 19.807,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -96,6 +132,9 @@
     "Prec_sum:mean:0": {
       "offset": 945840,
       "mean": 25.518,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -103,6 +142,9 @@
     "Prec_sum:mean:1": {
       "offset": 1024660,
       "mean": 57.075,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -110,6 +152,9 @@
     "Prec_sum:mean:2": {
       "offset": 1103480,
       "mean": 10.159,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -117,6 +162,9 @@
     "Prec_sum:mean:3": {
       "offset": 1182300,
       "mean": 25.099,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -124,6 +172,9 @@
     "Prec_sum:mean:4": {
       "offset": 1261120,
       "mean": -3.765,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -131,6 +182,9 @@
     "Prec_sum:mean:5": {
       "offset": 1339940,
       "mean": -8.908,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -138,6 +192,9 @@
     "Prec_sum:mean:6": {
       "offset": 1418760,
       "mean": -12.213,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -145,6 +202,9 @@
     "Prec_sum:mean:7": {
       "offset": 1497580,
       "mean": -34.529,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -152,6 +212,9 @@
     "Prec_sum:mean:8": {
       "offset": 1576400,
       "mean": -44.996,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -159,6 +222,9 @@
     "Prec_sum:mean:9": {
       "offset": 1655220,
       "mean": -25.266,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -166,6 +232,9 @@
     "Prec_sum:mean:10": {
       "offset": 1734040,
       "mean": 3.737,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -173,6 +242,9 @@
     "Prec_sum:mean:11": {
       "offset": 1812860,
       "mean": 21.176,
+      "limit": 160,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -180,6 +252,9 @@
     "Tmax_mean:mean:0": {
       "offset": 1891680,
       "mean": 2.975,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -187,6 +262,9 @@
     "Tmax_mean:mean:1": {
       "offset": 1970500,
       "mean": 2.991,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -194,6 +272,9 @@
     "Tmax_mean:mean:2": {
       "offset": 2049320,
       "mean": 3.117,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -201,6 +282,9 @@
     "Tmax_mean:mean:3": {
       "offset": 2128140,
       "mean": 3.187,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -208,6 +292,9 @@
     "Tmax_mean:mean:4": {
       "offset": 2206960,
       "mean": 3.597,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -215,6 +302,9 @@
     "Tmax_mean:mean:5": {
       "offset": 2285780,
       "mean": 3.432,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -222,6 +312,9 @@
     "Tmax_mean:mean:6": {
       "offset": 2364600,
       "mean": 4.782,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -229,6 +322,9 @@
     "Tmax_mean:mean:7": {
       "offset": 2443420,
       "mean": 5.257,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -236,6 +332,9 @@
     "Tmax_mean:mean:8": {
       "offset": 2522240,
       "mean": 4.412,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -243,6 +342,9 @@
     "Tmax_mean:mean:9": {
       "offset": 2601060,
       "mean": 3.6,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -250,6 +352,9 @@
     "Tmax_mean:mean:10": {
       "offset": 2679880,
       "mean": 3.871,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -257,6 +362,9 @@
     "Tmax_mean:mean:11": {
       "offset": 2758700,
       "mean": 2.92,
+      "limit": 6,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -264,6 +372,9 @@
     "ETPT_sum:mean:0": {
       "offset": 2837520,
       "mean": 1.244,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -271,6 +382,9 @@
     "ETPT_sum:mean:1": {
       "offset": 2916340,
       "mean": 0.861,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -278,6 +392,9 @@
     "ETPT_sum:mean:2": {
       "offset": 2995160,
       "mean": 3.496,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -285,6 +402,9 @@
     "ETPT_sum:mean:3": {
       "offset": 3073980,
       "mean": 9.495,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -292,6 +412,9 @@
     "ETPT_sum:mean:4": {
       "offset": 3152800,
       "mean": 15.323,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -299,6 +422,9 @@
     "ETPT_sum:mean:5": {
       "offset": 3231620,
       "mean": 16.367,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -306,6 +432,9 @@
     "ETPT_sum:mean:6": {
       "offset": 3310440,
       "mean": 15.9,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -313,6 +442,9 @@
     "ETPT_sum:mean:7": {
       "offset": 3389260,
       "mean": 14.312,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -320,6 +452,9 @@
     "ETPT_sum:mean:8": {
       "offset": 3468080,
       "mean": 10.717,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -327,6 +462,9 @@
     "ETPT_sum:mean:9": {
       "offset": 3546900,
       "mean": 4.298,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -334,6 +472,9 @@
     "ETPT_sum:mean:10": {
       "offset": 3625720,
       "mean": 2.235,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -341,6 +482,9 @@
     "ETPT_sum:mean:11": {
       "offset": 3704540,
       "mean": 1.369,
+      "limit": 160,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -348,6 +492,9 @@
     "CWBPT:01:6": {
       "offset": 3783360,
       "mean": -30.266,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -355,6 +502,9 @@
     "CWBPT:04:6": {
       "offset": 3862180,
       "mean": -16.367,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -362,6 +512,9 @@
     "CWBPT:05:6": {
       "offset": 3941000,
       "mean": -4.368,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -369,6 +522,9 @@
     "CWBPT:06:6": {
       "offset": 4019820,
       "mean": -40.084,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -376,6 +532,9 @@
     "CWBPT:07:6": {
       "offset": 4098640,
       "mean": -22.76,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -383,6 +542,9 @@
     "CWBPT:08:6": {
       "offset": 4177460,
       "mean": -49.682,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -390,6 +552,9 @@
     "CWBPT:09:6": {
       "offset": 4256280,
       "mean": -22.4,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -397,6 +562,9 @@
     "CWBPT:10:6": {
       "offset": 4335100,
       "mean": -28.741,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -404,6 +572,9 @@
     "CWBPT:11:6": {
       "offset": 4413920,
       "mean": -17.695,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -411,6 +582,9 @@
     "CWBPT:12:6": {
       "offset": 4492740,
       "mean": -37.179,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -418,6 +592,9 @@
     "CWBPT:13:6": {
       "offset": 4571560,
       "mean": -45.104,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -425,6 +602,9 @@
     "CWBPT:15:6": {
       "offset": 4650380,
       "mean": -22.707,
+      "limit": 90,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -432,6 +612,9 @@
     "Prec_sum:01:6": {
       "offset": 4729200,
       "mean": -11.402,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -439,6 +622,9 @@
     "Prec_sum:04:6": {
       "offset": 4808020,
       "mean": -0.647,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -446,6 +632,9 @@
     "Prec_sum:05:6": {
       "offset": 4886840,
       "mean": 9.049,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -453,6 +642,9 @@
     "Prec_sum:06:6": {
       "offset": 4965660,
       "mean": -24.745,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -460,6 +652,9 @@
     "Prec_sum:07:6": {
       "offset": 5044480,
       "mean": -9.685,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -467,6 +662,9 @@
     "Prec_sum:08:6": {
       "offset": 5123300,
       "mean": -31.388,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -474,6 +672,9 @@
     "Prec_sum:09:6": {
       "offset": 5202120,
       "mean": -8.405,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -481,6 +682,9 @@
     "Prec_sum:10:6": {
       "offset": 5280940,
       "mean": -13.081,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -488,6 +692,9 @@
     "Prec_sum:11:6": {
       "offset": 5359760,
       "mean": 0.542,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -495,6 +702,9 @@
     "Prec_sum:12:6": {
       "offset": 5438580,
       "mean": -19.205,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -502,6 +712,9 @@
     "Prec_sum:13:6": {
       "offset": 5517400,
       "mean": -25.496,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -509,6 +722,9 @@
     "Prec_sum:15:6": {
       "offset": 5596220,
       "mean": -12.097,
+      "limit": 70,
+      "clip_low": true,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -516,6 +732,9 @@
     "Tmax_mean:01:6": {
       "offset": 5675040,
       "mean": 5.072,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -523,6 +742,9 @@
     "Tmax_mean:04:6": {
       "offset": 5753860,
       "mean": 4.621,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -530,6 +752,9 @@
     "Tmax_mean:05:6": {
       "offset": 5832680,
       "mean": 4.683,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -537,6 +762,9 @@
     "Tmax_mean:06:6": {
       "offset": 5911500,
       "mean": 4.645,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -544,6 +772,9 @@
     "Tmax_mean:07:6": {
       "offset": 5990320,
       "mean": 3.739,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -551,6 +782,9 @@
     "Tmax_mean:08:6": {
       "offset": 6069140,
       "mean": 4.944,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -558,6 +792,9 @@
     "Tmax_mean:09:6": {
       "offset": 6147960,
       "mean": 4.248,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -565,6 +802,9 @@
     "Tmax_mean:10:6": {
       "offset": 6226780,
       "mean": 4.982,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -572,6 +812,9 @@
     "Tmax_mean:11:6": {
       "offset": 6305600,
       "mean": 6.041,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -579,6 +822,9 @@
     "Tmax_mean:12:6": {
       "offset": 6384420,
       "mean": 5.663,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -586,6 +832,9 @@
     "Tmax_mean:13:6": {
       "offset": 6463240,
       "mean": 5.299,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": true,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
@@ -593,14 +842,85 @@
     "Tmax_mean:15:6": {
       "offset": 6542060,
       "mean": 3.446,
+      "limit": 7,
+      "clip_low": false,
+      "clip_high": false,
       "mapped_valid_cells": 78820,
       "source_cells": 78855,
       "unmapped_source_cells": 35
     }
   },
   "map_encoding": "raw proj_value minus obs_value, clipped to the fixed map domain; 255 colour bins, 0 = no data",
-  "water_component_scale": "+/-160 mm for precipitation, ET PT and CWB PT",
-  "other_scales": "current production domains: precipitation/CWB +/-160 mm; Tmax +/-6 C",
+  "water_component_scale": "+/-160 mm shared; ET map displays -deltaET as its contribution to water-balance change",
+  "other_scales": "year view uses current production domains: precipitation/CWB +/-160 mm; Tmax +/-6 C",
+  "member_domains": {
+    "CWBPT": {
+      "limit": 90,
+      "month": 7,
+      "members": [
+        "01",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "15"
+      ],
+      "basis": "symmetric about zero; 95th percentile of absolute July cell changes pooled across all 12 members, rounded outward",
+      "raw_min": -251.49512100219727,
+      "raw_max": 169.18211543560028,
+      "clipped_fraction": 0.031169023312831567
+    },
+    "Prec_sum": {
+      "limit": 70,
+      "month": 7,
+      "members": [
+        "01",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "15"
+      ],
+      "basis": "symmetric about zero; 95th percentile of absolute July cell changes pooled across all 12 members, rounded outward",
+      "raw_min": -241.9144744873047,
+      "raw_max": 178.68671417236328,
+      "clipped_fraction": 0.044174962483883924
+    },
+    "Tmax_mean": {
+      "limit": 7,
+      "month": 7,
+      "members": [
+        "01",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "15"
+      ],
+      "basis": "symmetric about zero; 95th percentile of absolute July cell changes pooled across all 12 members, rounded outward",
+      "raw_min": 2.070284843444824,
+      "raw_max": 7.769819259643555,
+      "clipped_fraction": 0.002396804260985353
+    }
+  },
   "number_source": "current v2 regional summaries, common-valid-support means, differenced before display rounding",
   "geometry_note": "Available grid.parquet has 78,820 cells. Source climate files have 78,855; 35 lack geometry in this study. National numbers use the full official regional support, not a mean of the displayed subset.",
   "sources": [

@@ -3,6 +3,7 @@ import base64
 import gzip
 import hashlib
 import json
+import math
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -21,14 +22,33 @@ assert len(set(zip(x.tolist(), y.tolist()))) == len(g)
 pieces, frames, sources = [], {}, []
 offset = 0
 
-def pack(metric, member, month):
-    global offset
+
+def raw_change(metric, member, month):
     root = APP / f'data/precomputed/Metric={metric}/Period=2050-2079'
     p = root / (f'Month={month}.parquet' if member == 'mean' else f'Month={month}/Member={member}.parquet')
     source = pd.read_parquet(p, columns=['id_1km', 'obs_value', 'proj_value']).set_index('id_1km')
-    raw = source.proj_value.astype(float) - source.obs_value.astype(float)
+    return p, source.proj_value.astype(float) - source.obs_value.astype(float)
+
+
+member_domains = {}
+for metric in METRICS[:3]:
+    values = np.concatenate([raw_change(metric, member, 7)[1].to_numpy() for member in MEMBERS])
+    values = values[np.isfinite(values)]
+    step = 1 if metric == 'Tmax_mean' else 10
+    limit = max(step, math.ceil(float(np.quantile(np.abs(values), .95)) / step) * step)
+    member_domains[metric] = {
+        'limit': limit, 'month': 7, 'members': MEMBERS,
+        'basis': 'symmetric about zero; 95th percentile of absolute July cell changes pooled across all 12 members, rounded outward',
+        'raw_min': float(values.min()), 'raw_max': float(values.max()),
+        'clipped_fraction': float((np.abs(values) > limit).mean()),
+    }
+    print(metric, 'July member domain', limit, 'clipped fraction', member_domains[metric]['clipped_fraction'], flush=True)
+
+def pack(metric, member, month):
+    global offset
+    p, raw = raw_change(metric, member, month)
     series = raw.reindex(g.id_1km)
-    limit = 6 if metric == 'Tmax_mean' else 160
+    limit = member_domains[metric]['limit'] if member != 'mean' else (6 if metric == 'Tmax_mean' else 160)
     values = series.to_numpy()
     good = np.isfinite(values)
     bins = np.zeros(len(g), dtype='u1')
@@ -41,8 +61,9 @@ def pack(metric, member, month):
         mean = member_summary['regions']['national'][metric]['2050-2079'][month - 1] - region['1990-2019'][month - 1]
     frames[f'{metric}:{member}:{month-1}'] = {
         'offset': offset, 'mean': round(mean, 6),
+        'limit': limit, 'clip_low': bool((raw < -limit).any()), 'clip_high': bool((raw > limit).any()),
         'mapped_valid_cells': int(good.sum()), 'source_cells': int(np.isfinite(raw).sum()),
-        'unmapped_source_cells': len(set(source.index) - set(g.id_1km)),
+        'unmapped_source_cells': len(set(raw.index) - set(g.id_1km)),
     }
     sources.append({'path': str(p.relative_to(APP)), 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()})
     pieces.append(bins.tobytes())
@@ -63,6 +84,7 @@ data = {
     'coordinateBytes': len(coords), 'members': MEMBERS, 'frames': frames,
     'packed': base64.b64encode(gzip.compress(blob, mtime=0)).decode(),
     'climate_version': summary['_meta']['data_version'],
+    'member_domains': member_domains,
 }
 p = OUT / 'index.html'
 text = p.read_text()
@@ -76,8 +98,9 @@ p.write_text(head + sep + json.dumps(data, separators=(',', ':')) + close + tail
     'climate_version': data['climate_version'], 'grid': data['grid'],
     'grid_source': 'data/grid.parquet', 'maps': len(frames), 'frames': frames,
     'map_encoding': 'raw proj_value minus obs_value, clipped to the fixed map domain; 255 colour bins, 0 = no data',
-    'water_component_scale': '+/-160 mm for precipitation, ET PT and CWB PT',
-    'other_scales': 'current production domains: precipitation/CWB +/-160 mm; Tmax +/-6 C',
+    'water_component_scale': '+/-160 mm shared; ET map displays -deltaET as its contribution to water-balance change',
+    'other_scales': 'year view uses current production domains: precipitation/CWB +/-160 mm; Tmax +/-6 C',
+    'member_domains': member_domains,
     'number_source': 'current v2 regional summaries, common-valid-support means, differenced before display rounding',
     'geometry_note': 'Available grid.parquet has 78,820 cells. Source climate files have 78,855; 35 lack geometry in this study. National numbers use the full official regional support, not a mean of the displayed subset.',
     'sources': sources,

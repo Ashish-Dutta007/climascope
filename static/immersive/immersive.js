@@ -186,7 +186,7 @@
     var e = bounds && bounds[1] && bounds[1][0], n = bounds && bounds[1] && bounds[1][1];
     return isFinite(w) && isFinite(s) && isFinite(e) && isFinite(n)
       && (e - w) >= 0.01 && (n - s) >= 0.01
-      && w >= -8.0 && e <= 0.5 && s >= 54.0 && n <= 62.0;
+      && w >= -9.0 && e <= 0.5 && s >= 54.0 && n <= 62.0;
   }
 
   // ── Formatting ─────────────────────────────────────────────────────
@@ -695,8 +695,8 @@
   }
 
   function locatorSVG(region) {
-    var b = region.bounds;
-    var c = b ? projectLocator([(b[0][0] + b[1][0]) * 0.5, (b[0][1] + b[1][1]) * 0.5]) : null;
+    var interior = window.ClimaScopeLocator.interiorPoint(region.geometry);
+    var c = interior ? projectLocator(interior) : null;
     var dot = c
       ? '<circle class="locator-ring" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="8.5"></circle>' +
         '<circle class="locator-dot" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="4.2"></circle>'
@@ -852,7 +852,7 @@
         });
         return;
       }
-      if (s.low && s.high) {
+      if (s.low && s.high && s.shade !== false) {
         var segment = [];
         function ribbon() {
           if (!segment.length) return;
@@ -890,7 +890,8 @@
   function keyHTML(periods, symbol) {
     return periods.map(function (p) {
       var dash = p.dash ? ' stroke-dasharray="' + p.dash.split(' ').map(function (x) { return parseFloat(x) * 5; }).join(' ') + '"' : '';
-      var swatch = symbol === 'dot' ? '<circle cx="24" cy="6" r="5" fill="' + p.color + '"/>' :
+      var swatch = symbol === 'bar' ? '<rect x="6" y="1" width="36" height="10" fill="' + p.color + '"/>' :
+        symbol === 'dot' ? '<circle cx="24" cy="6" r="5" fill="' + p.color + '"/>' :
         '<line x1="2" y1="6" x2="46" y2="6" stroke="' + p.color + '" stroke-width="5"' + dash + '/>';
       return '<span class="key-item"><svg viewBox="0 0 48 12" class="key-swatch">' + swatch + '</svg>' + p.short + '</span>';
     }).join('');
@@ -919,7 +920,7 @@
     ps.absKey.innerHTML = keyHTML(PERIODS);
     ps.deltaName.textContent = 'Change from 1990–2019';
     ps.deltaSub.textContent = 'Future − baseline · ' + ps.panel.units;
-    ps.deltaKey.innerHTML = keyHTML(FUTURES);
+    ps.deltaKey.innerHTML = keyHTML(FUTURES, special && scene.kind === 'focus' ? 'bar' : null);
     if (special && scene.kind === 'agreement') { renderAgreementCharts(ps, frame); return; }
     if (special && (scene.kind === 'extent' || scene.kind === 'landscape')) {
       var threshold = PERIODS.map(function (p) { return { values: thresholdSeries(frame, p.id), color: p.color, dash: p.dash }; });
@@ -967,7 +968,7 @@
   function renderLandcoverChart(ps, frame) {
     ps.deltaName.textContent = 'Negative balance by land cover';
     ps.deltaSub.textContent = "Share of each class’s area in cells below zero";
-    ps.deltaKey.innerHTML = keyHTML([PERIODS[0], PERIODS[2]]);
+    ps.deltaKey.innerHTML = keyHTML([PERIODS[0], PERIODS[2]], 'bar');
     var classes = landcoverClasses(frame).slice(0, 5);
     var W = ps.deltaPlot.clientWidth, H = ps.deltaPlot.clientHeight, f = 25 * _u, L = 24 * _u, R = 85 * _u;
     var top = 8 * _u, bottom = 42 * _u, band = (H - top - bottom) / Math.max(1, classes.length), pw = W - L - R;
@@ -998,10 +999,10 @@
         low.push(a.length ? a[0] : null); high.push(a.length ? a[a.length - 1] : null);
         med.push(a.length ? (a[Math.floor((a.length - 1) / 2)] + a[Math.ceil((a.length - 1) / 2)]) / 2 : null);
       });
-      return { values: med, low: low, high: high, color: p.color, dash: p.dash };
+      return { values: med, low: low, high: high, color: p.color, dash: p.dash, shade: p.id === PERIODS[2].id };
     });
     ps.absName.textContent = ps.panel.title + ' change';
-    ps.absSub.textContent = 'Line: median · shaded: lowest to highest · ' + ps.panel.units;
+    ps.absSub.textContent = 'Lines: medians · shading: 2050–2079 range · ' + ps.panel.units;
     ps.absKey.innerHTML = keyHTML(FUTURES);
     ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: series, sel: mi, zero: true, signed: true });
     ps.deltaName.textContent = MONTH_LONG[frame.month] + ' · each member';
@@ -1380,6 +1381,8 @@
     var layoutChanged = applySceneLayout(frame);
     _shown = frame;
     var mi = frame.month - 1;
+    var kind = SCENES.get(frame.scene).kind;
+    var analytical = kind !== 'overview' && kind !== 'focus';
 
     _panels.forEach(function (ps) {
       var metric = ps.panel.id;
@@ -1406,11 +1409,12 @@
         cell.value.innerHTML = esc(fmtAbs(v)) + (v == null ? '' : ' <span class="num-unit">' + esc(ps.panel.units) + '</span>');
         if (j === 0) {
           cell.sub.textContent = v == null ? 'No climate cells in this region'
-            : 'Regional mean' + (n ? ' · ' + n.toLocaleString('en-GB') + ' cells' : '');
+            : regionLabel(frame.region) + ' mean' + (n ? ' · ' + n.toLocaleString('en-GB') + ' cells' : '');
         } else {
-          cell.sub.textContent = (v == null || base == null) ? ''
+          cell.sub.textContent = (analytical || v == null || base == null) ? ''
             : 'Δ ' + fmtDelta(v - base) + ' ' + ps.panel.units + ' from baseline';
         }
+        cell.sub.title = cell.sub.textContent;
       });
 
       if (regionChanged) {

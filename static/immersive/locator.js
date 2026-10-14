@@ -8,6 +8,44 @@
 
   function grid(coord) { return toGrid.forward(coord); }
 
+  // Intersect a horizontal scanline with each polygon, including its holes.
+  // The midpoint of the widest inside interval stays on the region. Work in
+  // the source geometry's coordinates, then project the resulting point.
+  function interiorPoint(geometry) {
+    if (!geometry) return null;
+    var polygons = geometry.type === 'Polygon' ? [geometry.coordinates] :
+      geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+    function area(ring) {
+      var sum = 0;
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        sum += ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+      }
+      return Math.abs(sum) / 2;
+    }
+    polygons = polygons.filter(function (poly) { return poly && poly[0] && poly[0].length >= 3; })
+      .sort(function (a, b) { return area(b[0]) - area(a[0]); });
+    for (var p = 0; p < polygons.length; p++) {
+      var rings = polygons[p], south = Infinity, north = -Infinity;
+      if (!rings.length || rings[0].length < 3) continue;
+      rings[0].forEach(function (c) { south = Math.min(south, c[1]); north = Math.max(north, c[1]); });
+      var y = (south + north) / 2, intersections = [];
+      rings.forEach(function (ring) {
+        for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          var a = ring[j], b = ring[i];
+          if ((a[1] > y) !== (b[1] > y)) intersections.push(a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
+        }
+      });
+      intersections.sort(function (a, b) { return a - b; });
+      var point = null, widest = 0;
+      for (var k = 0; k + 1 < intersections.length; k += 2) {
+        var width = intersections[k + 1] - intersections[k];
+        if (width > widest) { widest = width; point = [(intersections[k] + intersections[k + 1]) / 2, y]; }
+      }
+      if (point) return point;
+    }
+    return null;
+  }
+
   function create(rings, size) {
     var bounds = [Infinity, Infinity, -Infinity, -Infinity];
     (rings || []).forEach(function (ring) {
@@ -31,5 +69,5 @@
     };
   }
 
-  window.ClimaScopeLocator = { grid: grid, create: create, crs: 'EPSG:27700' };
+  window.ClimaScopeLocator = { grid: grid, create: create, interiorPoint: interiorPoint, crs: 'EPSG:27700' };
 })();

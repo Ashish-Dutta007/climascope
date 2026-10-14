@@ -1,5 +1,7 @@
 # Hosted scene study
 
+The [v4.2.2 CC follow-up](../CC_FOLLOWUP_2026-10-14.md) updates the July member scales and shows the PT contribution as negative ET change. It is live in Docker image `sha256:9a37c427174aaff714afc923bda2e5a8430b496316440d0e4bea8a99347001a5`. The public checks and captures in this directory reflect that version. The deployment history below is retained for reference.
+
 The later readability deployment also includes these assets in Docker image
 `sha256:681b1124e270502f1255dcf0daa6b531d7275906a33581733c5adf695b30db71`.
 Their container hashes and public HTML were verified after that rebuild. The

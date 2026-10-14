@@ -78,8 +78,8 @@
   "page_errors": [],
   "csp_errors": [],
   "asset_hashes": {
-    "index.html": "f965bfd07fb6ec2a47c0da4f5026b7aeae4b107c2c39166511f1b972f623dad6",
-    "data.json": "096fd6ad1d5dd6c12f9f1019cf7fa4dc192ae49d2f496e55b8148ae198d83fe6"
+    "index.html": "f2b704b0edadc9b06103e43141bdc5bd085848133f646e738ee0a3c7c4ce9498",
+    "data.json": "de9b7b0d3bbf6dad721dcb214b53846e36705233413cf0566ee87f03cd96c9ee"
   },
   "requests": [
     "https://climascope.hutton.ac.uk/static/immersive/scene-study/index.html",

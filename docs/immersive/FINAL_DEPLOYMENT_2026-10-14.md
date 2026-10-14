@@ -1,6 +1,6 @@
 # Immersive v4.2 deployment, 14 October 2026
 
-Historical v4.2 deployment. The later [readability and locator patch](READABILITY_2026-10-14.md) supersedes the running-image details below.
+Historical v4.2 deployment. The later [CC follow-up](CC_FOLLOWUP_2026-10-14.md) supersedes the running-image details below; the [readability patch](READABILITY_2026-10-14.md) records the intermediate v4.2.1 changes.
 
 The compact layout, change maps, PT evapotranspiration companion and reviewed wording are live.
 

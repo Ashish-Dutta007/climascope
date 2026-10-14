@@ -72,7 +72,9 @@
     el.className = '';
     if (!_wall) {
       el.classList.add('offline');
-      text.textContent = 'No wall display open in this browser. Open /immersive in another window of the same browser.';
+      text.textContent = _channel && _channel.session ? 'Wall offline — waiting for connection' :
+        (_channel && (_channel.local || !window.ClimaScopeRemoteChannel)
+          ? 'Open /immersive in another window of this browser.' : 'Enter the code from the wall to connect.');
       return;
     }
     var shown = _wall.shown;
@@ -109,7 +111,7 @@
   }
 
   // Scotland WGS84 extent used for the sanity clamp.
-  var SCOTLAND_EXTENT = { w: -8.0, s: 54.0, e: 0.5, n: 62.0 };
+  var SCOTLAND_EXTENT = { w: -9.0, s: 54.0, e: 0.5, n: 62.0 };
 
   function saneBounds(name, bounds) {
     if (!bounds) return null;
