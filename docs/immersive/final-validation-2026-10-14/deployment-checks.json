@@ -1,0 +1,46 @@
+{
+  "runtime_file_count": 45,
+  "all_container_hashes_match": true,
+  "image": "sha256:3506baa0b397a3bca4f97fcf28033cedcd33a0e3b337742374e5ae5bca64377f",
+  "container_status": "running",
+  "restarts": 0,
+  "http_checks": {
+    "/": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive/control": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive/preview": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "static/immersive/immersive.js": {
+      "matches_source": true
+    },
+    "static/immersive/immersive.css": {
+      "matches_source": true
+    },
+    "static/immersive/scenes.js": {
+      "matches_source": true
+    },
+    "static/immersive/scenes.css": {
+      "matches_source": true
+    },
+    "static/immersive/control.js": {
+      "matches_source": true
+    },
+    "static/immersive/preview.js": {
+      "matches_source": true
+    },
+    "preview_frame": {
+      "frame_policy": "SAMEORIGIN"
+    }
+  }
+}
