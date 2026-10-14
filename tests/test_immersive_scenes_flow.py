@@ -110,6 +110,12 @@ class SceneFlows(unittest.TestCase):
                 self.assertEqual(overflow, [])
                 if scene == "water-extent":
                     self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), "81.4%")
+                    self.assertEqual(wall.locator('.focus-primary .insight-detail').inner_text(), '1990–2019: 57.4%')
+                    self.assertEqual(wall.locator('.focus-primary .insight-note').count(), 0)
+                if scene == "agreement":
+                    self.assertEqual(wall.locator('.focus-primary .member-count strong').all_text_contents(), ['12'])
+                    self.assertEqual(wall.locator('.focus-primary .member-count span').inner_text(), 'of 12 show lower water balance')
+                    self.assertEqual(wall.locator('.focus-primary .insight-detail').inner_text(), '4.4 to 49.7 mm lower')
                 if scene == "landscape":
                     self.assertEqual(wall.locator(".focus-primary .scene-insight h2").inner_text(), "Mountain, heath & bog")
                     self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), "73.8%")
@@ -134,14 +140,14 @@ class SceneFlows(unittest.TestCase):
         phone.locator("#council-select").select_option("Angus")
         self.wait(wall, lambda: ready("agreement", focus="Prec_sum", region="Angus"), "even member split")
         self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["6", "6"])
-        self.assertEqual(wall.locator(".focus-primary .insight-caption").inner_text(), "12 members · change in July mean, 1990–2019 → 2050–2079")
+        self.assertEqual(wall.locator(".focus-primary .insight-caption").inner_text(), "July mean · 2050–2079 compared with 1990–2019")
         self.assertEqual(wall.locator(".focus-primary .chart-key").last.locator("circle").count(), 2)
 
         # Falkirk March includes a +0.007 mm member: show it at the same precision as the values.
         send({"cmd": "set", "month": 3, "region": {"kind": "council", "name": "Falkirk"}})
         self.wait(wall, lambda: ready("agreement", month=3, region="Falkirk"), "rounded near-zero member")
-        self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["11", "0", "1"])
-        self.assertEqual(wall.locator(".focus-primary .member-count span").last.inner_text(), "no change at 0.1 mm")
+        self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["11", "1"])
+        self.assertEqual(wall.locator(".focus-primary .member-count span").last.inner_text(), "of 12 show no change at 0.1 mm")
         send({"cmd": "set", "month": 7})
         self.wait(wall, lambda: ready("agreement", month=7), "return to July")
 
@@ -199,6 +205,8 @@ class SceneFlows(unittest.TestCase):
             return page.locator("#preview-status").get_attribute("data-status") == "ready" and page.locator("#scene-select").input_value() == scene
 
         self.wait(page, lambda: ready("focus-water"), "fitted preview")
+        self.assertTrue(page.locator('#focus-control').is_hidden())
+        self.assertEqual(page.locator('header p').count(), 0)
         frame = page.frame_locator("#wall-frame")
         self.assertEqual(frame.locator("body").evaluate("()=>[innerWidth,innerHeight,devicePixelRatio]"), [15360, 1200, 1])
         sentinel = '{"v":2,"month":3,"scene":"overview"}'

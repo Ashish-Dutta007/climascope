@@ -22,6 +22,7 @@
   function describe() {
     node('scene-description').textContent = SCENES.get(node('scene-select').value).description;
     node('focus-select').disabled = node('scene-select').value !== 'agreement';
+    node('focus-control').hidden = node('scene-select').value !== 'agreement';
   }
   function fit() {
     var width = +node('wall-size').value, mode = node('preview-scale').value;

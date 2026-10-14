@@ -53,6 +53,7 @@
       document.getElementById('scene-description').textContent = SCENES.get(s.scene).description;
       document.getElementById('focus-select').value = s.focus || 'CWBPT';
       document.getElementById('focus-select').disabled = s.scene !== 'agreement';
+      document.getElementById('focus-control').hidden = s.scene !== 'agreement';
       document.getElementById('btn-tour').classList.toggle('active', s.playing && s.playback === 'tour');
       document.getElementById('btn-annual').classList.toggle('active', s.playing && s.playback !== 'tour');
       document.getElementById('tour-progress').textContent = s.playback === 'tour'

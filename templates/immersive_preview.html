@@ -8,13 +8,12 @@
 </head>
 <body>
   <header><a href="/">ClimaScope</a><h1>Wall preview</h1>
-    <p>Preview the wall without changing the suite display.</p>
   </header>
   <main>
     <div class="preview-controls">
       <label>Wall size<select id="wall-size"><option value="11514">Open · 11,514 × 1,200</option><option value="15360">Full wrap · 15,360 × 1,200</option></select></label>
       <label>View<select id="scene-select"></select></label>
-      <label>Metric<select id="focus-select"><option value="CWBPT">Climate water balance</option><option value="Prec_sum">Precipitation</option><option value="Tmax_mean">Mean daily maximum temperature</option></select></label>
+      <label id="focus-control" hidden>Metric<select id="focus-select"><option value="CWBPT">Climate water balance</option><option value="Prec_sum">Precipitation</option><option value="Tmax_mean">Mean daily maximum temperature</option></select></label>
       <label>Month<select id="month-select"></select></label>
       <label>Ensemble<select id="member-select"><option value="mean">Ensemble mean</option></select></label>
       <label>Preview size<select id="preview-scale"><option value="fit">Fit whole wall</option><option value="0.25">25% · scroll to inspect</option><option value="0.5">50% · scroll to inspect</option><option value="1">100% · actual pixels</option></select></label>

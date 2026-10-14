@@ -1,5 +1,7 @@
 # Immersive v4.2 deployment, 14 October 2026
 
+Historical v4.2 deployment. The later [readability and locator patch](READABILITY_2026-10-14.md) supersedes the running-image details below.
+
 The compact layout, change maps, PT evapotranspiration companion and reviewed wording are live.
 
 - Wall: https://climascope.hutton.ac.uk/immersive

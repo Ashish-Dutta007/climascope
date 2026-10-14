@@ -633,6 +633,7 @@
           if (name && f.geometry) { _councilGeom[name] = f.geometry; geoms.push(f.geometry); }
         });
         _scotlandRings = indexRings(geoms);
+        _locatorProjection = window.ClimaScopeLocator.create(_scotlandRings.map(function (r) { return r.ring; }), LOCATOR_SIZE);
         _locatorContextPath = geoms.map(geometryToPath).filter(Boolean).join(' ');
       })
       .catch(function (e) { console.warn('[immersive] council geometry fetch failed:', e); });
@@ -674,16 +675,11 @@
 
   // ── Locator inset ──────────────────────────────────────────────────
 
-  var LOCATOR_BOX  = { w: -7.9, s: 54.55, e: -0.55, n: 60.95 };
   var LOCATOR_SIZE = { w: 182, h: 232, pad: 8 };
+  var _locatorProjection = window.ClimaScopeLocator.create(null, LOCATOR_SIZE);
 
   function projectLocator(coord) {
-    var usableW = LOCATOR_SIZE.w - LOCATOR_SIZE.pad * 2;
-    var usableH = LOCATOR_SIZE.h - LOCATOR_SIZE.pad * 2;
-    var scale = Math.min(usableW / (LOCATOR_BOX.e - LOCATOR_BOX.w), usableH / (LOCATOR_BOX.n - LOCATOR_BOX.s));
-    var ox = LOCATOR_SIZE.pad + (usableW - (LOCATOR_BOX.e - LOCATOR_BOX.w) * scale) * 0.5;
-    var oy = LOCATOR_SIZE.pad + (usableH - (LOCATOR_BOX.n - LOCATOR_BOX.s) * scale) * 0.5;
-    return [ox + (coord[0] - LOCATOR_BOX.w) * scale, oy + (LOCATOR_BOX.n - coord[1]) * scale];
+    return _locatorProjection.point(coord);
   }
 
   function ringToPath(ring) {
@@ -706,7 +702,7 @@
         '<circle class="locator-dot" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="4.2"></circle>'
       : '';
     var regionPath = geometryToPath(region.geometry);
-    return '<svg viewBox="0 0 ' + LOCATOR_SIZE.w + ' ' + LOCATOR_SIZE.h + '" role="img" aria-label="Selected region location in Scotland">' +
+    return '<svg viewBox="0 0 ' + LOCATOR_SIZE.w + ' ' + LOCATOR_SIZE.h + '" data-crs="EPSG:27700" role="img" aria-label="Selected region location in Scotland">' +
       (_locatorContextPath ? '<path class="locator-context" d="' + _locatorContextPath + '"></path>' : '') +
       (regionPath ? '<path class="locator-region" d="' + regionPath + '"></path>' : '') +
       dot + '</svg>';
@@ -1004,12 +1000,12 @@
       });
       return { values: med, low: low, high: high, color: p.color, dash: p.dash };
     });
-    ps.absName.textContent = 'Change across members';
-    ps.absSub.textContent = 'Band: full range · line: median · ' + ps.panel.units;
+    ps.absName.textContent = ps.panel.title + ' change';
+    ps.absSub.textContent = 'Line: median · shaded: lowest to highest · ' + ps.panel.units;
     ps.absKey.innerHTML = keyHTML(FUTURES);
     ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: series, sel: mi, zero: true, signed: true });
-    ps.deltaName.textContent = MONTH_LONG[frame.month] + ' · each ensemble member';
-    ps.deltaSub.textContent = 'Regional change from baseline · ' + ps.panel.units;
+    ps.deltaName.textContent = MONTH_LONG[frame.month] + ' · each member';
+    ps.deltaSub.textContent = 'Change from 1990–2019 · ' + ps.panel.units;
     ps.deltaKey.innerHTML = keyHTML(FUTURES, 'dot');
     var W = ps.deltaPlot.clientWidth, H = ps.deltaPlot.clientHeight, f = 25 * _u, L = 100 * _u, R = 32 * _u, T = 24 * _u, B = 55 * _u;
     var vals = [0]; FUTURES.forEach(function (p) { data[p.id].forEach(function (row) { row.forEach(function (v) { if (v != null) vals.push(v); }); }); });
@@ -1106,9 +1102,7 @@
         var b = base && base[mi], f = later && later[mi];
         big = f == null ? '—' : f.toFixed(1); unit = f == null ? '' : '%';
         caption = 'of valid cells with water balance below zero · 2050–2079';
-        detail = b == null || f == null ? 'No valid climate cells in this region' : '1990–2019: ' + b.toFixed(1) + '%<br>' +
-          fmtDelta(f - b) + ' percentage points';
-        note = 'Indicator, not a drought classification.';
+        detail = b == null || f == null ? 'No valid climate cells in this region' : '1990–2019: ' + b.toFixed(1) + '%';
       } else if (scene.kind === 'landscape') {
         // Use the largest mapped class, independent of its climate result.
         var largest = landcoverClasses(frame)[0];
@@ -1117,7 +1111,7 @@
         heading = largest ? largest.name : 'Land cover';
         big = futureShare == null ? '—' : futureShare.toFixed(1); unit = futureShare == null ? '' : '%';
         caption = largest ? 'of this class’s area in cells with water balance below zero · 2050–2079' : 'No mapped land cover on valid climate cells';
-        detail = largest ? '1990–2019: ' + baselineShare.toFixed(1) + '%<br>' + fmtDelta(futureShare - baselineShare) + ' percentage points' : '';
+        detail = largest ? '1990–2019: ' + baselineShare.toFixed(1) + '%' : '';
         note = (largest ? 'Largest mapped class. ' : '') + 'Current land cover, same for all periods.';
       } else if (scene.kind === 'agreement') {
         var row = frame.extra.agreement.regions[frame.rid][PERIODS[2].id][mi];
@@ -1125,14 +1119,21 @@
         var positive = valid.filter(function (v) { return round1(v) > 0; }).length;
         var negative = valid.filter(function (v) { return round1(v) < 0; }).length;
         big = '—'; unit = '';
-        var counts = [[positive, 'increase'], [negative, 'decrease']];
+        var metricName = ps.panel.id === 'CWBPT' ? 'water balance' : ps.panel.title.toLowerCase();
+        var counts = [[positive, 'higher ' + metricName], [negative, 'lower ' + metricName]];
         var nearZero = valid.length - positive - negative;
         if (nearZero) counts.push([nearZero, 'no change at 0.1 ' + ps.panel.units]);
-        if (valid.length) countHTML = counts.map(function (item) {
-            return '<div class="member-count"><strong>' + item[0] + '</strong><span>' + esc(item[1]) + '</span></div>';
+        if (valid.length) countHTML = counts.filter(function (item) { return item[0] > 0; }).map(function (item) {
+            return '<div class="member-count"><strong>' + item[0] + '</strong> <span>of ' + valid.length + ' show ' + esc(item[1]) + '</span></div>';
           }).join('');
-        caption = valid.length ? valid.length + ' members · change in ' + MONTH_LONG[frame.month] + ' mean, 1990–2019 → 2050–2079' : 'No member data in this region';
-        detail = valid.length ? 'Change range<br>' + fmtDelta(Math.min.apply(null, valid)) + ' to ' + fmtDelta(Math.max.apply(null, valid)) + ' ' + ps.panel.units : '';
+        caption = valid.length ? MONTH_LONG[frame.month] + ' mean · 2050–2079 compared with 1990–2019' : 'No member data in this region';
+        detail = '';
+        if (valid.length) {
+          var lo = round1(Math.min.apply(null, valid)), hi = round1(Math.max.apply(null, valid));
+          if (hi < 0) detail = fmtAbs(-hi) + ' to ' + fmtAbs(-lo) + ' ' + ps.panel.units + ' lower';
+          else if (lo > 0) detail = fmtAbs(lo) + ' to ' + fmtAbs(hi) + ' ' + ps.panel.units + ' higher';
+          else detail = 'Change: ' + fmtDelta(lo) + ' to ' + fmtDelta(hi) + ' ' + ps.panel.units;
+        }
         note = 'Maps: ' + ensembleLabel(frame.member) + '. Charts: all members.';
         if (nearZero) note += ' Counts rounded to 0.1 ' + ps.panel.units + '.';
       }

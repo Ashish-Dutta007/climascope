@@ -2,6 +2,8 @@
 
 This update follows both CC reviews. It replaces the layout described in the v4.1 scene notes. See the [release record](FINAL_DEPLOYMENT_2026-10-14.md) for deployment and rollback.
 
+The later [copy and locator update](READABILITY_2026-10-14.md) simplifies the analytical headlines and corrects the small Scotland inset.
+
 ## Layout and controls
 
 The main comparison is 4,300 wall pixels wide in both room configurations. Groups touch, with thin borders; unused wall is nearly black (`#03040a`). Charts stay 820 pixels wide. The nine-map overview is unchanged apart from spacing, borders and wording.
@@ -9,7 +11,7 @@ The main comparison is 4,300 wall pixels wide in both room configurations. Group
 - Water balance, Precipitation and Mean daily maximum temperature: three absolute period maps followed by a 2050–2079 minus 1990–2019 change map. The repeated headline card is removed. Two 1,600-pixel companion panels sit against the main group, giving six maps overall.
 - Water balance's companions are precipitation and PT evapotranspiration. Their three means appear once beneath their later-period maps. PT remains abbreviated.
 - Negative water balance, Land cover and Member spread: retain their distinct headline and charts, with baseline, 2050–2079 and change maps. The 2020–2049 values remain in the charts. No companion panels.
-- Member counts always show increases and decreases; the zero row appears only when needed and reads “no change at 0.1 mm/°C”. A note identifies rounding. The caption names the selected month and comparison periods.
+- Member counts show the non-empty higher/lower directions, name the metric and give the member total. A rounded zero row appears only when needed. The caption names the selected month and comparison periods.
 
 The phone controller, month loop, scene loop and independent desktop preview use the existing URLs and saved selections. Manual selection pauses playback. The wall remains responsible for playback and readiness.
 
