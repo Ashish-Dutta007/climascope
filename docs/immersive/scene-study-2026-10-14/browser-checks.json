@@ -1,0 +1,1045 @@
+{
+  "records": [
+    {
+      "view": "components",
+      "metric": "CWBPT",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221212.2 mm\n\nScotland mean change",
+          "left": 3679,
+          "right": 4579,
+          "width": 900,
+          "overflow": false
+        },
+        {
+          "text": "PT evapotranspiration\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+15.9 mm\n\nScotland mean change",
+          "left": 4699,
+          "right": 5599,
+          "width": 900,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221228.1 mm\n\nScotland mean change",
+          "left": 5719,
+          "right": 6619,
+          "width": 900,
+          "overflow": false
+        }
+      ],
+      "count": 3,
+      "chart": 1
+    },
+    {
+      "view": "components",
+      "metric": "CWBPT",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221212.2 mm\n\nScotland mean change",
+          "left": 5602,
+          "right": 6502,
+          "width": 900,
+          "overflow": false
+        },
+        {
+          "text": "PT evapotranspiration\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+15.9 mm\n\nScotland mean change",
+          "left": 6622,
+          "right": 7522,
+          "width": 900,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\n\nJuly \u00b7 ensemble mean\n2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221228.1 mm\n\nScotland mean change",
+          "left": 7642,
+          "right": 8542,
+          "width": 900,
+          "overflow": false
+        }
+      ],
+      "count": 3,
+      "chart": 1
+    },
+    {
+      "view": "months",
+      "metric": "Prec_sum",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\nJanuary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+25.5 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 952,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nFebruary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+57.1 mm\n\nScotland mean change",
+          "left": 952,
+          "right": 1904,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMarch\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+10.2 mm\n\nScotland mean change",
+          "left": 1903,
+          "right": 2855,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nApril\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+25.1 mm\n\nScotland mean change",
+          "left": 2855,
+          "right": 3807,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMay\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u22123.8 mm\n\nScotland mean change",
+          "left": 3806,
+          "right": 4758,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nJune\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u22128.9 mm\n\nScotland mean change",
+          "left": 4758,
+          "right": 5710,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nJuly\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221212.2 mm\n\nScotland mean change",
+          "left": 5709,
+          "right": 6661,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nAugust\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221234.5 mm\n\nScotland mean change",
+          "left": 6661,
+          "right": 7613,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nSeptember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221245.0 mm\n\nScotland mean change",
+          "left": 7612,
+          "right": 8564,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nOctober\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221225.3 mm\n\nScotland mean change",
+          "left": 8564,
+          "right": 9516,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nNovember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+3.7 mm\n\nScotland mean change",
+          "left": 9515,
+          "right": 10467,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nDecember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+21.2 mm\n\nScotland mean change",
+          "left": 10467,
+          "right": 11419,
+          "width": 952,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "months",
+      "metric": "Prec_sum",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\nJanuary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+25.5 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 1272,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nFebruary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+57.1 mm\n\nScotland mean change",
+          "left": 1272,
+          "right": 2544,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMarch\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+10.2 mm\n\nScotland mean change",
+          "left": 2544,
+          "right": 3816,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nApril\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+25.1 mm\n\nScotland mean change",
+          "left": 3816,
+          "right": 5088,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMay\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u22123.8 mm\n\nScotland mean change",
+          "left": 5088,
+          "right": 6360,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nJune\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u22128.9 mm\n\nScotland mean change",
+          "left": 6360,
+          "right": 7632,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nJuly\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221212.2 mm\n\nScotland mean change",
+          "left": 7632,
+          "right": 8904,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nAugust\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221234.5 mm\n\nScotland mean change",
+          "left": 8904,
+          "right": 10176,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nSeptember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221245.0 mm\n\nScotland mean change",
+          "left": 10176,
+          "right": 11448,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nOctober\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n\u221225.3 mm\n\nScotland mean change",
+          "left": 11448,
+          "right": 12720,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nNovember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+3.7 mm\n\nScotland mean change",
+          "left": 12720,
+          "right": 13992,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nDecember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u2212160\n0\n+160 mm\n\n+21.2 mm\n\nScotland mean change",
+          "left": 13992,
+          "right": 15264,
+          "width": 1272,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "months",
+      "metric": "Tmax_mean",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Mean daily maximum temperature\nJanuary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.0 \u00b0C\n\nScotland mean change",
+          "left": 0,
+          "right": 952,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nFebruary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.0 \u00b0C\n\nScotland mean change",
+          "left": 952,
+          "right": 1904,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMarch\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.1 \u00b0C\n\nScotland mean change",
+          "left": 1903,
+          "right": 2855,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nApril\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.2 \u00b0C\n\nScotland mean change",
+          "left": 2855,
+          "right": 3807,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMay\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.6 \u00b0C\n\nScotland mean change",
+          "left": 3806,
+          "right": 4758,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nJune\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.4 \u00b0C\n\nScotland mean change",
+          "left": 4758,
+          "right": 5710,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nJuly\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+4.8 \u00b0C\n\nScotland mean change",
+          "left": 5709,
+          "right": 6661,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nAugust\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+5.3 \u00b0C\n\nScotland mean change",
+          "left": 6661,
+          "right": 7613,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nSeptember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+4.4 \u00b0C\n\nScotland mean change",
+          "left": 7612,
+          "right": 8564,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nOctober\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.6 \u00b0C\n\nScotland mean change",
+          "left": 8564,
+          "right": 9516,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nNovember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.9 \u00b0C\n\nScotland mean change",
+          "left": 9515,
+          "right": 10467,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nDecember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+2.9 \u00b0C\n\nScotland mean change",
+          "left": 10467,
+          "right": 11419,
+          "width": 952,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "months",
+      "metric": "Tmax_mean",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Mean daily maximum temperature\nJanuary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.0 \u00b0C\n\nScotland mean change",
+          "left": 0,
+          "right": 1272,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nFebruary\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.0 \u00b0C\n\nScotland mean change",
+          "left": 1272,
+          "right": 2544,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMarch\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.1 \u00b0C\n\nScotland mean change",
+          "left": 2544,
+          "right": 3816,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nApril\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.2 \u00b0C\n\nScotland mean change",
+          "left": 3816,
+          "right": 5088,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMay\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.6 \u00b0C\n\nScotland mean change",
+          "left": 5088,
+          "right": 6360,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nJune\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.4 \u00b0C\n\nScotland mean change",
+          "left": 6360,
+          "right": 7632,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nJuly\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+4.8 \u00b0C\n\nScotland mean change",
+          "left": 7632,
+          "right": 8904,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nAugust\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+5.3 \u00b0C\n\nScotland mean change",
+          "left": 8904,
+          "right": 10176,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nSeptember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+4.4 \u00b0C\n\nScotland mean change",
+          "left": 10176,
+          "right": 11448,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nOctober\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.6 \u00b0C\n\nScotland mean change",
+          "left": 11448,
+          "right": 12720,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nNovember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+3.9 \u00b0C\n\nScotland mean change",
+          "left": 12720,
+          "right": 13992,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nDecember\n\n2050\u20132079 \u2212 1990\u20132019\nEnsemble mean\n\n\u22126\n0\n+6 \u00b0C\n\n+2.9 \u00b0C\n\nScotland mean change",
+          "left": 13992,
+          "right": 15264,
+          "width": 1272,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "Prec_sum",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221211.4 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 952,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22120.6 mm\n\nScotland mean change",
+          "left": 952,
+          "right": 1904,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+9.0 mm\n\nScotland mean change",
+          "left": 1903,
+          "right": 2855,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221224.7 mm\n\nScotland mean change",
+          "left": 2855,
+          "right": 3807,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22129.7 mm\n\nScotland mean change",
+          "left": 3806,
+          "right": 4758,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221231.4 mm\n\nScotland mean change",
+          "left": 4758,
+          "right": 5710,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22128.4 mm\n\nScotland mean change",
+          "left": 5709,
+          "right": 6661,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221213.1 mm\n\nScotland mean change",
+          "left": 6661,
+          "right": 7613,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+0.5 mm\n\nScotland mean change",
+          "left": 7612,
+          "right": 8564,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221219.2 mm\n\nScotland mean change",
+          "left": 8564,
+          "right": 9516,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221225.5 mm\n\nScotland mean change",
+          "left": 9515,
+          "right": 10467,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221212.1 mm\n\nScotland mean change",
+          "left": 10467,
+          "right": 11419,
+          "width": 952,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "Prec_sum",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Precipitation\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221211.4 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 1272,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22120.6 mm\n\nScotland mean change",
+          "left": 1272,
+          "right": 2544,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+9.0 mm\n\nScotland mean change",
+          "left": 2544,
+          "right": 3816,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221224.7 mm\n\nScotland mean change",
+          "left": 3816,
+          "right": 5088,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22129.7 mm\n\nScotland mean change",
+          "left": 5088,
+          "right": 6360,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221231.4 mm\n\nScotland mean change",
+          "left": 6360,
+          "right": 7632,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22128.4 mm\n\nScotland mean change",
+          "left": 7632,
+          "right": 8904,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221213.1 mm\n\nScotland mean change",
+          "left": 8904,
+          "right": 10176,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n+0.5 mm\n\nScotland mean change",
+          "left": 10176,
+          "right": 11448,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221219.2 mm\n\nScotland mean change",
+          "left": 11448,
+          "right": 12720,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221225.5 mm\n\nScotland mean change",
+          "left": 12720,
+          "right": 13992,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Precipitation\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221212.1 mm\n\nScotland mean change",
+          "left": 13992,
+          "right": 15264,
+          "width": 1272,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "CWBPT",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Water balance\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221230.3 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 952,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221216.4 mm\n\nScotland mean change",
+          "left": 952,
+          "right": 1904,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22124.4 mm\n\nScotland mean change",
+          "left": 1903,
+          "right": 2855,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221240.1 mm\n\nScotland mean change",
+          "left": 2855,
+          "right": 3807,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.8 mm\n\nScotland mean change",
+          "left": 3806,
+          "right": 4758,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221249.7 mm\n\nScotland mean change",
+          "left": 4758,
+          "right": 5710,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.4 mm\n\nScotland mean change",
+          "left": 5709,
+          "right": 6661,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221228.7 mm\n\nScotland mean change",
+          "left": 6661,
+          "right": 7613,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221217.7 mm\n\nScotland mean change",
+          "left": 7612,
+          "right": 8564,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221237.2 mm\n\nScotland mean change",
+          "left": 8564,
+          "right": 9516,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221245.1 mm\n\nScotland mean change",
+          "left": 9515,
+          "right": 10467,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.7 mm\n\nScotland mean change",
+          "left": 10467,
+          "right": 11419,
+          "width": 952,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "CWBPT",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Water balance\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221230.3 mm\n\nScotland mean change",
+          "left": 0,
+          "right": 1272,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221216.4 mm\n\nScotland mean change",
+          "left": 1272,
+          "right": 2544,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u22124.4 mm\n\nScotland mean change",
+          "left": 2544,
+          "right": 3816,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221240.1 mm\n\nScotland mean change",
+          "left": 3816,
+          "right": 5088,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.8 mm\n\nScotland mean change",
+          "left": 5088,
+          "right": 6360,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221249.7 mm\n\nScotland mean change",
+          "left": 6360,
+          "right": 7632,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.4 mm\n\nScotland mean change",
+          "left": 7632,
+          "right": 8904,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221228.7 mm\n\nScotland mean change",
+          "left": 8904,
+          "right": 10176,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221217.7 mm\n\nScotland mean change",
+          "left": 10176,
+          "right": 11448,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221237.2 mm\n\nScotland mean change",
+          "left": 11448,
+          "right": 12720,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221245.1 mm\n\nScotland mean change",
+          "left": 12720,
+          "right": 13992,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Water balance\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u2212160\n0\n+160 mm\n\n\u221222.7 mm\n\nScotland mean change",
+          "left": 13992,
+          "right": 15264,
+          "width": 1272,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "Tmax_mean",
+      "width": "11514",
+      "wall": {
+        "width": 11514,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Mean daily maximum temperature\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.1 \u00b0C\n\nScotland mean change",
+          "left": 0,
+          "right": 952,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.6 \u00b0C\n\nScotland mean change",
+          "left": 952,
+          "right": 1904,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.7 \u00b0C\n\nScotland mean change",
+          "left": 1903,
+          "right": 2855,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.6 \u00b0C\n\nScotland mean change",
+          "left": 2855,
+          "right": 3807,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+3.7 \u00b0C\n\nScotland mean change",
+          "left": 3806,
+          "right": 4758,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.9 \u00b0C\n\nScotland mean change",
+          "left": 4758,
+          "right": 5710,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.2 \u00b0C\n\nScotland mean change",
+          "left": 5709,
+          "right": 6661,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.0 \u00b0C\n\nScotland mean change",
+          "left": 6661,
+          "right": 7613,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+6.0 \u00b0C\n\nScotland mean change",
+          "left": 7612,
+          "right": 8564,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.7 \u00b0C\n\nScotland mean change",
+          "left": 8564,
+          "right": 9516,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.3 \u00b0C\n\nScotland mean change",
+          "left": 9515,
+          "right": 10467,
+          "width": 952,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+3.4 \u00b0C\n\nScotland mean change",
+          "left": 10467,
+          "right": 11419,
+          "width": 952,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    },
+    {
+      "view": "members",
+      "metric": "Tmax_mean",
+      "width": "15360",
+      "wall": {
+        "width": 15360,
+        "height": 1200
+      },
+      "cards": [
+        {
+          "text": "Mean daily maximum temperature\nMember 01\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.1 \u00b0C\n\nScotland mean change",
+          "left": 0,
+          "right": 1272,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 04\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.6 \u00b0C\n\nScotland mean change",
+          "left": 1272,
+          "right": 2544,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 05\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.7 \u00b0C\n\nScotland mean change",
+          "left": 2544,
+          "right": 3816,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 06\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.6 \u00b0C\n\nScotland mean change",
+          "left": 3816,
+          "right": 5088,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 07\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+3.7 \u00b0C\n\nScotland mean change",
+          "left": 5088,
+          "right": 6360,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 08\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.9 \u00b0C\n\nScotland mean change",
+          "left": 6360,
+          "right": 7632,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 09\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+4.2 \u00b0C\n\nScotland mean change",
+          "left": 7632,
+          "right": 8904,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 10\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.0 \u00b0C\n\nScotland mean change",
+          "left": 8904,
+          "right": 10176,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 11\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+6.0 \u00b0C\n\nScotland mean change",
+          "left": 10176,
+          "right": 11448,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 12\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.7 \u00b0C\n\nScotland mean change",
+          "left": 11448,
+          "right": 12720,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 13\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+5.3 \u00b0C\n\nScotland mean change",
+          "left": 12720,
+          "right": 13992,
+          "width": 1272,
+          "overflow": false
+        },
+        {
+          "text": "Mean daily maximum temperature\nMember 15\n\nJuly \u00b7 2050\u20132079 \u2212 1990\u20132019\n\n\u22126\n0\n+6 \u00b0C\n\n+3.4 \u00b0C\n\nScotland mean change",
+          "left": 13992,
+          "right": 15264,
+          "width": 1272,
+          "overflow": false
+        }
+      ],
+      "count": 12,
+      "chart": 0
+    }
+  ],
+  "page_errors": [],
+  "file_url_load": true,
+  "interaction_checks": true
+}

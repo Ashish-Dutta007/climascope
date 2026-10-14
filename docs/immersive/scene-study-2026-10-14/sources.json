@@ -1,0 +1,944 @@
+{
+  "climate_version": "29360d85ba350fe2",
+  "grid": {
+    "width": 414,
+    "height": 688,
+    "cells": 78820,
+    "crs": "EPSG:27700"
+  },
+  "grid_source": "data/grid.parquet",
+  "maps": 84,
+  "frames": {
+    "CWBPT:mean:0": {
+      "offset": 0,
+      "mean": 24.274,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:1": {
+      "offset": 78820,
+      "mean": 56.214,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:2": {
+      "offset": 157640,
+      "mean": 6.663,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:3": {
+      "offset": 236460,
+      "mean": 15.603,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:4": {
+      "offset": 315280,
+      "mean": -19.089,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:5": {
+      "offset": 394100,
+      "mean": -25.275,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:6": {
+      "offset": 472920,
+      "mean": -28.113,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:7": {
+      "offset": 551740,
+      "mean": -48.84,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:8": {
+      "offset": 630560,
+      "mean": -55.713,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:9": {
+      "offset": 709380,
+      "mean": -29.565,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:10": {
+      "offset": 788200,
+      "mean": 1.502,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:mean:11": {
+      "offset": 867020,
+      "mean": 19.807,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:0": {
+      "offset": 945840,
+      "mean": 25.518,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:1": {
+      "offset": 1024660,
+      "mean": 57.075,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:2": {
+      "offset": 1103480,
+      "mean": 10.159,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:3": {
+      "offset": 1182300,
+      "mean": 25.099,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:4": {
+      "offset": 1261120,
+      "mean": -3.765,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:5": {
+      "offset": 1339940,
+      "mean": -8.908,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:6": {
+      "offset": 1418760,
+      "mean": -12.213,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:7": {
+      "offset": 1497580,
+      "mean": -34.529,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:8": {
+      "offset": 1576400,
+      "mean": -44.996,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:9": {
+      "offset": 1655220,
+      "mean": -25.266,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:10": {
+      "offset": 1734040,
+      "mean": 3.737,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:mean:11": {
+      "offset": 1812860,
+      "mean": 21.176,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:0": {
+      "offset": 1891680,
+      "mean": 2.975,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:1": {
+      "offset": 1970500,
+      "mean": 2.991,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:2": {
+      "offset": 2049320,
+      "mean": 3.117,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:3": {
+      "offset": 2128140,
+      "mean": 3.187,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:4": {
+      "offset": 2206960,
+      "mean": 3.597,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:5": {
+      "offset": 2285780,
+      "mean": 3.432,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:6": {
+      "offset": 2364600,
+      "mean": 4.782,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:7": {
+      "offset": 2443420,
+      "mean": 5.257,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:8": {
+      "offset": 2522240,
+      "mean": 4.412,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:9": {
+      "offset": 2601060,
+      "mean": 3.6,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:10": {
+      "offset": 2679880,
+      "mean": 3.871,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:mean:11": {
+      "offset": 2758700,
+      "mean": 2.92,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:0": {
+      "offset": 2837520,
+      "mean": 1.244,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:1": {
+      "offset": 2916340,
+      "mean": 0.861,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:2": {
+      "offset": 2995160,
+      "mean": 3.496,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:3": {
+      "offset": 3073980,
+      "mean": 9.495,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:4": {
+      "offset": 3152800,
+      "mean": 15.323,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:5": {
+      "offset": 3231620,
+      "mean": 16.367,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:6": {
+      "offset": 3310440,
+      "mean": 15.9,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:7": {
+      "offset": 3389260,
+      "mean": 14.312,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:8": {
+      "offset": 3468080,
+      "mean": 10.717,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:9": {
+      "offset": 3546900,
+      "mean": 4.298,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:10": {
+      "offset": 3625720,
+      "mean": 2.235,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "ETPT_sum:mean:11": {
+      "offset": 3704540,
+      "mean": 1.369,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:01:6": {
+      "offset": 3783360,
+      "mean": -30.266,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:04:6": {
+      "offset": 3862180,
+      "mean": -16.367,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:05:6": {
+      "offset": 3941000,
+      "mean": -4.368,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:06:6": {
+      "offset": 4019820,
+      "mean": -40.084,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:07:6": {
+      "offset": 4098640,
+      "mean": -22.76,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:08:6": {
+      "offset": 4177460,
+      "mean": -49.682,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:09:6": {
+      "offset": 4256280,
+      "mean": -22.4,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:10:6": {
+      "offset": 4335100,
+      "mean": -28.741,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:11:6": {
+      "offset": 4413920,
+      "mean": -17.695,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:12:6": {
+      "offset": 4492740,
+      "mean": -37.179,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:13:6": {
+      "offset": 4571560,
+      "mean": -45.104,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "CWBPT:15:6": {
+      "offset": 4650380,
+      "mean": -22.707,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:01:6": {
+      "offset": 4729200,
+      "mean": -11.402,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:04:6": {
+      "offset": 4808020,
+      "mean": -0.647,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:05:6": {
+      "offset": 4886840,
+      "mean": 9.049,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:06:6": {
+      "offset": 4965660,
+      "mean": -24.745,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:07:6": {
+      "offset": 5044480,
+      "mean": -9.685,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:08:6": {
+      "offset": 5123300,
+      "mean": -31.388,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:09:6": {
+      "offset": 5202120,
+      "mean": -8.405,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:10:6": {
+      "offset": 5280940,
+      "mean": -13.081,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:11:6": {
+      "offset": 5359760,
+      "mean": 0.542,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:12:6": {
+      "offset": 5438580,
+      "mean": -19.205,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:13:6": {
+      "offset": 5517400,
+      "mean": -25.496,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Prec_sum:15:6": {
+      "offset": 5596220,
+      "mean": -12.097,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:01:6": {
+      "offset": 5675040,
+      "mean": 5.072,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:04:6": {
+      "offset": 5753860,
+      "mean": 4.621,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:05:6": {
+      "offset": 5832680,
+      "mean": 4.683,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:06:6": {
+      "offset": 5911500,
+      "mean": 4.645,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:07:6": {
+      "offset": 5990320,
+      "mean": 3.739,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:08:6": {
+      "offset": 6069140,
+      "mean": 4.944,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:09:6": {
+      "offset": 6147960,
+      "mean": 4.248,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:10:6": {
+      "offset": 6226780,
+      "mean": 4.982,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:11:6": {
+      "offset": 6305600,
+      "mean": 6.041,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:12:6": {
+      "offset": 6384420,
+      "mean": 5.663,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:13:6": {
+      "offset": 6463240,
+      "mean": 5.299,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    },
+    "Tmax_mean:15:6": {
+      "offset": 6542060,
+      "mean": 3.446,
+      "mapped_valid_cells": 78820,
+      "source_cells": 78855,
+      "unmapped_source_cells": 35
+    }
+  },
+  "map_encoding": "raw proj_value minus obs_value, clipped to the fixed map domain; 255 colour bins, 0 = no data",
+  "water_component_scale": "+/-160 mm for precipitation, ET PT and CWB PT",
+  "other_scales": "current production domains: precipitation/CWB +/-160 mm; Tmax +/-6 C",
+  "number_source": "current v2 regional summaries, common-valid-support means, differenced before display rounding",
+  "geometry_note": "Available grid.parquet has 78,820 cells. Source climate files have 78,855; 35 lack geometry in this study. National numbers use the full official regional support, not a mean of the displayed subset.",
+  "sources": [
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=1.parquet",
+      "sha256": "9794880be947fa8500ba8c4e84b37d3686ef56c0291f0910e12e883154e52ca2"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=2.parquet",
+      "sha256": "584b6badf5473284754b84579e670066253923ce6de53d114e4e3d3a39276bb9"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=3.parquet",
+      "sha256": "5c3eda48714c59f042fdb2d17b0895477bf398cc8dbb45ce6c37fae00349d61e"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=4.parquet",
+      "sha256": "8e6cd6b3fb5f791c316fd6a6d375cf0058799922059085cf780fcf4f1763b31a"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=5.parquet",
+      "sha256": "0f66af343633493ad51c231d6fc3ced71c9d6ddc301a12d67b59f94ffadad8d1"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=6.parquet",
+      "sha256": "6280104df587cedaccc8ca0f0340f07f807f665d70aa0a61490b1016137d18d2"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7.parquet",
+      "sha256": "fd8725988e2cb80a5ccd073e6f87bcfb4a32b55edcf2ca2658ed471624a66151"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=8.parquet",
+      "sha256": "3a0a2dafec739ba0ed954e340b7489d3524a23a867453dbbaac8bf2e9774b034"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=9.parquet",
+      "sha256": "4ec8f1687b9125ec2bc13be8478dec0b88ff1afd534c42e6bfbbb6b51044f086"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=10.parquet",
+      "sha256": "746da13f99c0361b50294c71c1c273158ca553f35911f5c98096b59f2eb58ab3"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=11.parquet",
+      "sha256": "69de105e1ee10bfb9fe0ceab8f90aede8f8becb5b8296dbce273a61d15f116a1"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=12.parquet",
+      "sha256": "68a29831e5356e9563a76e1cf1f161ad56c2d0947b5c1f7d2cabe5f2f4993dd9"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=1.parquet",
+      "sha256": "8dbf0b4052e1675b8aad32a6c285ab53bcf8ef1f01a4282e8ff854fb2c1fd69a"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=2.parquet",
+      "sha256": "a497cd926f57bdf9a1d8442ecafe95db52ef9bec23457012b9fc7751e53bc0a5"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=3.parquet",
+      "sha256": "2cf5998b4cf114309a8d5950c8c6b06f0f98ec64eb8b383c02e6c27fcb387c37"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=4.parquet",
+      "sha256": "a7c2b80f986180f993e4e8e3019752754f2bfb6505d90a8825f921906ffb6b88"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=5.parquet",
+      "sha256": "a62826933ff7779e5940d81764a283a772937d9d0368c84917a351d387ca5c1e"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=6.parquet",
+      "sha256": "ce0ef3fc128638fc7de6d1705e7ff3eeb3b6ec5f8ac9129f44c2691bae048238"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7.parquet",
+      "sha256": "ececa2387dd5af47e928b129b672b9b3807a3ebfb5ce3c3ed0bd5f75ff7d247c"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=8.parquet",
+      "sha256": "754e321a3f79ed9eed34a0c8dbfd4d89154128e55abe141e20d76906f553a65b"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=9.parquet",
+      "sha256": "ba62ea6ea4320032923070321438a7dc3bdaaf33ba923e9c092e7ec5d360f09d"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=10.parquet",
+      "sha256": "3ee2ba6f5946b98aace6f36656325488346700b8acc7dd968ded36bff56f77bb"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=11.parquet",
+      "sha256": "8312c1f71e712d7e2e37571803bb78132b4f69f2d672d84b04713d69be052967"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=12.parquet",
+      "sha256": "c3ddb6f1634126f6991478953146c358777eb811cb67e9b108c5951724520cc7"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=1.parquet",
+      "sha256": "1925544d1da478e054cfba4cbb63a8f58ed0890ce210dfcc5da4f9c799b25528"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=2.parquet",
+      "sha256": "be56c74ed535e379dc079876b29a0bd7055818c69fd19097fe3e044d290fc8d5"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=3.parquet",
+      "sha256": "de15ac32b2071d9384d198116ddd27fd90f49c7673be8f4c47e3474f06c0c7f2"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=4.parquet",
+      "sha256": "cc934fffc7f78cdd6dc2f44c1f1a9ac3e6fc98c32245f63c0e7aa19f8ebb1f52"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=5.parquet",
+      "sha256": "2b5974da82280d10a18a718e6c2bbe9f6e5d3cdc527952859bdb89c9967da9f0"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=6.parquet",
+      "sha256": "497c9cc38e1aab0bd1b8dcf43e41a66974ae2ca8af6dfcc711b904b98a6ba86e"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7.parquet",
+      "sha256": "c634a368db1d2a1f2d5a287e208e965a9c7517c1fa6f1862c2799e7c0b05239f"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=8.parquet",
+      "sha256": "b86b90ae93e6ab25cab0f127bf85a64ec470141b95026e380fa5b0091d002a99"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=9.parquet",
+      "sha256": "f7023b8db62e4c68ac462db61f388c8b2086c469b1d31349fc3ca46e6e6d647b"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=10.parquet",
+      "sha256": "5491b1ead9246ef974a7567584d65687bf90aa89694f51dab1db009b764dfc98"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=11.parquet",
+      "sha256": "e5e21bfa86ab5b83eab52a906f2e5079d71aa48705837b27537749bfec428a43"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=12.parquet",
+      "sha256": "6e286cd6fec13f95c18fcc53352f35b619f8c658c5c265868e52c3abcb9db601"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=1.parquet",
+      "sha256": "ea7366e3394a1b15fd6a5ea0939a70915f6bbbcb953b6122bd9ed158a1804986"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=2.parquet",
+      "sha256": "a3a1bc84c403d38292838cdb5008209e7a06065429f442cff3bdff60bb205d87"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=3.parquet",
+      "sha256": "eeb4829e0554958ce29a87f6a07341ae1eb831ab04ab29dbc529ed9f46f6db15"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=4.parquet",
+      "sha256": "e57916a261bf9c59a8be5ae2d6122661d9e3b56f6bfd30a6d872c115b039cb80"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=5.parquet",
+      "sha256": "edff6b2ade60778662d174797092085e49c7bb3f992ffd66365e347dc8fb84d6"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=6.parquet",
+      "sha256": "75d4ce75c408ebd4369c5686b806528cd7e27d3ee64a870adcdf55f7ade5a2ed"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=7.parquet",
+      "sha256": "8537aeed3b1e45dbd09a6a72ad402512b161497afb2248a33e0fc64691599613"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=8.parquet",
+      "sha256": "a6b752b7254700731411952198192720d1cb74baabef0f6ee7544db02cbbdbe3"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=9.parquet",
+      "sha256": "b7d3c0184311b784137b043c62396873acbac36324b3f6f8279773801e1dd51b"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=10.parquet",
+      "sha256": "b4fce5946aaee4f7220beef4701f6c2c6d01ec3b161bc387f58d7bc909e45eeb"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=11.parquet",
+      "sha256": "8a112a02509a6194da65563a3289eb9fe7e95263d23dd6434d459434f1d84fcd"
+    },
+    {
+      "path": "data/precomputed/Metric=ETPT_sum/Period=2050-2079/Month=12.parquet",
+      "sha256": "236eb80ba55dee4b451955be7d938231a6940f8c0a06bebc7b868abb38ab8da4"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=01.parquet",
+      "sha256": "747f5671deb8f475437593674e1ceea403f89e7b02d874598105f536be32f37c"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=04.parquet",
+      "sha256": "15d88ba8678c35f71fbf770a41673d13874fe1b372525fe4c703a1e985a6aa3f"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=05.parquet",
+      "sha256": "da27fb3fdf9b4c926ca17d4c499f51b79b4af1591a875411e7c41d220f408aa0"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=06.parquet",
+      "sha256": "3ed1b2920274486d02f3fb2397d4287a5d262c74af8948025606ac0d18678117"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=07.parquet",
+      "sha256": "0d5586ef7613d755ed493de09b62f5d4ab39271bab287812378615f6f13c13da"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=08.parquet",
+      "sha256": "6df50fb258c69dda7a310ca960a7dd0d2e0110d6193be88a317a25e16f9e1575"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=09.parquet",
+      "sha256": "87a69fd9a9c1b64dba2f61e6caeb51ff0eb265046f5f497fffd1237c625693a3"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=10.parquet",
+      "sha256": "bc900a70f1dfaa0a2c6c2894d7488f3b6052f033af46da38856028ee073f3bab"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=11.parquet",
+      "sha256": "71301dfac2980d4265cca6c097f4a07625d13fb235c8a785d2b0492da949a244"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=12.parquet",
+      "sha256": "3720ee7577ea65a6f3d7d15eaeb19f3a259f92bd11c182ab9cfac75ed783d627"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=13.parquet",
+      "sha256": "6e8e7abd7a4a4e6dfeaab7f552a251ac50a3f24d7f69e1300704ca3366423e7e"
+    },
+    {
+      "path": "data/precomputed/Metric=CWBPT/Period=2050-2079/Month=7/Member=15.parquet",
+      "sha256": "ca5e69275eaf5f4a1a32e30dfeda7000ada966abc4126d5ca41b3974b1b5ef38"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=01.parquet",
+      "sha256": "4cfce4d32ae242fa85f831b734dd25bd7676d88c988d0113937cbe1a8fc3103d"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=04.parquet",
+      "sha256": "ab9870c902d91bd539e473ceee910ef7e09ece6fe059ae5b83cd55208ef40d4b"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=05.parquet",
+      "sha256": "44f4741c1ae6dfae11f9ac01c89eb9defed450ce9904ec570078b9a4a952d2b6"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=06.parquet",
+      "sha256": "6c9173a76483a154fc38fa138fbf615554c4bbe878381873cc6d0efa5ed3d29b"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=07.parquet",
+      "sha256": "511444c4c0cd0231bd914fa4589b6e2b13f6c8aa9b689cddfa099135615399cd"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=08.parquet",
+      "sha256": "e694dbb085fc1aec005f8d015c154c1dedd8b93fe619fbf82483a4c98d945a5a"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=09.parquet",
+      "sha256": "441867dd0eac8746fe28ed431919ee62d5f733a422a41f9ce29c322b7098c97f"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=10.parquet",
+      "sha256": "7e5cf9f0d663b20e25943b4e051129d42097cb82024b3163aa7d9f25acae406f"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=11.parquet",
+      "sha256": "85f1a6d560015d1077ab88185a3c04142579cead28c16dd1422b9c39443257b8"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=12.parquet",
+      "sha256": "3f66d91412bd5870bf4b6d45f7a9488ddbc0cc326b7413e70832286bc6602385"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=13.parquet",
+      "sha256": "84a40d5a31336614fc7b2318ff39031a1bb30f6cc122c27a36ce608c1ae685bd"
+    },
+    {
+      "path": "data/precomputed/Metric=Prec_sum/Period=2050-2079/Month=7/Member=15.parquet",
+      "sha256": "ce0dae210d93d8ac22f00c93cd530b02bebf26e891f74e1908e12db56edf9acc"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=01.parquet",
+      "sha256": "ffee5bba59a6f01f122b3a0da28dfb5a5842aa9c673d37b6c95e8a25a27adf6f"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=04.parquet",
+      "sha256": "a068a536f83ea5f74592a5230d8d00af202e6127fc926acb7404ed17479f82ec"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=05.parquet",
+      "sha256": "7e29de3911f19cc138cc65891315183f93f96166d34becb2771aaaba5ec82de5"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=06.parquet",
+      "sha256": "30ec259607e34e52ea877f0c5d67eb4430e95d988052844b3f0846cd32649e71"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=07.parquet",
+      "sha256": "0342cb04408bdfcc5815ceaf770ebdca7446d24f8b7332061d421bb2c79f6504"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=08.parquet",
+      "sha256": "3a1f310a53779f0fc89ff65538ea16cd3a2f2098b67d97de5e6fabc70241bdc6"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=09.parquet",
+      "sha256": "5e2e06e479005c571dba48617ee61afde1454fd7683348269f0d580aa374b212"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=10.parquet",
+      "sha256": "94fcd0d5142cd5b52c65b3e3d72c324593c9a683074908f7d6adffbc45a16c64"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=11.parquet",
+      "sha256": "6d2dbe370db6af53664940ce487d3af48db48842afee48ab9a4dc59a103a7749"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=12.parquet",
+      "sha256": "57aa22634fc624f7394e020c8ab49e06bbb850b82882c4bff52256a671cbdeff"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=13.parquet",
+      "sha256": "bd90a4b72e6abfa66b6cb12fac2d6908fe3ed7525a2cd1f23da783645ea86c53"
+    },
+    {
+      "path": "data/precomputed/Metric=Tmax_mean/Period=2050-2079/Month=7/Member=15.parquet",
+      "sha256": "a778ddd11aee3926cbaf66f550a35c103b0803485708fe502ae5c93bda50e1db"
+    }
+  ]
+}

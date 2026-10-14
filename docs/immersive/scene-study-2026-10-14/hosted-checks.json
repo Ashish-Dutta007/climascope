@@ -1,0 +1,90 @@
+{
+  "url": "https://climascope.hutton.ac.uk/static/immersive/scene-study/index.html",
+  "current_preview": "https://climascope.hutton.ac.uk/immersive/preview",
+  "combinations": [
+    {
+      "view": "components",
+      "metric": "CWBPT",
+      "width": 11514,
+      "maps": 3
+    },
+    {
+      "view": "components",
+      "metric": "CWBPT",
+      "width": 15360,
+      "maps": 3
+    },
+    {
+      "view": "months",
+      "metric": "Prec_sum",
+      "width": 11514,
+      "maps": 12
+    },
+    {
+      "view": "months",
+      "metric": "Prec_sum",
+      "width": 15360,
+      "maps": 12
+    },
+    {
+      "view": "months",
+      "metric": "Tmax_mean",
+      "width": 11514,
+      "maps": 12
+    },
+    {
+      "view": "months",
+      "metric": "Tmax_mean",
+      "width": 15360,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "CWBPT",
+      "width": 11514,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "CWBPT",
+      "width": 15360,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "Prec_sum",
+      "width": 11514,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "Prec_sum",
+      "width": 15360,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "Tmax_mean",
+      "width": 11514,
+      "maps": 12
+    },
+    {
+      "view": "members",
+      "metric": "Tmax_mean",
+      "width": 15360,
+      "maps": 12
+    }
+  ],
+  "page_errors": [],
+  "csp_errors": [],
+  "asset_hashes": {
+    "index.html": "f965bfd07fb6ec2a47c0da4f5026b7aeae4b107c2c39166511f1b972f623dad6",
+    "data.json": "096fd6ad1d5dd6c12f9f1019cf7fa4dc192ae49d2f496e55b8148ae198d83fe6"
+  },
+  "requests": [
+    "https://climascope.hutton.ac.uk/static/immersive/scene-study/index.html",
+    "https://climascope.hutton.ac.uk/static/immersive/scene-study/study.js",
+    "https://climascope.hutton.ac.uk/static/immersive/scene-study/data.json"
+  ],
+  "current_scene_catalog_matches_local": true
+}
