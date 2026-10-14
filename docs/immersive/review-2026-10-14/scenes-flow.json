@@ -1,0 +1,79 @@
+{
+  "scenes": [
+    {
+      "width": 11514,
+      "scene": "overview",
+      "maps": 9
+    },
+    {
+      "width": 11514,
+      "scene": "focus-water",
+      "maps": 5
+    },
+    {
+      "width": 11514,
+      "scene": "focus-rain",
+      "maps": 5
+    },
+    {
+      "width": 11514,
+      "scene": "focus-heat",
+      "maps": 5
+    },
+    {
+      "width": 11514,
+      "scene": "water-extent",
+      "maps": 5
+    },
+    {
+      "width": 11514,
+      "scene": "landscape",
+      "maps": 5
+    },
+    {
+      "width": 11514,
+      "scene": "agreement",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "overview",
+      "maps": 9
+    },
+    {
+      "width": 15360,
+      "scene": "focus-water",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "focus-rain",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "focus-heat",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "water-extent",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "landscape",
+      "maps": 5
+    },
+    {
+      "width": 15360,
+      "scene": "agreement",
+      "maps": 5
+    }
+  ],
+  "full_tour_without_phone": true,
+  "member_region_reload": true,
+  "heap_before_mb": 205.1,
+  "heap_after_mb": 192.9,
+  "errors": []
+}

@@ -1,13 +1,13 @@
 (function () {
   'use strict';
   var catalog = [
-    { id: 'overview', title: 'Compare all metrics', kind: 'overview', description: 'Three climate indicators and three periods, with seasonal values and monthly changes.' },
-    { id: 'focus-water', title: 'Water balance', kind: 'focus', metric: 'CWBPT', description: 'Where and when does climate water balance change?' },
-    { id: 'focus-rain', title: 'Precipitation', kind: 'focus', metric: 'Prec_sum', description: 'Compare monthly precipitation patterns and changes.' },
-    { id: 'focus-heat', title: 'Temperature', kind: 'focus', metric: 'Tmax_mean', description: 'Compare mean daily maximum temperatures, not hottest-day extremes.' },
-    { id: 'water-extent', title: 'Beyond the regional mean', kind: 'extent', metric: 'CWBPT', description: 'What share of valid climate cells has monthly water balance below zero?' },
-    { id: 'landscape', title: 'Landscape context', kind: 'landscape', metric: 'CWBPT', description: 'How does negative water balance coincide with existing land cover?' },
-    { id: 'agreement', title: 'Ensemble agreement', kind: 'agreement', description: 'Compare changes in regional means across the twelve available ensemble members.' }
+    { id: 'overview', title: 'Overview', kind: 'overview', description: 'Three metrics, three periods.' },
+    { id: 'focus-water', title: 'Water balance', kind: 'focus', metric: 'CWBPT', description: 'Monthly water balance and change from 1990–2019.' },
+    { id: 'focus-rain', title: 'Precipitation', kind: 'focus', metric: 'Prec_sum', description: 'Monthly precipitation and change from 1990–2019.' },
+    { id: 'focus-heat', title: 'Mean daily maximum temperature', kind: 'focus', metric: 'Tmax_mean', description: 'Mean daily maximum temperature and change from 1990–2019.' },
+    { id: 'water-extent', title: 'Negative water balance', kind: 'extent', metric: 'CWBPT', description: 'Share of valid cells with water balance below zero.' },
+    { id: 'landscape', title: 'Land cover', kind: 'landscape', metric: 'CWBPT', description: 'Water balance below zero within each land-cover class.' },
+    { id: 'agreement', title: 'Member spread', kind: 'agreement', description: 'Changes in regional means across 12 ensemble members.' }
   ];
   var tour = [
     { scene: 'overview', month: 1, hold: 2 },

@@ -82,11 +82,10 @@
         ' · ' + SCENES.get(shown.scene).title
       : 'Wall starting');
     if (_wall.status === 'loading') parts.push('loading ' + MONTH_LONG[s.month] + '…');
-    else if (_wall.status === 'ready') parts.push(s.playing ? 'playing, ' + s.dwell + ' s per month' : 'paused');
+    else if (_wall.status === 'ready') parts.push(s.playing ? (s.playback === 'tour' ? 'scene loop' : s.dwell + ' s per month') : 'paused');
     if (_wall.message) parts.push(_wall.message);
-    parts.push('rev ' + _wall.rev + (_wall.heapMB ? ' · JS heap ' + _wall.heapMB + ' MB' : ''));
     el.classList.add(_wall.status);
-    text.textContent = parts.join(' — ');
+    text.textContent = parts.join(' · ');
   }
 
   // ── Region selects ───────────────────────────────────────────────

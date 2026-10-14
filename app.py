@@ -2671,6 +2671,8 @@ def get_immersive_values():
       - Specific member + future period + member parquet present → same absolute column from member parquet
 
     ?metrics=CWBPT,Prec_sum limits the payload to the panels actually drawn.
+    ?change=1 adds 2050-2079_change from raw proj_value minus obs_value before
+    rounding. The change shares the later period's member/substitution source.
     "_meta" records, per metric and period, whether values are observed, the
     ensemble mean or the member, and lists any member→mean substitution so the
     wall never labels substituted values as the member.
@@ -2700,6 +2702,7 @@ def get_immersive_values():
     except ValueError:
         return jsonify({'error': 'month must be 1–12'}), 400
     month = str(month_int)
+    include_change = request.args.get('change') == '1'
 
     if member and member != 'mean':
         if member not in _VALID_MEMBERS:
@@ -2747,8 +2750,20 @@ def get_immersive_values():
                 f' FROM read_parquet(?)'
             )
             params.extend([metric, period, path])
+            if include_change and period == '2050-2079':
+                # Difference raw source values before rounding; missing operands stay missing.
+                parts.append(
+                    'SELECT ? AS metric, ? AS period, id_1km,'
+                    ' CASE WHEN isfinite(proj_value) AND isfinite(obs_value)'
+                    ' THEN round(CAST(proj_value AS DOUBLE) - CAST(obs_value AS DOUBLE), 2)'
+                    ' ELSE NULL END AS value FROM read_parquet(?)'
+                )
+                params.extend([metric, '2050-2079_change', path])
 
     result = {m: {p: {} for p, _ in _IMMERSIVE_PERIODS} for m in metrics}
+    if include_change:
+        for values in result.values():
+            values['2050-2079_change'] = {}
 
     if parts:
         con = duckdb.connect(':memory:')
@@ -2765,6 +2780,7 @@ def get_immersive_values():
         'metrics': list(metrics),
         'source': source,
         'substituted': substituted,
+        'change': '2050-2079 proj_value minus obs_value, rounded to 0.01' if include_change else None,
     }
     resp = jsonify(result)
     resp.headers['Cache-Control'] = 'public, max-age=3600'

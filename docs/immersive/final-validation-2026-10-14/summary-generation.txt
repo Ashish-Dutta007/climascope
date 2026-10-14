@@ -1,0 +1,28 @@
+Validation — national July:
+  CWBPT      1990-2019 =     3.217  expect    3.217  OK
+  CWBPT      2050-2079 =   -24.896  expect  -24.896  OK
+  Prec_sum   1990-2019 =    94.501  expect     94.5  OK
+  Prec_sum   2050-2079 =    82.288  expect     82.3  OK
+  Tmax_mean  1990-2019 =    16.357  expect     16.4  OK
+  national means vs direct DuckDB: worst abs diff 0.00050
+
+regions: 1059 (national + 32 councils + 1026 catchments)
+all-null regions: ['Loch Huisinis : 100439']
+common-support exceptions: 0
+data_version: 29360d85ba350fe2
+domains: {"CWBPT": [-70.0, 66.4, 340.0], "Prec_sum": [40.0, 99.4, 350.0], "Tmax_mean": [2.0, 11.9, 24.0], "ETPT_sum": [0.0, 32.6, 120.0]}
+  mean.json           1.57 MB raw   0.53 MB gzip
+  member_01.json      0.92 MB raw   0.35 MB gzip
+  member_04.json      0.92 MB raw   0.34 MB gzip
+  member_05.json      0.92 MB raw   0.34 MB gzip
+  member_06.json      0.92 MB raw   0.35 MB gzip
+  member_07.json      0.92 MB raw   0.35 MB gzip
+  member_08.json      0.92 MB raw   0.35 MB gzip
+  member_09.json      0.92 MB raw   0.35 MB gzip
+  member_10.json      0.92 MB raw   0.35 MB gzip
+  member_11.json      0.92 MB raw   0.35 MB gzip
+  member_12.json      0.92 MB raw   0.35 MB gzip
+  member_13.json      0.92 MB raw   0.35 MB gzip
+  member_15.json      0.92 MB raw   0.35 MB gzip
+output: /mnt/shared/docker/climascope/app/static/immersive/summaries/v2
+runtime: 153.3s

@@ -76,7 +76,7 @@
     node('dwell-select').value = String(s.dwell);
     var shown = r.shown, text = shown ? 'Displaying ' + SCENES.get(shown.scene).title + ' · ' + months[shown.month - 1] + ' · ' + shown.region : 'Preparing the wall';
     if (r.status === 'loading') text += ' · Updating…';
-    if (s.playback === 'tour') text += ' · Tour ' + (s.tourIndex + 1) + '/' + SCENES.tour.length;
+    if (s.playback === 'tour') text += ' · Scene ' + (s.tourIndex + 1) + '/' + SCENES.tour.length;
     if (r.message) text += ' · ' + r.message;
     node('preview-status').textContent = text; node('preview-status').className = r.status === 'error' ? 'error' : '';
     node('preview-status').dataset.status = r.status;

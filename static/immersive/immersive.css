@@ -38,7 +38,7 @@ html, body {
   min-height: 0;
   display: flex;
   gap: calc(8 * var(--u));
-  background: #181c34;
+  background: #03040a;
 }
 
 /* ── One metric group: 3 equal map columns + 1 chart column ───────── */

@@ -1,0 +1,14 @@
+{
+  "viewport_sizes": [
+    15360,
+    11514
+  ],
+  "relay_calls": [],
+  "preview_did_not_write_wall_state": true,
+  "failed_scene_kept_previous_frame": true,
+  "stale_scene_ignored": true,
+  "share_link_reloaded": true,
+  "empty_catchment": true,
+  "all_three_visible_maps_painted_after_reset_and_resize": true,
+  "errors": []
+}

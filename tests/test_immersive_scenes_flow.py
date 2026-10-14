@@ -101,17 +101,49 @@ class SceneFlows(unittest.TestCase):
             for scene in scenes:
                 phone.locator('.btn-scene[data-scene="' + scene + '"]').click()
                 self.wait(wall, lambda: ready(scene, month=7), scene)
-                self.assertEqual(wall.locator(".mapcell:visible").count(), 9 if scene == "overview" else 5)
-                self.assertEqual(wall.locator(".num-value").all_text_contents(),
+                self.assertEqual(wall.locator(".mapcell:visible").count(),
+                    9 if scene == "overview" else 6 if scene.startswith("focus-") else 3)
+                self.assertEqual(wall.locator('.group:not([data-metric="ETPT_sum"]) .num:not(.change-num) .num-value').all_text_contents(),
                     ["3.2 mm", "−3.7 mm", "−24.9 mm", "94.5 mm", "94.8 mm", "82.3 mm", "16.4 °C", "19.1 °C", "21.1 °C"])
                 overflow = wall.evaluate("""() => [...document.querySelectorAll('.scene-insight:not([hidden]),.support-summary:not([hidden])')]
-                  .filter(e=>e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2).map(e=>e.className)""")
+                  .filter(e=>e.getClientRects().length && (e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2)).map(e=>e.className)""")
                 self.assertEqual(overflow, [])
-                if scene in ["water-extent", "landscape"]:
+                if scene == "water-extent":
                     self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), "81.4%")
+                if scene == "landscape":
+                    self.assertEqual(wall.locator(".focus-primary .scene-insight h2").inner_text(), "Mountain, heath & bog")
+                    self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), "73.8%")
+                if scene == "focus-water":
+                    self.assertEqual(wall.locator('.focus-support:visible').evaluate_all('(els)=>els.map(e=>e.dataset.metric)'), ['Prec_sum', 'ETPT_sum'])
+                    self.assertEqual(wall.locator(".focus-support .num:visible").count(), 0)
+                    for canvas in wall.locator(".focus-support canvas").all():
+                        if canvas.is_visible():
+                            self.assertTrue(self.has_climate_pixels(wall, canvas))
+                if scene != "overview":
+                    self.assertEqual(wall.locator('.focus-primary').evaluate('(e)=>Math.round(e.getBoundingClientRect().width)'), 4300)
+                    self.assertEqual(wall.locator('.change-map:visible').count(), 1)
+                    self.assertIn('Zero-centred', wall.locator('.change-map .legend').inner_text())
+                    expected_change = {'focus-rain': '−12.2 mm', 'focus-heat': '+4.8 °C'}.get(scene, '−28.1 mm')
+                    self.assertEqual(wall.locator('.change-num .num-value').inner_text(), expected_change)
+                self.assertEqual(wall.locator('#panels').evaluate('(e)=>getComputedStyle(e).backgroundColor'), 'rgb(3, 4, 10)')
                 records.append({"width": width, "scene": scene, "maps": wall.locator(".mapcell:visible").count()})
             phone.locator("#focus-select").select_option("Tmax_mean")
             self.wait(wall, lambda: ready("agreement", focus="Tmax_mean"), "agreement metric")
+
+        phone.locator("#focus-select").select_option("Prec_sum")
+        phone.locator("#council-select").select_option("Angus")
+        self.wait(wall, lambda: ready("agreement", focus="Prec_sum", region="Angus"), "even member split")
+        self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["6", "6"])
+        self.assertEqual(wall.locator(".focus-primary .insight-caption").inner_text(), "12 members · change in July mean, 1990–2019 → 2050–2079")
+        self.assertEqual(wall.locator(".focus-primary .chart-key").last.locator("circle").count(), 2)
+
+        # Falkirk March includes a +0.007 mm member: show it at the same precision as the values.
+        send({"cmd": "set", "month": 3, "region": {"kind": "council", "name": "Falkirk"}})
+        self.wait(wall, lambda: ready("agreement", month=3, region="Falkirk"), "rounded near-zero member")
+        self.assertEqual(wall.locator(".focus-primary .member-count strong").all_text_contents(), ["11", "0", "1"])
+        self.assertEqual(wall.locator(".focus-primary .member-count span").last.inner_text(), "no change at 0.1 mm")
+        send({"cmd": "set", "month": 7})
+        self.wait(wall, lambda: ready("agreement", month=7), "return to July")
 
         phone.locator('.btn-member[data-member="07"]').click()
         phone.locator("#council-select").select_option("Midlothian")
@@ -119,7 +151,8 @@ class SceneFlows(unittest.TestCase):
         self.wait(wall, lambda: ready("landscape", member="07", region="Midlothian"), "member-specific landscape")
         baseline = json.loads((ROOT / "static/immersive/summaries/scenes-v1/mean.json").read_text())["regions"]["Midlothian"]
         member = json.loads((ROOT / "static/immersive/summaries/scenes-v1/member_07.json").read_text())["regions"]["Midlothian"]
-        expected = 100 * member["below"]["2050-2079"][6] / baseline["n_cells"][6]
+        largest = max(baseline["landcover"], key=lambda c: baseline["landcover"][c]["weight"][6])
+        expected = 100 * member["landcover"][largest]["below"]["2050-2079"][6] / baseline["landcover"][largest]["weight"][6]
         self.assertEqual(wall.locator(".focus-primary .insight-value").inner_text(), f"{expected:.1f}%")
         phone.reload()
         self.wait(wall, lambda: phone.locator('.btn-scene[data-scene="landscape"]').get_attribute("aria-pressed") == "true", "phone restores scene")
@@ -197,7 +230,7 @@ class SceneFlows(unittest.TestCase):
 
         page.select_option("#scene-select", "landscape")
         self.wait(page, lambda: ready("landscape"), "scene retry")
-        self.assertEqual(frame.locator(".focus-primary .insight-value").inner_text(), "81.4%")
+        self.assertEqual(frame.locator(".focus-primary .insight-value").inner_text(), "73.8%")
         page.select_option("#member-select", "07")
         page.select_option("#council-select", "Midlothian")
         self.wait(page, lambda: ready("landscape") and "Midlothian" in page.locator("#preview-status").inner_text() and
@@ -215,7 +248,7 @@ class SceneFlows(unittest.TestCase):
         page.locator("#reset-region").click()
         page.select_option("#member-select", "mean")
         self.wait(page, lambda: ready("landscape") and "Scotland" in page.locator("#preview-status").inner_text() and
-                  frame.locator(".focus-primary .insight-value").inner_text() == "81.4%" and
+                  frame.locator(".focus-primary .insight-value").inner_text() == "73.8%" and
                   frame.locator(".num-value").first.inner_text() == "3.2 mm", "preview national reset")
         page.select_option("#wall-size", "11514")
         self.wait(page, lambda: frame.locator("body").evaluate("()=>innerWidth") == 11514, "open-mode viewport")
@@ -225,7 +258,7 @@ class SceneFlows(unittest.TestCase):
         page.screenshot(path=str(self.artifacts / "live-preview.png"), full_page=True)
         (self.artifacts / "preview-flow.json").write_text(json.dumps({"viewport_sizes": [15360, 11514], "relay_calls": relay_calls,
             "preview_did_not_write_wall_state": True, "failed_scene_kept_previous_frame": True, "stale_scene_ignored": True,
-            "share_link_reloaded": True, "empty_catchment": True, "all_five_maps_painted_after_reset_and_resize": True,
+            "share_link_reloaded": True, "empty_catchment": True, "all_three_visible_maps_painted_after_reset_and_resize": True,
             "errors": self.errors}, indent=2))
 
 

@@ -15,7 +15,7 @@
   <div class="section-label">Scene</div>
   <div class="scene-grid" id="scene-grid"></div>
   <p class="hint" id="scene-description"></p>
-  <label class="focus-select-label"><span class="region-sublabel">Metric for ensemble agreement</span>
+  <label class="focus-select-label"><span class="region-sublabel">Metric for member spread</span>
     <select id="focus-select" class="region-select">
       <option value="CWBPT">Climate water balance</option>
       <option value="Prec_sum">Precipitation</option>
@@ -25,8 +25,8 @@
 
   <div class="section-label">Playback</div>
   <div class="tour-row">
-    <button id="btn-tour" class="ctrl-btn" type="button">▶ Guided tour</button>
-    <button id="btn-annual" class="ctrl-btn" type="button">▶ Annual cycle</button>
+    <button id="btn-tour" class="ctrl-btn" type="button">▶ Scene loop</button>
+    <button id="btn-annual" class="ctrl-btn" type="button">▶ Month loop</button>
     <span id="tour-progress" aria-live="polite"></span>
   </div>
   <div class="play-row">
@@ -38,7 +38,7 @@
       <select id="dwell-select" class="region-select dwell-select"></select>
     </label>
   </div>
-  <p class="hint">The guided tour explains eight scenes for the selected area. The annual cycle advances through the months in the current scene. Any manual selection pauses playback; Play resumes it.</p>
+  <p class="hint">Scene loop changes views. Month loop changes months. Manual changes pause playback.</p>
 
   <div class="section-label">Month</div>
   <div class="btn-grid" id="month-grid"></div>
@@ -65,7 +65,7 @@
     </div>
   </div>
 
-  <p class="hint"><a href="/immersive/preview" target="_blank" rel="noopener">Open the separate wall preview</a></p>
+  <p class="hint"><a href="/immersive/preview" target="_blank" rel="noopener">Open wall preview</a></p>
   <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
   <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
   <script src="/static/immersive/control.js?v={{ av('immersive/control.js') }}"></script>

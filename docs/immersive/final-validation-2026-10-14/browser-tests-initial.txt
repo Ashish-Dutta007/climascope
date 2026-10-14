@@ -1,0 +1,37 @@
+test_preview_isolation_failure_recovery_and_reproducible_url (tests.test_immersive_scenes_flow.SceneFlows.test_preview_isolation_failure_recovery_and_reproducible_url) ... ok
+test_scene_controls_and_complete_tour (tests.test_immersive_scenes_flow.SceneFlows.test_scene_controls_and_complete_tour) ... tour 1 overview
+tour 2 focus-heat
+tour 3 focus-rain
+tour 4 focus-water
+tour 5 water-extent
+tour 6 landscape
+tour 7 agreement
+tour 8 focus-water
+ok
+test_open_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_open_wall) ... FAIL
+test_wrap_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_wrap_wall) ... FAIL
+
+======================================================================
+FAIL: test_open_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_open_wall)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_phone_flow.py", line 20, in test_open_wall
+    self.flow(11514, full=True)
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_phone_flow.py", line 67, in flow
+    self.assertEqual(wall.locator("canvas").count(), 9)
+AssertionError: 11 != 9
+
+======================================================================
+FAIL: test_wrap_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_wrap_wall)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_phone_flow.py", line 23, in test_wrap_wall
+    self.flow(15360, full=False)
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_phone_flow.py", line 67, in flow
+    self.assertEqual(wall.locator("canvas").count(), 9)
+AssertionError: 11 != 9
+
+----------------------------------------------------------------------
+Ran 4 tests in 184.773s
+
+FAILED (failures=2)

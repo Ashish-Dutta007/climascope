@@ -50,7 +50,7 @@ t0 = time.perf_counter()
 
 VERSION = 2
 DECIMALS = 3
-METRICS = ["CWBPT", "Prec_sum", "Tmax_mean"]
+METRICS = ["CWBPT", "Prec_sum", "Tmax_mean", "ETPT_sum"]
 BASELINE = ("1990-2019", "obs_value")
 FUTURES = [("2020-2049", "proj_value"), ("2050-2079", "proj_value")]
 PERIODS = [BASELINE] + FUTURES
@@ -60,7 +60,7 @@ OUT_DIR = os.path.join(APP_DIR, "static", "immersive", "summaries", f"v{VERSION}
 # Fixed scene colour domains: pooled national cells of the ensemble mean over
 # all 12 months x 3 periods, clipped to these quantiles and rounded outward.
 DOMAIN_Q = (0.005, 0.995)
-DOMAIN_STEP = {"CWBPT": 10.0, "Prec_sum": 10.0, "Tmax_mean": 1.0}
+DOMAIN_STEP = {"CWBPT": 10.0, "Prec_sum": 10.0, "Tmax_mean": 1.0, "ETPT_sum": 10.0}
 
 
 def mean_path(metric, period, month):
@@ -149,6 +149,7 @@ result = {rid: {m: {p: [None] * 12 for p, _ in PERIODS} for m in METRICS} for ri
 n_cells = {rid: {m: [0] * 12 for m in METRICS} for rid in region_ids}
 support_notes = []
 pools = {m: [] for m in METRICS}
+change_pools = {m: [] for m in METRICS}
 baselines = {}   # (metric, month) -> baseline Series, reused for the member check
 
 for metric in METRICS:
@@ -165,11 +166,14 @@ for metric in METRICS:
         for p, _ in PERIODS:
             s = series[p].loc[common]
             pools[metric].append(s.values)
+            if p != BASELINE[0]:
+                change_pools[metric].append((s - series[BASELINE[0]].loc[common]).values)
             for rid, v in region_means(s).items():
                 result[rid][metric][p][month - 1] = rnd(v)
         baselines[(metric, month)] = series[BASELINE[0]]
 
 domains = {}
+change_domains = {}
 for metric in METRICS:
     pool = np.concatenate(pools[metric])
     q_lo, q_hi = np.quantile(pool, DOMAIN_Q)
@@ -182,6 +186,13 @@ for metric in METRICS:
         "data_min": round(float(pool.min()), 1), "data_max": round(float(pool.max()), 1),
         "basis": f"ensemble-mean cells, all months and periods, quantiles {DOMAIN_Q[0]}-{DOMAIN_Q[1]} "
                  f"rounded outward to {step:g}; values beyond are drawn at the end colour",
+    }
+    changes = np.concatenate(change_pools[metric])
+    limit = max(step, float(np.ceil(np.quantile(np.abs(changes), 0.995) / step) * step))
+    change_domains[metric] = {
+        "lo": -limit, "hi": limit, "median": 0,
+        "data_min": round(float(changes.min()), 2), "data_max": round(float(changes.max()), 2),
+        "basis": "symmetric around zero; ensemble-mean cell changes from observed baseline, all months and both futures; 99.5th percentile of absolute change rounded outward",
     }
 
 null_regions = sorted(rid for rid in result
@@ -230,7 +241,7 @@ def write(name, payload):
 os.makedirs(OUT_DIR, exist_ok=True)
 sizes = {}
 sizes["mean.json"] = write("mean.json", {
-    "_meta": {**base_meta, "ensemble": "mean", "domains": domains,
+    "_meta": {**base_meta, "ensemble": "mean", "domains": domains, "change_domains": change_domains,
               "common_support_exceptions": support_notes, "all_null_regions": null_regions,
               "members_available": MEMBERS},
     "regions": result,

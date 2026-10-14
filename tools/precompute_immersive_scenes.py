@@ -56,7 +56,7 @@ def main():
     mean = json.loads((SOURCE / "mean.json").read_text())
     fp = hashlib.sha256()
     sources = []
-    for metric in METRICS:
+    for metric in mean["_meta"]["metrics"]:
         for period in PERIODS:
             for month in range(1, 13):
                 sources.append(path(metric, period, month))

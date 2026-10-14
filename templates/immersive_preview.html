@@ -8,13 +8,13 @@
 </head>
 <body>
   <header><a href="/">ClimaScope</a><h1>Wall preview</h1>
-    <p>Explore the live scenes at the wall’s dimensions. This preview has its own controls.</p>
+    <p>Preview the wall without changing the suite display.</p>
   </header>
   <main>
     <div class="preview-controls">
       <label>Wall size<select id="wall-size"><option value="11514">Open · 11,514 × 1,200</option><option value="15360">Full wrap · 15,360 × 1,200</option></select></label>
       <label>View<select id="scene-select"></select></label>
-      <label>Agreement metric<select id="focus-select"><option value="CWBPT">Climate water balance</option><option value="Prec_sum">Precipitation</option><option value="Tmax_mean">Mean daily maximum temperature</option></select></label>
+      <label>Metric<select id="focus-select"><option value="CWBPT">Climate water balance</option><option value="Prec_sum">Precipitation</option><option value="Tmax_mean">Mean daily maximum temperature</option></select></label>
       <label>Month<select id="month-select"></select></label>
       <label>Ensemble<select id="member-select"><option value="mean">Ensemble mean</option></select></label>
       <label>Preview size<select id="preview-scale"><option value="fit">Fit whole wall</option><option value="0.25">25% · scroll to inspect</option><option value="0.5">50% · scroll to inspect</option><option value="1">100% · actual pixels</option></select></label>
@@ -29,15 +29,15 @@
       <button id="prev-month" type="button">Previous month</button>
       <button id="play-pause" type="button">Play</button>
       <button id="next-month" type="button">Next month</button>
-      <button id="annual" type="button">Annual cycle</button>
-      <button id="tour" type="button">Guided tour</button>
+      <button id="annual" type="button">Month loop</button>
+      <button id="tour" type="button">Scene loop</button>
       <label>Seconds per month<select id="dwell-select"><option>4</option><option selected>6</option><option>10</option><option>15</option><option>20</option></select></label>
       <button id="copy-link" type="button">Copy this view</button>
     </div>
     <p id="preview-status" role="status" aria-live="polite">Preparing the wall…</p>
     <div id="viewport"><div id="frame-space"><iframe id="wall-frame" title="Interactive ClimaScope wall preview"></iframe></div></div>
     <p class="preview-help" id="dimensions"></p>
-    <p class="preview-help">Fit shows the whole wall as a shallow strip. Choose 25% or 50% to read a section. Monthly climatologies describe 30-year period means, not weather forecasts. Projection brightness and readability need a room check.</p>
+    <p class="preview-help">Use Fit for the whole wall, or 25% / 50% to read a section.</p>
     <input id="view-link" aria-label="Link to the selected preview" readonly hidden>
   </main>
   <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
