@@ -45,6 +45,7 @@
     play.textContent = s && s.playing ? '❚❚ Pause' : '▶ Play';
     play.classList.toggle('active', !!(s && s.playing));
     if (s) {
+      document.querySelector('.btn-mean').textContent = s.scene === 'water-classes' ? 'Mean class areas' : 'Ensemble mean';
       document.querySelectorAll('.btn-scene').forEach(function (btn) {
         var active = btn.dataset.scene === (s.scene || 'overview');
         btn.classList.toggle('active', active);
@@ -81,7 +82,7 @@
     var parts = [];
     parts.push(shown
       ? 'Wall shows ' + MONTH_LONG[shown.month] + ' · ' + (shown.region === 'All Scotland' ? 'Scotland' : shown.region) +
-        ' · ' + (shown.member === 'mean' ? 'ensemble mean' : 'member ' + shown.member) +
+        ' · ' + (shown.member === 'mean' ? (shown.scene === 'water-classes' ? 'mean class areas · 12 members' : 'ensemble mean') : 'member ' + shown.member) +
         ' · ' + SCENES.get(shown.scene).title
       : 'Wall starting');
     if (_wall.status === 'loading') parts.push('loading ' + MONTH_LONG[s.month] + '…');

@@ -59,6 +59,7 @@
   var SCENES = window.ClimaScopeScenes;
   var SCENE_BASE = '/static/immersive/summaries/scenes-v1/';
   var SCENE_V = document.body.getAttribute('data-scenes-v') || '0';
+  var CONTEXT = window.ClimaScopeContext;
 
   var SCOTLAND_BOUNDS = [[-7.7, 54.6], [-0.7, 60.9]];
   var BG_COLOR     = '#0d0f1a';
@@ -324,10 +325,12 @@
   var _shown  = null;      // committed frame {month, member, region, rid, subs, missing, annualReset}
   var _channel = null;
   var _panels  = [];       // per-group DOM + maps
-  var _maps    = [];       // nine overview maps, one ET companion, one shared change map
+  var _maps    = [];       // climate maps, ET companion, shared change and fixed cover
   var _change = null;
   var _changeValues = {};  // only the current month's cell changes, by metric
   var _mapsReady = null;   // Promise resolved when every map style has loaded
+  var _mapKey = null;
+  var _contextMap = null;
   var _stageSeq  = 0;
   var _dwellTimer = null;
   var _annualReset = false;
@@ -606,7 +609,8 @@
   }
 
   function prefetchNext() {
-    if (!_state.playing || _inflight) return;
+    if (!_state.playing || _inflight || _state.scene === 'water-classes') return;
+    if (_state.playback === 'tour' && SCENES.tour[(_state.tourIndex + 1) % SCENES.tour.length].scene === 'water-classes') return;
     function nextMonth() { return _state.playback === 'tour' ? SCENES.tour[(_state.tourIndex + 1) % SCENES.tour.length].month : _state.month % 12 + 1; }
     var month = nextMonth();
     if (month === _state.month) return;
@@ -915,24 +919,24 @@
       return { values: vals, color: p.color, dash: p.dash };
     });
     var scene = SCENES.get(frame.scene), special = scene.kind !== 'overview' && ps.panel.id === frame.focus;
-    ps.absName.textContent = 'Monthly values';
+    ps.absName.textContent = ps.panel.title + ' · monthly values';
     ps.absSub.textContent = '30-year means · ' + ps.panel.units;
     ps.absKey.innerHTML = keyHTML(PERIODS);
-    ps.deltaName.textContent = 'Change from 1990–2019';
+    ps.deltaName.textContent = ps.panel.title + ' · change from 1990–2019';
     ps.deltaSub.textContent = 'Future − baseline · ' + ps.panel.units;
     ps.deltaKey.innerHTML = keyHTML(FUTURES, special && scene.kind === 'focus' ? 'bar' : null);
     if (special && scene.kind === 'agreement') { renderAgreementCharts(ps, frame); return; }
     if (special && (scene.kind === 'extent' || scene.kind === 'landscape')) {
       var threshold = PERIODS.map(function (p) { return { values: thresholdSeries(frame, p.id), color: p.color, dash: p.dash }; });
       if (scene.kind === 'landscape') {
-        ps.absName.textContent = 'Cells with water balance below zero';
+        ps.absName.textContent = 'Water balance · cells below zero';
         ps.absSub.textContent = '% of valid climate cells';
         ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: threshold, sel: mi, domain: [0, 100] });
         renderLandcoverChart(ps, frame);
         return;
       }
       delta = threshold;
-      ps.deltaName.textContent = 'Cells with water balance below zero';
+      ps.deltaName.textContent = 'Water balance · cells below zero';
       ps.deltaSub.textContent = '% of valid climate cells';
       ps.deltaKey.innerHTML = keyHTML(PERIODS);
     }
@@ -966,7 +970,7 @@
   }
 
   function renderLandcoverChart(ps, frame) {
-    ps.deltaName.textContent = 'Negative balance by land cover';
+    ps.deltaName.textContent = 'Water balance below zero · land cover';
     ps.deltaSub.textContent = "Share of each class’s area in cells below zero";
     ps.deltaKey.innerHTML = keyHTML([PERIODS[0], PERIODS[2]], 'bar');
     var classes = landcoverClasses(frame).slice(0, 5);
@@ -1005,7 +1009,7 @@
     ps.absSub.textContent = 'Lines: medians · shading: 2050–2079 range · ' + ps.panel.units;
     ps.absKey.innerHTML = keyHTML(FUTURES);
     ps.absPlot.innerHTML = buildChart({ W: ps.absPlot.clientWidth, H: ps.absPlot.clientHeight, series: series, sel: mi, zero: true, signed: true });
-    ps.deltaName.textContent = MONTH_LONG[frame.month] + ' · each member';
+    ps.deltaName.textContent = ps.panel.title + ' · ' + MONTH_LONG[frame.month] + ' members';
     ps.deltaSub.textContent = 'Change from 1990–2019 · ' + ps.panel.units;
     ps.deltaKey.innerHTML = keyHTML(FUTURES, 'dot');
     var W = ps.deltaPlot.clientWidth, H = ps.deltaPlot.clientHeight, f = 25 * _u, L = 100 * _u, R = 32 * _u, T = 24 * _u, B = 55 * _u;
@@ -1035,7 +1039,7 @@
       ps.maps.forEach(function (map, j) { if (!ps.mapCells[j].hidden) out.push(map); });
     });
     if (_change && !_change.wrap.hidden && _change.map) out.push(_change.map);
-    return out;
+    return out.concat(CONTEXT.activeMaps());
   }
 
   var _layoutKey = '';
@@ -1043,7 +1047,7 @@
     var key = frame.scene + '|' + frame.focus;
     if (key === _layoutKey) return false;
     _layoutKey = key;
-    var scene = SCENES.get(frame.scene), focused = scene.kind !== 'overview';
+    var scene = SCENES.get(frame.scene), focused = scene.kind !== 'overview', custom = scene.kind === 'cwr';
     var analytical = focused && scene.kind !== 'focus';
     var companions = frame.scene === 'focus-water' ? ['Prec_sum', 'ETPT_sum'] :
       frame.scene === 'focus-rain' ? ['CWBPT', 'Tmax_mean'] :
@@ -1051,9 +1055,9 @@
     document.body.dataset.scene = frame.scene;
     document.getElementById('panels').classList.toggle('focused', focused);
     _panels.forEach(function (ps) {
-      var primary = focused && ps.panel.id === frame.focus;
+      var primary = focused && !custom && ps.panel.id === frame.focus;
       ps.support = !!ps.panel.supportOnly || (focused && !primary);
-      ps.root.hidden = focused ? !primary && companions.indexOf(ps.panel.id) < 0 : !!ps.panel.supportOnly;
+      ps.root.hidden = custom || (focused ? !primary && companions.indexOf(ps.panel.id) < 0 : !!ps.panel.supportOnly);
       ps.root.classList.toggle('focus-primary', primary);
       ps.root.classList.toggle('focus-support', ps.support);
       ps.root.classList.toggle('analytical', primary && analytical);
@@ -1076,7 +1080,8 @@
       ps.mapCells[ps.support ? 2 : 0].appendChild(ps.locatorEl);
       if (primary) [_change.label, _change.wrap, _change.num].forEach(function (node) { ps.root.appendChild(node); });
     });
-    [_change.label, _change.wrap, _change.num].forEach(function (node) { node.hidden = !focused; });
+    [_change.label, _change.wrap, _change.num].forEach(function (node) { node.hidden = !focused || custom; });
+    CONTEXT.layout(frame);
     activeMaps().forEach(function (m) { m.resize(); });
     return true;
   }
@@ -1176,9 +1181,11 @@
         : _state.playing ? '▶ Auto · ' + _state.dwell + ' s per month' : '❚❚ Paused';
       ps.ctxMode.classList.toggle('playing', _state.playing);
     });
+    CONTEXT.context(frame, _status, _panels[0].ctxMode.textContent);
   }
 
   function startDwellBars(seconds) {
+    CONTEXT.dwell(seconds);
     _panels.forEach(function (ps) {
       var bar = ps.ctxBar;
       bar.style.transition = 'none';
@@ -1284,7 +1291,7 @@
     startDwellBars(0);
     var target = { month: _state.month, member: _state.member, region: _state.region,
       scene: _state.scene, focus: _state.focus, tourIndex: _state.tourIndex };
-    var needMaps = !_shown || _shown.month !== target.month || _shown.member !== target.member;
+    var needMaps = target.scene !== 'water-classes' && _mapKey !== payloadKey(target.month, target.member);
     var t0 = performance.now();
     setStatus('loading');
 
@@ -1295,6 +1302,7 @@
       needMaps ? getPayload(target.month, target.member, isCurrent) : null,
       resolveRegion(target.region),
       loadSceneData(target),
+      CONTEXT.load(target, isCurrent),
     ]).then(function (res) {
       if (!isCurrent()) return null;
       if (res[2] && res[2]._meta.data_version !== res[1]._meta.data_version) throw new Error('Regional summaries do not share one data version');
@@ -1315,6 +1323,7 @@
         tourIndex: target.tourIndex,
         summary: { mean: res[1], member: res[2] },
         extra: res[5],
+        context: res[6],
       };
       _annualReset = false;
       var regionChanged = !_shown || _shown.region.name !== region.name;
@@ -1426,7 +1435,14 @@
       renderCharts(ps, frame);
     });
 
-    if (payload) PANELS.forEach(function (p) { _changeValues[p.id] = payload[p.id] && payload[p.id]['2050-2079_change']; });
+    if (payload) {
+      _mapKey = payloadKey(frame.month, frame.member);
+      PANELS.forEach(function (p) { _changeValues[p.id] = payload[p.id] && payload[p.id]['2050-2079_change']; });
+    }
+    CONTEXT.render(frame);
+    document.getElementById('footer-method').textContent = frame.scene === 'water-classes'
+      ? 'CWR PT · classified land-use area · km²'
+      : 'Regional means: valid 1 km climate cells, equally weighted';
     if (!_change.wrap.hidden) {
       var panel = PANELS.find(function (p) { return p.id === frame.focus; });
       var changePanel = Object.assign({}, panel, { change: true });
@@ -1683,9 +1699,9 @@
         charts.appendChild(box);
         return { plot: plot, sub: sub, name: name, key: key };
       }
-      var a = chartBox('Monthly values', PERIODS);
+      var a = chartBox(panel.title + ' · monthly values', PERIODS);
       a.sub.textContent = '30-year means · ' + panel.units;
-      var d = chartBox('Change from 1990–2019 baseline', FUTURES);
+      var d = chartBox(panel.title + ' · change from 1990–2019', FUTURES);
       d.sub.textContent = 'Future − baseline · ' + panel.units;
       ps.absPlot = a.plot;
       ps.deltaPlot = d.plot;
@@ -1737,10 +1753,12 @@
     });
     jobs.push(createMap('map-change', colorStops(Object.assign({}, PANELS[0], { change: true }), _sum.mean._meta.change_domains.CWBPT))
       .then(function (map) { _change.map = map; }));
+    jobs.push(CONTEXT.createMap(createMap).then(function (map) { _contextMap = map; }));
     return Promise.all(jobs).then(function () {
       _maps = [];
       _panels.forEach(function (ps) { ps.maps.forEach(function (m) { _maps.push(m); }); });
       _maps.push(_change.map);
+      _maps.push(_contextMap);
     });
   }
 
@@ -1762,6 +1780,7 @@
   applyScale();
   restore();
   buildPanels();
+  CONTEXT.build(document.getElementById('panels'));
   renderContext();
   loadCouncils();
 

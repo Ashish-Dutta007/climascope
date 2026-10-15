@@ -1,0 +1,11 @@
+{
+  "url": "https://climascope.hutton.ac.uk/immersive/preview?scene=water-classes&month=7&width=11514",
+  "ready": true,
+  "periods": 3,
+  "class_bars": 144,
+  "page_errors": [],
+  "climate_grid_requests": 0,
+  "relay_requests": 0,
+  "map_tile_requests": "fulfilled locally; no production tile sweep",
+  "final_area_svg_viewbox": "0 0 1400 455"
+}

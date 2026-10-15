@@ -2134,6 +2134,9 @@ def coverage():
 JESS_ROOT = os.environ.get("JESS_ROOT", "data/jess/parquet")
 JESS_CWR_ROOT = os.environ.get("JESS_CWR_ROOT", "data/jess/parquet_cwr")
 
+from immersive_context import create_context_blueprint
+app.register_blueprint(create_context_blueprint(JESS_CWR_ROOT, _COUNCIL_CATCHMENTS, _CATCHMENT_NAMES))
+
 @lru_cache(maxsize=256)
 def _catchment_cached(variable, metric, month, period, scenario, scope_str):
     # Target the exact partitioned file — DuckDB cannot partition-prune

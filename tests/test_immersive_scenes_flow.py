@@ -94,7 +94,7 @@ class SceneFlows(unittest.TestCase):
 
         self.wait(wall, lambda: ready("focus-water", month=7), "pairing preserves the default focused scene")
         wall.get_by_role("button", name="Hide", exact=True).click()
-        scenes = ["overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "agreement"]
+        scenes = ["overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "water-classes", "agreement"]
         records = []
         for width in [11514, 15360]:
             wall.set_viewport_size({"width": width, "height": 1200})
@@ -102,7 +102,7 @@ class SceneFlows(unittest.TestCase):
                 phone.locator('.btn-scene[data-scene="' + scene + '"]').click()
                 self.wait(wall, lambda: ready(scene, month=7), scene)
                 self.assertEqual(wall.locator(".mapcell:visible").count(),
-                    9 if scene == "overview" else 6 if scene.startswith("focus-") else 3)
+                    10 if scene == "overview" else 6 if scene.startswith("focus-") else 4 if scene == "landscape" else 0 if scene == "water-classes" else 3)
                 self.assertEqual(wall.locator('.group:not([data-metric="ETPT_sum"]) .num:not(.change-num) .num-value').all_text_contents(),
                     ["3.2 mm", "−3.7 mm", "−24.9 mm", "94.5 mm", "94.8 mm", "82.3 mm", "16.4 °C", "19.1 °C", "21.1 °C"])
                 overflow = wall.evaluate("""() => [...document.querySelectorAll('.scene-insight:not([hidden]),.support-summary:not([hidden])')]
@@ -136,7 +136,7 @@ class SceneFlows(unittest.TestCase):
                     for canvas in wall.locator(".focus-support canvas").all():
                         if canvas.is_visible():
                             self.assertTrue(self.has_climate_pixels(wall, canvas))
-                if scene != "overview":
+                if scene not in ["overview", "water-classes"]:
                     self.assertEqual(wall.locator('.focus-primary').evaluate('(e)=>Math.round(e.getBoundingClientRect().width)'), 4300)
                     self.assertEqual(wall.locator('.change-map:visible').count(), 1)
                     self.assertIn('Zero-centred', wall.locator('.change-map .legend').inner_text())
@@ -191,8 +191,8 @@ class SceneFlows(unittest.TestCase):
         cdp = wall.context.new_cdp_session(wall)
         cdp.send("HeapProfiler.collectGarbage")
         before = wall.evaluate("performance.memory.usedJSHeapSize")
-        for index, scene in enumerate(["overview", "focus-heat", "focus-rain", "focus-water", "water-extent", "landscape", "agreement", "focus-water"]):
-            month = 1 if index in [0, 7] else 7
+        for index, scene in enumerate(["overview", "focus-heat", "focus-rain", "focus-water", "water-extent", "landscape", "water-classes", "agreement", "focus-water"]):
+            month = 1 if index in [0, 8] else 7
             self.wait(wall, lambda: ready(scene, month=month) and report()["state"]["tourIndex"] == index, "tour chapter " + str(index + 1), 45)
             print("tour", index + 1, scene, flush=True)
         send({"cmd": "pause"})

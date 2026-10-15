@@ -132,6 +132,12 @@ server; the normal desktop viewer remains separate. See the
 [wall and phone-control notes](docs/immersive/PHONE_REMOTE_2026-10-13.md) for
 deployment, pairing and validation.
 
+Eight scenes now include fixed land-cover maps and estimated class areas in
+Overview and Land cover, plus CWR PT class shares and land-use areas from the
+catchment dataset. The scene loop has nine chapters. See the
+[15 October update](docs/immersive/JESS_FEEDBACK_2026-10-15.md) for methods,
+the independent desktop preview and validation at both wall sizes.
+
 ## Runtime data
 
 Runtime data are intentionally excluded from Git because the collection is

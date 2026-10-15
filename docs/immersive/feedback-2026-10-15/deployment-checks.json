@@ -1,0 +1,60 @@
+{
+  "image": "sha256:d1cc02196e658b63d729536800c6c5a6667cb76af81c63fd23cd5718ec539b31",
+  "container_state": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 3856608,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-10-15T16:21:27.688869972Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "restart_count": 0,
+  "container_files": {
+    "checked": 57,
+    "mismatches": []
+  },
+  "pages": {
+    "/": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive/control": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive/preview": {
+      "status": 200,
+      "frame_policy": "DENY"
+    },
+    "/immersive?preview=feedbackcheck": {
+      "status": 200,
+      "frame_policy": "SAMEORIGIN"
+    },
+    "/static/immersive/scene-study/index.html": {
+      "status": 200,
+      "frame_policy": "DENY"
+    }
+  },
+  "public_asset_hashes": {
+    "static/immersive/immersive.js": "1e240849a4b566165499698f94b306bf1d33c2112257d8006b7545bc3db65da5",
+    "static/immersive/immersive.css": "313fb20acdb53edfd3f284b612628d5f6d0d9515a2fea4f1a03b50ab02351c01",
+    "static/immersive/control.js": "15f4b8b11a5a7d7576527504c58ccca23f08f964bbaec32c2aff3f62e4385095",
+    "static/immersive/preview.js": "b006b67e91342a17a7007e32e002274834aebd15dc81a1038195b9cce46d4831",
+    "static/immersive/scenes.js": "cf6243759c67281b7fc7305c7671aa3372862c1b916c12027aa121d8ac063bf9",
+    "static/immersive/scenes.css": "c5df84ce0796c3ddbcf625eb40f0fcfe341d404e81de05089814255215e770b0",
+    "static/immersive/context.js": "cd7f32992373fb8c68447ee107047245827367e1c7402b2bf794932b342a585d",
+    "static/immersive/context.css": "3dc85c787addda5010a502a90c144e359b1de57246a368955bea8c7eaa1d64e8",
+    "static/immersive/summaries/landcover-v1.json": "4c00b78d98f76467b4c7e50dd230a4adf8d1dafbe43fda7ca886a6208ca0c436"
+  },
+  "cwr_public_matches_staging_to_km2": 1e-06,
+  "cwr_month_periods_checked": 36
+}

@@ -1,0 +1,89 @@
+{
+  "scenes": [
+    {
+      "width": 11514,
+      "scene": "overview",
+      "maps": 10
+    },
+    {
+      "width": 11514,
+      "scene": "focus-water",
+      "maps": 6
+    },
+    {
+      "width": 11514,
+      "scene": "focus-rain",
+      "maps": 6
+    },
+    {
+      "width": 11514,
+      "scene": "focus-heat",
+      "maps": 6
+    },
+    {
+      "width": 11514,
+      "scene": "water-extent",
+      "maps": 3
+    },
+    {
+      "width": 11514,
+      "scene": "landscape",
+      "maps": 4
+    },
+    {
+      "width": 11514,
+      "scene": "water-classes",
+      "maps": 0
+    },
+    {
+      "width": 11514,
+      "scene": "agreement",
+      "maps": 3
+    },
+    {
+      "width": 15360,
+      "scene": "overview",
+      "maps": 10
+    },
+    {
+      "width": 15360,
+      "scene": "focus-water",
+      "maps": 6
+    },
+    {
+      "width": 15360,
+      "scene": "focus-rain",
+      "maps": 6
+    },
+    {
+      "width": 15360,
+      "scene": "focus-heat",
+      "maps": 6
+    },
+    {
+      "width": 15360,
+      "scene": "water-extent",
+      "maps": 3
+    },
+    {
+      "width": 15360,
+      "scene": "landscape",
+      "maps": 4
+    },
+    {
+      "width": 15360,
+      "scene": "water-classes",
+      "maps": 0
+    },
+    {
+      "width": 15360,
+      "scene": "agreement",
+      "maps": 3
+    }
+  ],
+  "full_tour_without_phone": true,
+  "member_region_reload": true,
+  "heap_before_mb": 231.3,
+  "heap_after_mb": 235.6,
+  "errors": []
+}

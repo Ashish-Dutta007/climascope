@@ -20,6 +20,7 @@
     frame.contentWindow.postMessage({ type: 'climascope-preview-command', token: token, command: command }, location.origin);
   }
   function describe() {
+    node('member-select').options[0].textContent = node('scene-select').value === 'water-classes' ? 'Mean class areas' : 'Ensemble mean';
     node('scene-description').textContent = SCENES.get(node('scene-select').value).description;
     node('focus-select').disabled = node('scene-select').value !== 'agreement';
     node('focus-control').hidden = node('scene-select').value !== 'agreement';

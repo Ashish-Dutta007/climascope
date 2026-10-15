@@ -1,0 +1,16 @@
+.F..............
+======================================================================
+FAIL: test_real_source_classes_members_and_scope (tests.test_immersive_context.CWRSource.test_real_source_classes_members_and_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_context.py", line 60, in test_real_source_classes_members_and_scope
+    with duckdb.connect() as db:
+         ^^^^^^^^^^^^^^^^
+  File "/mnt/shared/docker/climascope/app/tests/test_immersive_context.py", line 75, in test_real_source_classes_members_and_scope
+    self.assertAlmostEqual(item["classes_km2"][ci],expected.get(category,0),delta=.003)
+AssertionError: 52781.00543782851 != np.float32(52781.008) within 0.003 delta (np.float32(0.00390625) difference)
+
+----------------------------------------------------------------------
+Ran 16 tests in 188.295s
+
+FAILED (failures=1)

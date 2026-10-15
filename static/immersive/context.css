@@ -1,0 +1,33 @@
+.context-panel { flex-shrink: 1; min-width: 0; background: var(--bg); border-inline: calc(2 * var(--u)) solid var(--rule); }
+.context-title { font-size: calc(48 * var(--u)); font-weight: 700; text-align: center; padding: calc(10 * var(--u)); background: var(--bg-panel); }
+.land-panel { flex-basis: calc(2400 * var(--u)); max-width: calc(2400 * var(--u)); display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1.35fr);
+  grid-template-rows: calc(54 * var(--u)) calc(72 * var(--u)) calc(46 * var(--u)) minmax(0,1fr) calc(128 * var(--u)); }
+.land-panel .ctx { grid-column: 1 / -1; }
+.land-panel .context-title { grid-column: 1; grid-row: 2; font-size: calc(42 * var(--u)); }
+.context-label { grid-column: 1; grid-row: 3; text-align: center; font-size: calc(28 * var(--u)); color: var(--text-2); padding-top: calc(6 * var(--u)); }
+.context-map { grid-column: 1; grid-row: 4; }
+.land-map-note { grid-column: 1; grid-row: 5; text-align: center; padding: calc(18 * var(--u)); font-size: calc(29 * var(--u)); color: var(--text-2); background: var(--bg-panel); }
+.cover-nodata { display: inline-block; width: calc(22 * var(--u)); height: calc(22 * var(--u)); margin-right: calc(10 * var(--u)); background: #4a4f66; }
+.land-area { grid-column: 2; grid-row: 2 / 6; border-left: calc(2 * var(--u)) solid var(--rule);
+  padding: calc(18 * var(--u)) calc(20 * var(--u)); display: flex; flex-direction: column; min-height: 0; }
+.land-area h2 { font-size: calc(42 * var(--u)); }
+.land-area p { font-size: calc(29 * var(--u)); color: var(--text-2); margin-top: calc(8 * var(--u)); }
+.area-plot { flex: 1; min-height: 0; }
+.area-plot svg { width: 100%; height: 100%; }
+.land-area .area-total { font-size: calc(30 * var(--u)); margin-top: auto; }
+.cwr-panel { flex: 0 1 calc(5900 * var(--u)); display: grid; grid-template-rows: calc(54 * var(--u)) calc(80 * var(--u)) minmax(0,1fr) calc(55 * var(--u)); }
+.cwr-body { display: grid; grid-template-columns: calc(660 * var(--u)) repeat(3,minmax(0,1fr)); gap: calc(22 * var(--u)); min-height: 0; padding: calc(18 * var(--u)); }
+.cwr-key { padding: calc(30 * var(--u)) calc(18 * var(--u)); }
+.cwr-key h2 { font-size: calc(48 * var(--u)); margin-bottom: calc(36 * var(--u)); }
+.cwr-key p { font-size: calc(36 * var(--u)); display: flex; align-items: center; gap: calc(18 * var(--u)); margin-block: calc(28 * var(--u)); }
+.cwr-key p span { width: calc(32 * var(--u)); height: calc(32 * var(--u)); flex-shrink: 0; }
+.cwr-description { font-size: calc(32 * var(--u)); line-height: 1.4; color: var(--text-2); margin-top: calc(60 * var(--u)); }
+.cwr-period { display: flex; flex-direction: column; min-height: 0; padding: calc(20 * var(--u)); border-left: calc(2 * var(--u)) solid var(--rule); background: #090c18; }
+.cwr-period h2 { font-size: calc(48 * var(--u)); margin-bottom: calc(20 * var(--u)); }
+.cwr-period h3 { font-size: calc(34 * var(--u)); font-weight: 650; }
+.cwr-period p { font-size: calc(28 * var(--u)); color: var(--text-2); margin-top: calc(8 * var(--u)); }
+.cwr-months { flex: .85; min-height: 0; margin-block: calc(12 * var(--u)); }
+.cwr-land-use { flex: 1.15; min-height: 0; margin-top: calc(18 * var(--u)); }
+.cwr-months svg,.cwr-land-use svg { width: 100%; height: 100%; }
+.cwr-source { color: var(--text-2); font-size: calc(30 * var(--u)); padding: calc(12 * var(--u)) calc(36 * var(--u)); background: var(--bg-panel); }

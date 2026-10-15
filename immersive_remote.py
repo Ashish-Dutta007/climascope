@@ -207,7 +207,7 @@ def _validate_message(payload):
             raise RemoteError("Unknown ensemble member.")
         if "region" in payload and (not isinstance(payload["region"], dict) or not isinstance(payload["region"].get("name"), str)):
             raise RemoteError("Region must include its name.")
-        if "scene" in payload and (not isinstance(payload["scene"], str) or payload["scene"] not in {"overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "agreement"}):
+        if "scene" in payload and (not isinstance(payload["scene"], str) or payload["scene"] not in {"overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "water-classes", "agreement"}):
             raise RemoteError("Unknown wall scene.")
         if "focus" in payload and (not isinstance(payload["focus"], str) or payload["focus"] not in {"CWBPT", "Prec_sum", "Tmax_mean"}):
             raise RemoteError("Unknown focus metric.")

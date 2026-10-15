@@ -1,0 +1,45 @@
+{
+  "views": [
+    {
+      "width": 11514,
+      "scene": "overview",
+      "maps": 10,
+      "overflow": []
+    },
+    {
+      "width": 11514,
+      "scene": "landscape",
+      "maps": 4,
+      "overflow": []
+    },
+    {
+      "width": 11514,
+      "scene": "water-classes",
+      "maps": 0,
+      "overflow": []
+    },
+    {
+      "width": 15360,
+      "scene": "overview",
+      "maps": 10,
+      "overflow": []
+    },
+    {
+      "width": 15360,
+      "scene": "landscape",
+      "maps": 4,
+      "overflow": []
+    },
+    {
+      "width": 15360,
+      "scene": "water-classes",
+      "maps": 0,
+      "overflow": []
+    }
+  ],
+  "svg_values_match_source": true,
+  "member_and_region_follow_selection": true,
+  "month_reuses_class_payload": true,
+  "error_preserves_previous_frame": true,
+  "errors": []
+}
