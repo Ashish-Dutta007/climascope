@@ -1,4 +1,4 @@
-# Jess's wall feedback, 15 October 2026
+# Land cover and CWR classes, 15 October 2026
 
 Immersive v4.3.0 adds the fixed land-cover context and four-class CWR view. Both confirmed canvas sizes are supported: 11,514 × 1,200 open, and 15,360 × 1,200 full wrap.
 
@@ -21,7 +21,7 @@ The national estimated mapped-cover area is 76,966.7 km²; its available grid fo
 
 ## CWR source and interpretation
 
-The new `/api/immersive/cwr` endpoint reads the existing `data/jess/parquet_cwr/Variable=Land%20Use/Period=.../Metric=CWRPT/` partitions. It uses the supplied **Strong Deficit, Moderate Deficit, Moderate Surplus and Strong Surplus** classes unchanged. The source includes all twelve members and all months. The supplied Power BI report was also opened: it exposes CWRPT/CWRPM and the same class names.
+The new `/api/immersive/cwr` endpoint reads the existing `data/jess/parquet_cwr/Variable=Land%20Use/Period=.../Metric=CWRPT/` partitions. It uses the supplied **Strong Deficit, Moderate Deficit, Moderate Surplus and Strong Surplus** classes unchanged. The source includes all twelve members and all months. The supplied Power BI report uses CWRPT/CWRPM and the same class names.
 
 Selecting a member uses that member's class areas. Selecting **Mean class areas** takes the arithmetic mean of the twelve supplied area totals in each class. The wall and controller label this explicitly. National classified land-use coverage is approximately 52,781.0 km². The monthly share denominator is this source's classified land-use area.
 

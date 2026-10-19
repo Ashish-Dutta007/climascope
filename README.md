@@ -1,241 +1,112 @@
 # ClimaScope
 
-ClimaScope is a map-based environmental decision-support prototype for
-exploring projected climate change, land cover, catchments, habitats and
-LiDAR-derived terrain information across Scotland on a common 1 km grid.
+A web viewer for climate projections, land cover, catchments, habitats and
+LiDAR-derived terrain across Scotland on a 1 km grid.
 
-The application was developed at the James Hutton Institute for the Scottish
-Government RESAS Strategic Research Programme 2022-2027, project D5-2:
-*Climate Change Impacts on Natural Capital*.
+Developed at the James Hutton Institute for RESAS project D5-2,
+*Climate Change Impacts on Natural Capital*, within the Scottish Government
+Strategic Research Programme 2022–2027.
 
-ClimaScope combines UKCP18-derived climate indicators with UKCEH land cover,
-SEPA river catchments, local-authority boundaries, habitat context and
-LiDAR-derived products. Users can explore national, council, catchment and
-user-defined areas; compare climate periods; apply environmental and terrain
-filters; inspect data availability; and export data for further analysis.
+[Open ClimaScope](https://climascope.hutton.ac.uk/)
 
-**Live application:** <https://climascope.hutton.ac.uk/>
+## What it shows
 
-**Trishuli rapid event reconstruction:**
-<https://climascope.hutton.ac.uk/trishuli/report>
+- Monthly climate indicators for 1990–2019, 2020–2049 and 2050–2079.
+- Scotland, council, catchment and drawn-area selections.
+- Land-cover fractions, habitat context, LiDAR coverage and terrain layers.
+- Filters combining climate, land cover and terrain criteria.
+- Cell details, area summaries, CSV exports and selected geospatial downloads.
 
-The Trishuli work is a separate open evidence workflow for the 26 August 2026
-Bhote Koshi-Trishuli flood. It publishes a reviewed seismic source, terrain
-measurements, a Nepal DHM gauge-telemetry audit, competing mechanism tests and
-machine-readable observations. Contributions use the repository's structured
-Trishuli evidence issue template so direct observations remain distinct from
-interpretation.
+The geographic grid contains 81,659 cells and covers 32 Scottish councils.
+Climate-data coverage depends on the supplied files. LiDAR products and
+hillshade cover the areas available from each acquisition phase.
 
-> **Status:** public research and decision-support prototype. The source code is
-> available for transparency and technical review. Runtime datasets are not
-> included in this repository.
+## Climate metrics
 
-## Main capabilities
+| Code | Quantity |
+|---|---|
+| `CWBPM`, `CWBPT` | Climate water balance, mm |
+| `CWRPM`, `CWRPT` | Climate water ratio |
+| `ETPM_sum`, `ETPT_sum` | Monthly evapotranspiration, mm |
+| `Prec_sum` | Monthly precipitation total, mm |
+| `Tmax_mean` | Mean daily maximum temperature, °C |
+| `Tmin_mean` | Mean daily minimum temperature, °C |
 
-- Explore Scotland-wide climate indicators at 1 km resolution for baseline and
-  projected periods.
-- View precipitation, temperature, evapotranspiration and climate-water-balance
-  metrics by month and period.
-- Work at national, local-authority, river-catchment or drawn-area scope.
-- Overlay land-cover fractions, habitat context, LiDAR coverage and terrain
-  variables.
-- Filter grid cells using combinations of climate, land-cover and terrain
-  criteria.
-- Inspect cell-level context and generate summaries for selected areas.
-- Export cell-level CSV data and supported geospatial products for downstream
-  analysis.
+PM and PT are the method codes in the supplied datasets. Check the project data
+definitions for the method, scenario and aggregation used in an analysis.
+Future 1 km CWR grids are disabled because of a formula error in the source RDS.
+The separate classified catchment CWR summaries remain available.
 
-## LiDAR and terrain functionality
+## Data
 
-ClimaScope integrates LiDAR availability and derived terrain information with
-the climate and land-cover evidence base:
+Inputs include UKCP18-derived climate indicators, UKCEH land-cover fractions,
+SEPA catchments, council boundaries, habitat data and Scottish Government LiDAR
+products. Project-derived summaries combine these for selected areas.
 
-- LiDAR coverage displayed by acquisition phase on the 1 km grid.
-- Cell-level availability of digital terrain model (DTM), digital surface model
-  (DSM) and point-cloud products.
-- LiDAR-derived mean elevation, slope, ruggedness and canopy-height metrics.
-- Terrain variables available as interactive layers and filter criteria.
-- Regional 10 m LiDAR-derived hillshade where coverage is available.
-- Size-limited export of AOI-clipped, georeferenced hillshade GeoTIFFs.
-- LiDAR phase and terrain attributes added to relevant tabular AOI exports.
+Runtime data are excluded from Git. A deployment needs the relevant files under
+`data/`, including:
 
-The application exposes dedicated APIs for coverage, cell metadata, terrain
-variables, hillshade tiles and controlled hillshade export. Raw LiDAR and some
-derived datasets are not redistributed because of volume and third-party
-licensing constraints.
+- `precomputed/`: monthly climate Parquets;
+- `grid.parquet`, `councils.gpkg` and `catchments.gpkg`;
+- `landcover_fractions.parquet` and the habitat/soil-wetness inputs;
+- `jess/`: catchment summaries;
+- LiDAR coverage, collection and terrain Parquets;
+- `tiles/grid.mbtiles` and the hillshade MBTiles/COG where configured.
 
-## Data and analytical scope
+Dataset licences and attribution requirements apply separately. See
+[deployment notes](DEPLOY.md) for paths and configuration.
 
-The application currently covers:
+## Immersive suite
 
-- 32 Scottish local authorities;
-- 81,659 one-kilometre grid cells;
-- SEPA river catchments;
-- UKCP18-derived baseline and projected climate indicators; and
-- land-cover, habitat, LiDAR-coverage and terrain context where available.
+- [Wall](https://climascope.hutton.ac.uk/immersive)
+- [Phone controller](https://climascope.hutton.ac.uk/immersive/control)
+- [Browser preview](https://climascope.hutton.ac.uk/immersive/preview)
 
-Climate metrics include:
+Select **Phone remote** on the wall and enter its temporary code on the
+controller. Eight scenes compare climate periods, negative water balance,
+land cover, CWR classes and member spread. Month loop cycles through the year;
+Scene loop runs nine stops. The wall runs playback after the controller closes.
+Manual changes pause it.
 
-| Code | Description |
-| --- | --- |
-| `CWBPM` | Climate Water Balance (Penman-Monteith), mm |
-| `CWBPT` | Climate Water Balance (Penman-Thornthwaite), mm |
-| `CWRPM` | Climate Water Ratio (Penman-Monteith) |
-| `CWRPT` | Climate Water Ratio (Penman-Thornthwaite) |
-| `ETPM_sum` | Evapotranspiration (Penman-Monteith), mm |
-| `ETPT_sum` | Evapotranspiration (Penman-Thornthwaite), mm |
-| `Prec_sum` | Annual precipitation sum, mm |
-| `Tmax_mean` | Mean maximum temperature |
-| `Tmin_mean` | Mean minimum temperature |
+The [immersive repo](https://github.com/Ashish-Dutta007/climascope-immersive)
+contains setup, methods and release records. The
+[land-cover and CWR notes](docs/immersive/JESS_FEEDBACK_2026-10-15.md) describe the
+latest additions.
 
-Metric definitions should be confirmed against the authoritative project data
-dictionary before formal reuse or citation.
+## Running
 
-## Data sources
+Python 3.12; Flask/Gunicorn, DuckDB, GeoPandas, Pandas and Rasterio. The frontend
+uses JavaScript and MapLibre GL. Climate values are read from partitioned
+Parquets and joined to vector tiles in the browser.
 
-- **UKCP18:** Met Office 12-member ensemble and derived climate indicators,
-  using the scenario and periods configured in the project datasets.
-- **UKCEH Land Cover Map:** fractional land-cover information at 1 km.
-- **SEPA:** river-catchment boundaries.
-- **Scottish local-authority boundaries:** council selection and summaries.
-- **Scottish Government:** LiDAR coverage and derived terrain products from the
-  national LiDAR programme where available.
-- **James Hutton Institute:** project-derived catchment summaries and analytical
-  datasets.
-
-Users are responsible for checking the licence, attribution and permitted use
-of each underlying dataset. Inclusion in the application does not transfer
-third-party data rights.
-
-## Technical architecture
-
-- **Backend:** Flask served by Gunicorn.
-- **Spatial and tabular processing:** GeoPandas, Rasterio, Pandas and DuckDB.
-- **Frontend:** vanilla JavaScript with MapLibre GL.
-- **Storage:** partitioned Parquet for precomputed climate values, GeoPackage for
-  boundaries and SQLite/MBTiles for vector and raster tiles.
-- **Deployment:** Docker or a managed Gunicorn process; large runtime datasets
-  are mounted separately from the application image.
-
-Precomputed monthly ensemble means are stored in partitions such as
-`data/precomputed/Metric=X/Period=Y/Month=N.parquet`, allowing each request to
-read only the relevant subset. Vector tiles are generated with Tippecanoe and
-served by Flask, with values joined client-side using MapLibre feature state.
-
-## Immersive wall and phone control
-
-The repository also includes an immersive wall display at `/immersive` and a
-separate controller at `/immersive/control`. The wall compares three climate
-metrics across three periods with seasonal charts and annual playback. A phone
-or tablet can pair using a temporary code and control the wall through the
-server; the normal desktop viewer remains separate. See the
-[wall and phone-control notes](docs/immersive/PHONE_REMOTE_2026-10-13.md) for
-deployment, pairing and validation.
-
-Eight scenes now include fixed land-cover maps and estimated class areas in
-Overview and Land cover, plus CWR PT class shares and land-use areas from the
-catchment dataset. The scene loop has nine chapters. See the
-[15 October update](docs/immersive/JESS_FEEDBACK_2026-10-15.md) for methods,
-the independent desktop preview and validation at both wall sizes.
-
-## Runtime data
-
-Runtime data are intentionally excluded from Git because the collection is
-large and includes third-party licensed material. A configured deployment may
-contain files such as:
-
-- `data/precomputed/` - partitioned climate values;
-- `data/grid.parquet` - 1 km cell identifiers and geometries;
-- `data/councils.gpkg` - Scottish local-authority boundaries;
-- `data/catchments.gpkg` - SEPA river catchments;
-- `data/landcover_fractions.parquet` - UKCEH land-cover fractions;
-- `data/lidar_coverage.parquet` - LiDAR product availability by grid cell;
-- `data/lidar_collections.parquet` - acquisition collection/phase metadata;
-- `data/terrain_metrics.parquet` - LiDAR-derived terrain summaries;
-- `data/tiles/grid.mbtiles` - vector tile pyramid;
-- `data/tiles/terrain_hillshade.mbtiles` - display hillshade tiles; and
-- `data/terrain_hillshade_cog.tif` - export-enabled hillshade COG.
-
-Exact paths can be overridden with deployment environment variables where the
-application provides them.
-
-## Running locally
-
-Create an environment containing the packages in `requirements.txt`, provide
-the required runtime datasets, and run from the repository root:
+For a fresh checkout, create the environment and provide the runtime data:
 
 ```bash
+python3.12 -m venv venv
+venv/bin/pip install -r requirements.txt
 ./start.sh
 ./check.sh
 ./stop.sh
 ```
 
-The application listens on port 8000 by default. Some deployment paths are
-resolved relative to the current working directory, so the repository root must
-be the working directory.
+The deployment checkout already has a venv. Gunicorn runs on port 8000, with
+logs in `../logs/gunicorn.log`.
 
-For local development with Flask:
-
-```bash
-python app.py
-```
-
-## Docker deployment
-
-Runtime data are bind-mounted rather than copied into the image:
+For Docker:
 
 ```bash
-docker compose build --no-cache
-docker compose up -d
+docker compose build climascope
+docker compose up -d --no-build --force-recreate climascope
 ```
 
-See [`DEPLOY.md`](DEPLOY.md) for deployment-specific guidance.
+Data are mounted from `./data`; the host port is 8123. Code and static files are
+built into the image, so changes need a rebuild. See [DEPLOY.md](DEPLOY.md).
 
-## Quality, safeguards and reproducibility
+## Trishuli
 
-The implementation includes controls intended to keep analytical outputs
-traceable and operationally safe:
-
-- explicit validation of metric, period, month and spatial-scope parameters;
-- council- and catchment-scoped queries to limit unnecessary national reads;
-- precomputed, partitioned inputs for repeatable metric retrieval;
-- stable 1 km cell identifiers across map, API and export outputs;
-- source/phase metadata for LiDAR availability;
-- bounded hillshade exports with AOI-area, pixel-count and dimension limits;
-- checks for missing data and unavailable layers before enabling controls;
-- documented separation between redistributable code and licensed runtime data;
-  and
-- health-check and controlled start/stop scripts for managed deployment.
-
-These measures support reproducibility and proportionate quality assurance, but
-the prototype and its outputs still require project-level scientific review,
-source-data checks and fitness-for-purpose assessment before use in formal
-environmental decisions.
-
-## Known limitations
-
-- Future-grid CWR data for 2020-2049 and 2050-2079 are unavailable because a
-  formula error was identified in the source RDS. Those future-period map
-  combinations are disabled rather than presenting unreliable values; the
-  supported catchment workflow remains available where valid data exist.
-- The public application has no user accounts; administrative and deployment
-  access must be controlled outside the application.
-- Raw and derived datasets are not included, so the repository cannot run as a
-  complete application without an authorised runtime-data bundle.
-- LiDAR and hillshade coverage is regional and varies by acquisition phase and
-  available source products.
-- Generated job outputs require operational housekeeping in long-running
-  deployments.
-
-## Responsible use
-
-ClimaScope is an exploratory research tool, not a substitute for authoritative
-site assessment, statutory guidance or professional judgement. Users should
-verify source data, units, spatial coverage, scenario assumptions and known
-limitations before interpreting or communicating results.
-
-## Acknowledgement
-
-Developed at the James Hutton Institute under the Scottish Government RESAS
-Strategic Research Programme 2022-2027, project D5-2: *Climate Change Impacts
-on Natural Capital*.
+The app also hosts a separate
+[Trishuli event map](https://climascope.hutton.ac.uk/trishuli) and
+[evidence brief](https://climascope.hutton.ac.uk/trishuli/report).
+Sources, measurements and interpretation limits are recorded in the
+[data notes](static/trishuli/DATA_NOTES.txt) and
+[build instructions](analysis/trishuli/README.md).

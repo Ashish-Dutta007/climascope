@@ -23,8 +23,7 @@ logs/
 *.rds
 *.h5
 
-# Virtual environment (included in repo for deployment convenience,
-# but should not be tracked — re-create with pip install -r requirements.txt)
+# Local Python environment; recreate from requirements.txt
 venv/
 
 # Editor

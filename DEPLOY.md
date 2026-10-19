@@ -1,4 +1,4 @@
-# ClimaScope — deployment notes
+# ClimaScope deployment
 
 Flask app, Python 3.12, gunicorn on port 8000.
 
@@ -10,7 +10,9 @@ Flask app, Python 3.12, gunicorn on port 8000.
 ./check.sh    # quick health check
 ```
 
-Venv is included (`venv/`), so no install needed. Logs go to `../logs/gunicorn.log`.
+The deployment checkout has a `venv/`. For a fresh clone, create it and install
+`requirements.txt` as described in [README.md](README.md#running). Logs go to
+`../logs/gunicorn.log`.
 
 For OS place-name search, set the API key on the server (never in browser JS):
 

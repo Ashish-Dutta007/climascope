@@ -1,9 +1,0 @@
-test_open_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_open_wall) ... 11514 × 1200: real July data, nine maps, six charts; pairing does not reset the wall; phone month command and displayed confirmation; region/member commands and member-consistent values; phone refresh, state restoration and mobile fit; wall-owned playback and annual reset without controller; rapid commands retain one climate request in flight; failure keeps last displayed frame and pauses; wall refresh retains remote session and shown state; second phone takeover revokes first phone; no uncaught browser exceptions
-ok
-test_wrap_wall (tests.test_immersive_phone_flow.ImmersivePhoneFlow.test_wrap_wall) ... 15360 × 1200: real July data, nine maps, six charts; pairing does not reset the wall; phone month command and displayed confirmation; region/member commands and member-consistent values; phone refresh, state restoration and mobile fit; no uncaught browser exceptions
-ok
-
-----------------------------------------------------------------------
-Ran 2 tests in 84.416s
-
-OK
