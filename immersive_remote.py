@@ -198,7 +198,7 @@ def _validate_message(payload):
         raise RemoteError("Message must be an object.")
     if not isinstance(payload.get("type"), str):
         raise RemoteError("Message type must be a string.")
-    if payload.get("type") == "command" and (not isinstance(payload.get("cmd"), str) or payload["cmd"] not in {"set", "step", "play", "pause", "dwell", "tour"}):
+    if payload.get("type") == "command" and (not isinstance(payload.get("cmd"), str) or payload["cmd"] not in {"set", "step", "play", "pause", "dwell", "tour", "save-place", "remove-place", "places-play"}):
         raise RemoteError("Unknown wall command.")
     if payload.get("type") in {"state", "command"}:
         if "month" in payload and (type(payload["month"]) is not int or not 1 <= payload["month"] <= 12):
@@ -207,12 +207,24 @@ def _validate_message(payload):
             raise RemoteError("Unknown ensemble member.")
         if "region" in payload and (not isinstance(payload["region"], dict) or not isinstance(payload["region"].get("name"), str)):
             raise RemoteError("Region must include its name.")
-        if "scene" in payload and (not isinstance(payload["scene"], str) or payload["scene"] not in {"overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "water-classes", "agreement"}):
+        if "region" in payload and payload["region"].get("kind") == "cell":
+            region = payload["region"]
+            if type(region.get("id")) is not int or not 0 < region["id"] < 10**9:
+                raise RemoteError("Location must include a climate grid cell.")
+            for field, lo, hi in (("longitude", -9, 1), ("latitude", 54, 62)):
+                value = region.get(field)
+                if type(value) not in (int, float) or not lo <= value <= hi:
+                    raise RemoteError("Location must be in Scotland.")
+            if len(region["name"]) > 200:
+                raise RemoteError("Location name is too long.")
+        if "scene" in payload and (not isinstance(payload["scene"], str) or payload["scene"] not in {"local-climate", "overview", "focus-water", "focus-rain", "focus-heat", "water-extent", "landscape", "water-classes", "agreement"}):
             raise RemoteError("Unknown wall scene.")
         if "focus" in payload and (not isinstance(payload["focus"], str) or payload["focus"] not in {"CWBPT", "Prec_sum", "Tmax_mean"}):
             raise RemoteError("Unknown focus metric.")
-        if "playback" in payload and (not isinstance(payload["playback"], str) or payload["playback"] not in {"months", "tour"}):
+        if "playback" in payload and (not isinstance(payload["playback"], str) or payload["playback"] not in {"months", "tour", "places"}):
             raise RemoteError("Unknown playback mode.")
+        if payload.get("cmd") == "remove-place" and (not isinstance(payload.get("placeKey"), str) or not 1 <= len(payload["placeKey"]) <= 80):
+            raise RemoteError("Choose a saved place to remove.")
     try:
         raw = json.dumps(payload, allow_nan=False)
     except (ValueError, TypeError):

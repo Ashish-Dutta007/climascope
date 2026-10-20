@@ -25,16 +25,68 @@
   var _catchGeom    = {};    // catchment name → geometry (cache)
   var _helloTimer   = null;
   var _lastSeen     = 0;     // the wall reports at least every 10 s
+  var _location = null;
+  var _locationSeq = 0;
+  var _pendingLocation = null;
 
-  function send(cmd) {
+  function sameLocation(a, b) {
+    return a && b && a.id === b.id && a.name === b.name &&
+      a.longitude === b.longitude && a.latitude === b.latitude;
+  }
+
+  function locationScopes() {
+    var holder = document.getElementById('remote-location-scopes');
+    holder.replaceChildren();
+    if (!_location) return;
+    [['cell', 'This location'], ['catchment', 'Catchment'], ['council', 'Council']].forEach(function (entry) {
+      var kind = entry[0];
+      if (kind !== 'cell' && !_location[kind]) return;
+      var button = document.createElement('button'); button.type = 'button'; button.textContent = entry[1];
+      var region = _wall && _wall.state.region;
+      button.setAttribute('aria-pressed', String(!!region && region.kind === kind &&
+        (kind === 'cell' ? region.id === _location.id : region.name === _location[kind])));
+      button.onclick = function () {
+        send({cmd:'set', scene:'local-climate', region:kind === 'cell' ? _location : {kind:kind, name:_location[kind]}});
+      };
+      holder.appendChild(button);
+    });
+  }
+
+  document.getElementById('remote-postcode-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var status = document.getElementById('remote-location-status');
+    if (!_wall) { status.textContent = 'Connect to the wall first.'; return; }
+    var seq = ++_locationSeq;
+    status.textContent = 'Finding location…';
+    ClimaScopeProfile.get('/api/location?' + new URLSearchParams({postcode:document.getElementById('remote-postcode').value.trim()}))
+      .then(function (location) {
+        if (seq !== _locationSeq) return;
+        _location = location;
+        _pendingLocation = location;
+        status.textContent = location.name + ' · ' + (location.council || '1 km climate cell');
+        send({cmd:'set', scene:'local-climate', region:location}, true);
+        locationScopes();
+      }).catch(function (e) { if (seq === _locationSeq) status.textContent = e.message; });
+  });
+
+  function send(cmd, fromLookup) {
     if (!_channel) return;
+    if (!fromLookup && ((cmd.cmd === 'set' && (cmd.region || cmd.scene)) || cmd.cmd === 'places-play')) {
+      _locationSeq++;
+      _pendingLocation = null;
+      var status = document.getElementById('remote-location-status');
+      if (status.textContent === 'Finding location…') status.textContent = '';
+    }
     _channel.postMessage(Object.assign({ type: 'command' }, cmd));
   }
+
+  var renderPlaces = ClimaScopePlaces.mount(document.getElementById('saved-places'), send);
 
   // ── Mirror the wall's reported state ─────────────────────────────
 
   function render() {
     var s = _wall && _wall.state;
+    renderPlaces(_wall);
     document.querySelectorAll('.btn-month').forEach(function (btn) {
       btn.classList.toggle('active', !!s && +btn.dataset.month === s.month);
     });
@@ -45,18 +97,30 @@
     play.textContent = s && s.playing ? '❚❚ Pause' : '▶ Play';
     play.classList.toggle('active', !!(s && s.playing));
     if (s) {
+      if (s.region && s.region.kind === 'cell' &&
+          (!_pendingLocation || sameLocation(_pendingLocation, s.region))) {
+        _location = s.region;
+        if (_wall.status === 'ready' && _wall.shown && _wall.shown.region === s.region.name) {
+          _pendingLocation = null;
+        }
+      }
+      locationScopes();
+      var cellSelected = s.region && s.region.kind === 'cell';
+      document.getElementById('btn-tour').disabled = !!cellSelected;
       document.querySelector('.btn-mean').textContent = s.scene === 'water-classes' ? 'Mean class areas' : 'Ensemble mean';
       document.querySelectorAll('.btn-scene').forEach(function (btn) {
         var active = btn.dataset.scene === (s.scene || 'overview');
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-pressed', String(active));
+        btn.disabled = !!cellSelected && btn.dataset.scene !== 'local-climate';
       });
-      document.getElementById('scene-description').textContent = SCENES.get(s.scene).description;
+      document.getElementById('scene-description').textContent = cellSelected
+        ? 'Choose Catchment or Council to use the other scenes.' : SCENES.get(s.scene).description;
       document.getElementById('focus-select').value = s.focus || 'CWBPT';
       document.getElementById('focus-select').disabled = s.scene !== 'agreement';
       document.getElementById('focus-control').hidden = s.scene !== 'agreement';
       document.getElementById('btn-tour').classList.toggle('active', s.playing && s.playback === 'tour');
-      document.getElementById('btn-annual').classList.toggle('active', s.playing && s.playback !== 'tour');
+      document.getElementById('btn-annual').classList.toggle('active', s.playing && s.playback === 'months');
       document.getElementById('tour-progress').textContent = s.playback === 'tour'
         ? 'Scene ' + ((s.tourIndex || 0) + 1) + ' of ' + SCENES.tour.length + (s.playing ? '' : ' · paused') : '';
       var dwellSel = document.getElementById('dwell-select');
@@ -85,8 +149,9 @@
         ' · ' + (shown.member === 'mean' ? (shown.scene === 'water-classes' ? 'mean class areas · 12 members' : 'ensemble mean') : 'member ' + shown.member) +
         ' · ' + SCENES.get(shown.scene).title
       : 'Wall starting');
-    if (_wall.status === 'loading') parts.push('loading ' + MONTH_LONG[s.month] + '…');
-    else if (_wall.status === 'ready') parts.push(s.playing ? (s.playback === 'tour' ? 'scene loop' : s.dwell + ' s per month') : 'paused');
+    if (_wall.status === 'loading') parts.push('loading ' + (s.playback === 'places' ? s.region.name : MONTH_LONG[s.month]) + '…');
+    else if (_wall.status === 'ready' || _wall.status === 'warning') parts.push(s.playing ?
+      (s.playback === 'tour' ? 'scene loop' : s.dwell + (s.playback === 'places' ? ' s per place' : ' s per month')) : 'paused');
     if (_wall.message) parts.push(_wall.message);
     el.classList.add(_wall.status);
     text.textContent = parts.join(' · ');

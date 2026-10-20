@@ -63,6 +63,19 @@ class RemoteTests(unittest.TestCase):
         self.assertEqual(self.poll(room, r.json["cursor"]).json["messages"], [])
         self.assertEqual(self.poll(phone).json["messages"], [])
 
+    def test_local_climate_selection_is_validated_and_delivered(self):
+        room = self.create()
+        phone = self.pair(room)
+        region = {"kind":"cell", "name":"PH2 7HP", "id":135422,
+                  "longitude":-3.422055, "latitude":56.402953}
+        message = {"type":"command", "cmd":"set", "scene":"local-climate", "region":region}
+        for invalid in ({**region,"id":"135422"}, {**region,"latitude":20},
+                        {**region,"longitude":float('nan')}):
+            self.assertEqual(self.send(phone,{**message,"region":invalid}).status_code,400)
+        self.assertEqual(self.poll(room).json['messages'],[])
+        self.assertEqual(self.send(phone,message).status_code,200)
+        self.assertEqual(self.poll(room).json['messages'],[message])
+
     def test_retry_does_not_repeat_step(self):
         room = self.create()
         phone = self.pair(room)
@@ -159,6 +172,20 @@ class RemoteTests(unittest.TestCase):
         for i, command in enumerate(commands):
             self.assertEqual(self.send(phone, command, "scene-test-%04d" % i).status_code, 200)
         self.assertEqual(self.poll(room).json["messages"], commands)
+
+    def test_saved_place_commands_cross_workers(self):
+        room = self.create()
+        phone = self.pair(room)
+        for invalid in (None, [], '', 'x' * 81):
+            self.assertEqual(self.send(phone, {"type":"command", "cmd":"remove-place", "placeKey":invalid}).status_code,400)
+        commands = [
+            {"type":"command", "cmd":"save-place"},
+            {"type":"command", "cmd":"places-play"},
+            {"type":"command", "cmd":"remove-place", "placeKey":"135422@-3.422055,56.402953"},
+        ]
+        for i, command in enumerate(commands):
+            self.assertEqual(self.send(phone,command,"places-test-%04d" % i).status_code,200)
+        self.assertEqual(self.poll(room).json['messages'],commands)
 
     def test_rate_limits_shared_across_workers(self):
         for i in range(30):

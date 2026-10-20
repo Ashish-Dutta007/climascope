@@ -711,7 +711,7 @@ def search_places():
 METRIC_CATALOGUE = [
     {
         "id": "CWBPT", "short": "CWB PT",
-        "label": "Climate Water Balance (Penman-Thornthwaite)",
+        "label": "Climate Water Balance (PT)",
         "units": "mm", "colorscale": "diverging",
     },
     {
@@ -721,7 +721,7 @@ METRIC_CATALOGUE = [
     },
     {
         "id": "CWRPT", "short": "CWR PT",
-        "label": "Climate Water Ratio (Penman-Thornthwaite)",
+        "label": "Climate Water Ratio (PT)",
         "units": "ratio", "colorscale": "diverging",
     },
     {
@@ -731,12 +731,12 @@ METRIC_CATALOGUE = [
     },
     {
         "id": "Prec_sum", "short": "Precipitation",
-        "label": "Precipitation (annual sum)",
+        "label": "Precipitation (monthly total)",
         "units": "mm", "colorscale": "diverging",
     },
     {
         "id": "ETPT_sum", "short": "ET PT",
-        "label": "Evapotranspiration (Penman-Thornthwaite)",
+        "label": "Evapotranspiration (PT)",
         "units": "mm", "colorscale": "sequential_warm",
     },
     {
@@ -3196,6 +3196,13 @@ def aoi_export():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=climascope_aoi.csv"},
     )
+
+
+from climate_profiles import init_profiles
+init_profiles(app, grid_file=GRID_FILE, data_dir=_data("data/place_profiles"),
+              summary_dir=_data("static/immersive/summaries/v2"),
+              councils=get_councils, catchments=get_catchments, council_file=COUNCILS_FILE,
+              catchment_file=CATCHMENTS_FILE, rate_limit=_rate_limited)
 
 
 if __name__ == "__main__":

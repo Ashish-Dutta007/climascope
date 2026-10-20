@@ -1,0 +1,49 @@
+.cp-cards {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.cp-card {min-width:0;padding:18px;border:1px solid #354257;border-radius:8px;background:#172131;color:#edf2f8}
+.cp-card h3 {font-size:17px;margin:0 0 10px;font-weight:600;min-height:2.5em}
+.cp-card h4 {font-size:12px;font-weight:500;color:#bdcada;margin:18px 0 4px}
+.cp-caption {font-size:14px;line-height:1.5;min-height:3em;margin:0 0 18px;color:#d8e1ed}
+.cp-values {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cp-period {font-size:11px;display:block}
+.cp-values strong {display:block;font-size:24px;font-weight:600;white-space:nowrap;margin-top:6px}
+.cp-values small {font-size:12px;font-weight:400}
+.cp-chart {display:block;width:100%;height:auto;overflow:visible}
+.cp-chart text {font:11px system-ui,sans-serif;fill:#bac9da}
+.cp-grid {stroke:#344155;stroke-width:.7}
+.cp-zero {stroke:#9aacbf;stroke-width:1}
+.cp-month-band {fill:#ffffff0d}
+.cp-spread,.cp-support,.cp-footnote {font-size:12px;line-height:1.6;color:#bac9da}
+.cp-support {margin-bottom:0}
+.cp-footnote {margin:14px 0 0}
+.profile-search {display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+.profile-search input {background:#101827;color:#f3f6fb;border:1px solid #56657a;border-radius:5px;padding:10px;font:inherit;width:190px}
+.profile-search button,.profile-scopes button {background:#253449;color:#edf2f8;border:1px solid #56657a;border-radius:5px;padding:9px 14px;font:inherit;cursor:pointer}
+.profile-search button:disabled,.profile-scopes button:disabled {opacity:.5;cursor:default}
+.profile-scopes {display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.profile-scopes button[aria-pressed="true"] {border-color:#6eb6ff;background:#254567}
+.profile-status {min-height:1.5em;font-size:13px;color:#bdcada}
+.profile-controls {display:flex;flex-wrap:wrap;gap:12px;margin:0 0 12px}
+.profile-controls label {display:grid;gap:5px;font-size:12px;color:#bdcada}
+.profile-controls select {font:14px system-ui,sans-serif;color:#edf2f8;background:#1a283c;border:1px solid #56657a;border-radius:5px;padding:8px}
+.profile-heading h2 {font-size:23px;margin:0 0 6px;color:#f0f5fa}
+.profile-heading p {color:#bdcada;font-size:13px;margin:0 0 16px}
+.profile-error {color:#ffb4a9}
+.cp-loading .profile-heading,.cp-loading .profile-content {opacity:.4;transition:opacity .15s}
+#dash-tabs {display:none;flex:0 0 auto;border-bottom:1px solid #374151;background:#111827;padding:8px 16px 0;gap:8px}
+.dashboard-mode #dash-tabs {display:flex}
+#dash-tabs button {border:0;border-bottom:3px solid transparent;background:none;padding:9px 14px;color:#bcc9d8;font:inherit;cursor:pointer}
+#dash-tabs button[aria-selected="true"] {color:#f3f6fb;border-color:#60a5fa}
+#dash-climate {display:none;overflow:auto;min-height:0;padding:22px;background:#111827;color:#edf2f8}
+#dash-splitter {display:none;flex:0 0 12px;align-items:center;justify-content:center;cursor:row-resize;touch-action:none;background:#172131;border-block:1px solid #354257;outline-offset:-2px}
+.dashboard-mode #dash-splitter {display:flex}
+#dash-splitter span {width:54px;height:4px;border-radius:2px;background:#8294aa}
+#dash-splitter:hover,#dash-splitter:focus-visible {background:#2b405b;outline:2px solid #6eb6ff}
+.dashboard-resizing {cursor:row-resize;user-select:none}
+#dash-land-context {display:none;flex:0 0 auto;color:#bdcada;font-size:13px;margin:0;padding:10px 18px;background:#111827}
+.dashboard-mode:not(.climate-tab) #dash-land-context:not(:empty) {display:block}
+body.dashboard-mode #map-area {flex:0 0 var(--dashboard-map-share,55%);min-height:0}
+.dashboard-mode:not(.climate-tab) #dash-bottom {flex:1 1 0;min-height:0}
+.dashboard-mode.climate-tab #dash-climate {display:block;flex:1 1 0}
+.dashboard-mode.climate-tab #dash-bottom {display:none}
+@media(max-width:1150px) {.cp-cards {grid-template-columns:1fr}.cp-card {display:grid;grid-template-columns:1fr 1fr;column-gap:18px}.cp-card h3,.cp-caption,.cp-values {grid-column:1}.cp-card h4 {display:none}.cp-chart {grid-column:2;grid-row:1/5;align-self:center}.cp-caption {min-height:0;margin-bottom:10px}.cp-spread,.cp-support {grid-column:1/-1}}
+@media(max-width:600px) {.cp-card {display:block}.cp-values strong {font-size:22px}.cp-chart {margin-top:15px}#dash-climate {padding:14px}}

@@ -1,0 +1,9 @@
+.places-actions {display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.places-actions button,.places-list button {font:inherit;cursor:pointer;border:1px solid #64788f;border-radius:5px;padding:10px 14px;color:inherit;background:transparent;min-height:44px}
+.places-actions button:disabled {opacity:.5;cursor:default}
+.places-actions button.active {background:#23526f;color:#fff}
+.places-progress {font-size:14px}
+.places-list {padding:0;list-style:none;max-width:600px;margin:0 0 16px}
+.places-list li {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0}
+.places-list button {font-size:13px;padding:6px 12px}
+.places-hint {font-size:13px;opacity:.8;margin:0 0 12px}

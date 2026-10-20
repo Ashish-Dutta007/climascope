@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="/static/css/filter_panel.css?v={{ av('css/filter_panel.css') }}" />
   <link rel="stylesheet" href="/static/css/dashboard.css?v={{ av('css/dashboard.css') }}" />
   <link rel="stylesheet" href="/static/css/ui_polish.css?v={{ av('css/ui_polish.css') }}" />
+  <link rel="stylesheet" href="/static/css/climate_profile.css?v={{ av('css/climate_profile.css') }}" />
 </head>
 <body>
 <div id="app">
@@ -240,7 +241,16 @@
     </div>
 
     <!-- ===== DASHBOARD BOTTOM PANELS (hidden unless dashboard mode) ===== -->
-    <div id="dash-bottom">
+    <div id="dash-splitter" role="separator" tabindex="0" aria-label="Resize map and Dashboard"
+         aria-orientation="horizontal" aria-valuemin="20" aria-valuemax="80" aria-valuenow="55"
+         title="Drag to resize. Double-click to reset."><span></span></div>
+    <div id="dash-tabs" role="tablist" aria-label="Dashboard">
+      <button id="dash-tab-climate" type="button" role="tab" aria-selected="true" aria-controls="dash-climate">Climate</button>
+      <button id="dash-tab-land" type="button" role="tab" aria-selected="false" aria-controls="dash-bottom">Land &amp; catchments</button>
+    </div>
+    <section id="dash-climate" role="tabpanel" aria-labelledby="dash-tab-climate"></section>
+    <p id="dash-land-context"></p>
+    <div id="dash-bottom" role="tabpanel" aria-labelledby="dash-tab-land">
       <div id="dash-bars"></div>
       <div id="dash-pie"></div>
     </div>
@@ -272,6 +282,9 @@
 <script src="/static/js/catchment_panel.js?v={{ av('js/catchment_panel.js') }}"></script>
 <script src="/static/js/filter_panel.js?v={{ av('js/filter_panel.js') }}"></script>
 <script src="/static/js/dashboard.js?v={{ av('js/dashboard.js') }}"></script>
+<script src="/static/js/climate_profile.js?v={{ av('js/climate_profile.js') }}"></script>
+<script src="/static/js/dashboard_climate.js?v={{ av('js/dashboard_climate.js') }}"></script>
+<script src="/static/js/dashboard_layout.js?v={{ av('js/dashboard_layout.js') }}"></script>
 <script src="/static/script.js?v={{ av('script.js') }}"></script>
 </body>
 </html>

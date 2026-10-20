@@ -6,11 +6,26 @@
   <title>ClimaScope — Wall Controller</title>
   <link rel="stylesheet" href="/static/immersive/control.css?v={{ av('immersive/control.css') }}" />
   <link rel="stylesheet" href="/static/immersive/remote.css?v={{ av('immersive/remote.css') }}" />
+  <link rel="stylesheet" href="/static/css/climate_profile.css?v={{ av('css/climate_profile.css') }}" />
+  <link rel="stylesheet" href="/static/immersive/places.css?v={{ av('immersive/places.css') }}">
 </head>
 <body>
   <p class="page-title">ClimaScope Wall Controller</p>
 
   <div id="status"><span class="status-dot"></span><span id="status-text">Looking for the wall…</span></div>
+
+  <div class="section-label">Location</div>
+  <form id="remote-postcode-form" class="profile-search">
+    <label for="remote-postcode">Postcode</label>
+    <input id="remote-postcode" autocomplete="postal-code" placeholder="e.g. PH2 7HP" required maxlength="10">
+    <button type="submit">Show on wall</button>
+  </form>
+  <p id="remote-location-status" class="profile-status" role="status"></p>
+  <div id="remote-location-scopes" class="profile-scopes" aria-label="Location area"></div>
+
+  <div class="section-label">Saved places</div>
+  <div id="saved-places"></div>
+  <p class="places-hint">Save up to 8 places. Place loop keeps the month and ensemble selection.</p>
 
   <div class="section-label">Scene</div>
   <div class="scene-grid" id="scene-grid"></div>
@@ -34,7 +49,7 @@
     <button id="btn-play" class="ctrl-btn btn-play" type="button">▶ Play</button>
     <button id="btn-next" class="ctrl-btn" type="button">Next month ▶</button>
     <label class="dwell">
-      <span class="region-sublabel">Seconds per month</span>
+      <span class="region-sublabel">Seconds per step</span>
       <select id="dwell-select" class="region-select dwell-select"></select>
     </label>
   </div>
@@ -68,6 +83,8 @@
   <p class="hint"><a href="/immersive/preview" target="_blank" rel="noopener">Open wall preview</a></p>
   <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
   <script src="/static/immersive/remote.js?v={{ av('immersive/remote.js') }}"></script>
+  <script src="/static/js/climate_profile.js?v={{ av('js/climate_profile.js') }}"></script>
+  <script src="/static/immersive/places.js?v={{ av('immersive/places.js') }}"></script>
   <script src="/static/immersive/control.js?v={{ av('immersive/control.js') }}"></script>
 </body>
 </html>

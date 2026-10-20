@@ -51,6 +51,67 @@ document.addEventListener('DOMContentLoaded', () => {
   let filterPanel        = null;
   let dashCatchmentPanel = null;
   let dashPiePanel       = null;
+  let dashClimatePanel   = null;
+  let climateCellSelected = false;
+  let climateTab = true;
+  let climateMarker = null;
+  let climateCell = null;   // location shown by the outline while a 1 km cell is selected
+  let selectingClimateScope = false;
+
+  function _initClimateDashboard() {
+    if (!dashClimatePanel) dashClimatePanel = new ClimateDashboard($('dash-climate'), _getMapState, _selectClimateScope);
+    return dashClimatePanel;
+  }
+
+  function _selectClimateScope(kind, location) {
+    _initClimateDashboard().setLocation(location);
+    climateCellSelected = kind === 'cell';
+    const regionalKind = kind === 'cell' ? (location.catchment ? 'catchment' : 'council') : kind;
+    const selector = $(regionalKind);
+    selectingClimateScope = true;
+    try {
+      if (selector && location[regionalKind]) {
+        if (!Array.from(selector.options).some(option => option.value === location[regionalKind]))
+          selector.add(new Option(location[regionalKind], location[regionalKind]));
+        selector.value = location[regionalKind];
+        selector.dispatchEvent(new Event('change'));
+      } else if (kind === 'cell') {
+        ['council','catchment'].forEach(id => { $(id).value = ''; $(id).dispatchEvent(new Event('change')); });
+      }
+    } finally {
+      selectingClimateScope = false;
+    }
+    $('dash-land-context').textContent = location.name + ' · Land and catchment charts use ' + (location[regionalKind] || 'Scotland') + '.';
+    if (climateMarker) climateMarker.remove();
+    climateMarker = new maplibregl.Marker({color:'#f4d06f'}).setLngLat([location.longitude, location.latitude]).addTo(map);
+    _showClimateCell(climateCellSelected ? location : null);
+    _setDashboardTab(true);
+    if (mode !== 'dashboard') initMode('dashboard');
+    if (climateCellSelected) map.flyTo({center:[location.longitude, location.latitude], zoom:11});
+    _emitStateChange();
+  }
+
+  // Outline the selected 1 km cell, so the map shows the same place as the Climate tab.
+  function _showClimateCell(location) {
+    climateCell = location && location.geometry ? location : null;
+    const data = climateCell ? { type:'Feature', geometry: climateCell.geometry, properties:{} } : emptyFC();
+    if (!map.isStyleLoaded()) { map.once('idle', () => _showClimateCell(climateCell)); return; }
+    if (map.getSource('climate-cell')) { map.getSource('climate-cell').setData(data); return; }
+    map.addSource('climate-cell', { type:'geojson', data });
+    map.addLayer({ id:'climate-cell-halo', type:'line', source:'climate-cell', paint:{ 'line-color':'#101827', 'line-width':6 } });
+    map.addLayer({ id:'climate-cell-line', type:'line', source:'climate-cell', paint:{ 'line-color':'#f4d06f', 'line-width':3 } });
+  }
+
+  function _setDashboardTab(climate) {
+    climateTab = climate;
+    document.body.classList.toggle('climate-tab', climate);
+    $('dash-tab-climate').setAttribute('aria-selected', String(climate));
+    $('dash-tab-land').setAttribute('aria-selected', String(!climate));
+    $('dash-climate').setAttribute('aria-hidden', String(!climate));
+    $('dash-bottom').setAttribute('aria-hidden', String(climate));
+    if (climate && mode === 'dashboard') _initClimateDashboard().update(_getMapState(), climateCellSelected);
+    setTimeout(() => map.resize(), 240);
+  }
   function _getMapState() {
     const hasAoi = filterPanel?._aoiActive && filterPanel?._aoiCells?.length > 0;
     const scope = hasAoi
@@ -77,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterPanel)        filterPanel.onMapStateChange(state);
     if (dashCatchmentPanel) dashCatchmentPanel.onMapStateChange(state);
     if (dashPiePanel)       dashPiePanel.onMapStateChange(state);
+    if (dashClimatePanel && mode === 'dashboard') dashClimatePanel.update(state, climateCellSelected);
   }
 
   const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -1041,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const _srchEl = document.createElement('div');
     _srchEl.id = 'map-search';
     _srchEl.innerHTML =
-      '<input type="search" id="search-input" placeholder="Search a place …" aria-label="Search councils, catchments, places, or OS grid references" role="combobox" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" autocomplete="off">' +
+      '<input type="search" id="search-input" placeholder="Search postcode or place …" aria-label="Search postcodes, councils, catchments, places, or OS grid references" role="combobox" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" autocomplete="off">' +
       '<div id="search-results" role="listbox" aria-label="Search results"></div>';
     map.getContainer().appendChild(_srchEl);
 
@@ -1213,8 +1275,14 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = h.name;
           } else {
             const g = placeHits[idx - localHits.length];
-            const [lng, lat] = bngToWgs84(g.GEOMETRY_X, g.GEOMETRY_Y);
-            map.flyTo({ center: [lng, lat], zoom: 10 });
+            if (g.location) {
+              _selectClimateScope('cell', g.location);
+            } else {
+              const [lng, lat] = bngToWgs84(g.GEOMETRY_X, g.GEOMETRY_Y);
+              _setDashboardTab(true);
+              initMode('dashboard');
+              _initClimateDashboard().selectPoint(lng, lat);
+            }
             input.value = g.NAME1;
           }
           clearResults();
@@ -1226,6 +1294,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function doSearch(q) {
       const localHits = _localHits(q);
       let placeHits = [];
+      if (/^[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}$/i.test(q)) {
+        try {
+          const location = await ClimaScopeProfile.get('/api/location?' + new URLSearchParams({postcode:q}));
+          if (input.value.trim() === q) _renderResults(localHits, [{NAME1:location.name, location}]);
+        } catch (e) {
+          if (input.value.trim() !== q) return;
+          clearResults();
+          results.textContent = e.message;
+          results.classList.add('open');
+        }
+        return;
+      }
       try {
         const resp = await fetch(`/api/search/places?q=${encodeURIComponent(q)}`);
         if (resp.ok) {
@@ -1673,6 +1753,7 @@ document.addEventListener('DOMContentLoaded', () => {
     _applyBasemapOpacity();
     _applyDataOpacity();
     _renderActiveLayers();
+    _showClimateCell(climateCell);
   }
 
   function switchBasemap(bm) {
@@ -1744,6 +1825,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function _initDashboard() {
+    _initClimateDashboard();
+    _setDashboardTab(climateTab);
     if (!dashCatchmentPanel) {
       const barsEl = $('dash-bars');
       if (barsEl && typeof CatchmentPanel !== 'undefined') {
@@ -1759,8 +1842,18 @@ document.addEventListener('DOMContentLoaded', () => {
     _emitStateChange();
   }
 
+  document.addEventListener('climascope:dashboard:resize', () => map.resize());
+
   $('mode-explore').onclick   = () => initMode('explore');
   $('mode-dashboard').onclick = () => initMode('dashboard');
+  $('dash-tab-climate').onclick = () => _setDashboardTab(true);
+  $('dash-tab-land').onclick = () => _setDashboardTab(false);
+  [$('dash-tab-climate'), $('dash-tab-land')].forEach(button => button.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    _setDashboardTab(!climateTab);
+    (climateTab ? $('dash-tab-climate') : $('dash-tab-land')).focus();
+  }));
 
   const _rpToggle = $('rp-toggle');
   if (_rpToggle) {
@@ -1945,6 +2038,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   $('council').addEventListener('change', () => {
+    if (!selectingClimateScope) {
+      dashClimatePanel?.cancelLookup();
+      climateCellSelected = false;
+      if (climateMarker) climateMarker.remove();
+      _showClimateCell(null);
+    }
+    $('dash-land-context').textContent = '';
     activeCouncil = $('council').value || null;
 
     if (activeCouncil && activeCatchment) {
@@ -1995,6 +2095,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   $('catchment').addEventListener('change', () => {
+    if (!selectingClimateScope) {
+      dashClimatePanel?.cancelLookup();
+      climateCellSelected = false;
+      if (climateMarker) climateMarker.remove();
+      _showClimateCell(null);
+    }
+    $('dash-land-context').textContent = '';
     activeCatchment = $('catchment').value || null;
 
     if (activeCatchment && activeCouncil) {
@@ -2648,6 +2755,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function attachPopup() {
     map.on('click', 'grid-fill', e => {
       if (_drawActive) return;
+      if (mode === 'dashboard' && climateTab) return;
       const f = e.features[0];
       if (f.properties?.catchment_name && f.properties?.id_1km == null) {
         const sel = $('catchment');
@@ -2662,6 +2770,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     map.on('click', 'cells-fill', e => {
       if (_drawActive) return;
+      if (mode === 'dashboard' && climateTab) return;
       const f = e.features[0];
       const id = f.id;  // promoted from id_1km via promoteId
       const value = _vtValues ? _vtValues[String(id)] : null;
@@ -2676,6 +2785,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     map.on('click', e => {
       if (_drawActive) return;
+      if (mode === 'dashboard' && climateTab) {
+        _initClimateDashboard().selectPoint(e.lngLat.lng, e.lngLat.lat);
+        return;
+      }
       if (_filterMaskState.mode === 'none') return;
       const hits = map.queryRenderedFeatures(e.point, { layers: ['cells-fill', 'grid-fill'] });
       if (hits.length === 0) {

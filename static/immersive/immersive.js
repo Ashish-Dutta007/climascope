@@ -320,6 +320,8 @@
     focus: 'CWBPT',
     playback: 'months',
     tourIndex: 0,
+    places: [],
+    placeIndex: 0,
   };
   var _status = { kind: 'loading', message: '' };   // loading | ready | warning | error
   var _shown  = null;      // committed frame {month, member, region, rid, subs, missing, annualReset}
@@ -345,6 +347,7 @@
   var _scotlandRings = indexRings([{ type: 'Polygon', coordinates: [FOG_FEATURE.geometry.coordinates[1]] }]);
   var _locatorContextPath = '';
   var _councilsReady = null;
+  var _resolvedCell = null;
 
   function regionId(region) {
     return region && region.kind ? region.name : 'national';
@@ -352,11 +355,31 @@
 
   function regionLabel(region) {
     if (!region || !region.kind) return 'Scotland';
+    if (region.kind === 'cell') return region.name + ' · 1 km climate cell';
     return region.name + (region.kind === 'council' ? ' · council area' : ' · catchment');
   }
 
   function ensembleLabel(member) {
     return member === 'mean' ? 'Ensemble mean' : 'Ensemble member ' + member;
+  }
+
+  function savedPlace(region) {
+    if (!region || region.kind !== 'cell' || !Number.isInteger(region.id) || region.id <= 0 ||
+        typeof region.name !== 'string' || !region.name || region.name.length > 200 ||
+        !Number.isFinite(region.longitude) || region.longitude < -9 || region.longitude > 1 ||
+        !Number.isFinite(region.latitude) || region.latitude < 54 || region.latitude > 62) return null;
+    return {kind:'cell', id:region.id, name:region.name, longitude:region.longitude, latitude:region.latitude};
+  }
+
+  function placeKey(place) {
+    return place.id + '@' + place.longitude.toFixed(6) + ',' + place.latitude.toFixed(6);
+  }
+
+  function syncPlaceIndex() {
+    var current = savedPlace(_state.region);
+    var index = current ? _state.places.findIndex(function (p) { return placeKey(p) === placeKey(current); }) : -1;
+    _state.placeIndex = index >= 0 ? index : Math.max(0, Math.min(_state.placeIndex, _state.places.length - 1));
+    return index;
   }
 
   function persist() {
@@ -368,7 +391,7 @@
         month: _state.month,
         member: _state.member,
         region: _state.region.kind
-          ? { kind: _state.region.kind, name: _state.region.name, bounds: _state.region.bounds }
+          ? Object.assign({}, _state.region, {geometry:null})
           : null,
         playing: _state.playing,
         dwell: _state.dwell,
@@ -376,6 +399,8 @@
         focus: _state.focus,
         playback: _state.playback,
         tourIndex: _state.tourIndex,
+        places: _state.places,
+        placeIndex: _state.placeIndex,
       }));
     } catch (e) { /* storage unavailable: state simply is not restored */ }
   }
@@ -389,7 +414,10 @@
       if (saved.rev > 0) _state.rev = saved.rev;
       if (saved.month >= 1 && saved.month <= 12) _state.month = saved.month;
       if (saved.member === 'mean' || VALID_MEMBERS.indexOf(saved.member) >= 0) _state.member = saved.member;
-      if (saved.region && saved.region.name && (saved.region.kind === 'council' || saved.region.kind === 'catchment')) {
+      if (saved.region && saved.region.name && saved.region.kind === 'cell' &&
+          Number.isInteger(saved.region.id) && Number.isFinite(saved.region.longitude) && Number.isFinite(saved.region.latitude)) {
+        _state.region = saved.region;
+      } else if (saved.region && saved.region.name && (saved.region.kind === 'council' || saved.region.kind === 'catchment')) {
         _state.region = {
           kind: saved.region.kind, name: saved.region.name,
           bounds: regionBoundsSane(saved.region.bounds) ? saved.region.bounds : null,
@@ -401,6 +429,14 @@
       if (SCENES.valid(saved.scene)) _state.scene = saved.scene;
       if (PANELS.some(function (p) { return !p.supportOnly && p.id === saved.focus; })) _state.focus = saved.focus;
       if (saved.playback === 'tour') _state.playback = 'tour';
+      if (Array.isArray(saved.places)) {
+        saved.places.forEach(function (entry) {
+          var place = savedPlace(entry);
+          if (place && _state.places.length < 8 && !_state.places.some(function (p) { return placeKey(p) === placeKey(place); })) _state.places.push(place);
+        });
+      }
+      if (Number.isInteger(saved.placeIndex) && saved.placeIndex >= 0 && saved.placeIndex < _state.places.length) _state.placeIndex = saved.placeIndex;
+      if (saved.playback === 'places' && _state.places.length) _state.playback = 'places';
       if (Number.isInteger(saved.tourIndex) && saved.tourIndex >= 0 && saved.tourIndex < SCENES.tour.length) _state.tourIndex = saved.tourIndex;
     }
     if (params.has('dwell')) _state.dwell = numParam('dwell', 6, 2, 60);
@@ -414,6 +450,15 @@
     if (member === 'mean' || VALID_MEMBERS.indexOf(member) >= 0) _state.member = member;
     if (params.get('region') && ['council', 'catchment'].indexOf(params.get('kind')) >= 0) {
       _state.region = { kind: params.get('kind'), name: params.get('region'), geometry: null, bounds: null };
+    }
+    if (params.get('kind') === 'cell' && Number.isInteger(+params.get('cell')) && +params.get('cell') > 0 &&
+        params.has('lon') && params.has('lat') && Number.isFinite(+params.get('lon')) && Number.isFinite(+params.get('lat'))) {
+      _state.region = {kind:'cell', id:+params.get('cell'), name:params.get('region') || 'Selected location',
+        longitude:+params.get('lon'), latitude:+params.get('lat')};
+    }
+    if (_state.region.kind === 'cell') {
+      _state.scene = 'local-climate';
+      if (_state.playback !== 'places') _state.playback = 'months';
     }
   }
 
@@ -431,13 +476,15 @@
       state: {
         month: _state.month,
         member: _state.member,
-        region: { kind: _state.region.kind, name: _state.region.name },
+        region: _state.region.kind === 'cell' ? _state.region : { kind: _state.region.kind, name: _state.region.name },
         playing: _state.playing,
         dwell: _state.dwell,
         scene: _state.scene,
         focus: _state.focus,
         playback: _state.playback,
         tourIndex: _state.tourIndex,
+        places: _state.places,
+        placeIndex: _state.placeIndex,
       },
       status: _status.kind,
       message: _status.message,
@@ -609,6 +656,7 @@
   }
 
   function prefetchNext() {
+    if (_state.scene === 'local-climate') return;
     if (!_state.playing || _inflight || _state.scene === 'water-classes') return;
     if (_state.playback === 'tour' && SCENES.tour[(_state.tourIndex + 1) % SCENES.tour.length].scene === 'water-classes') return;
     function nextMonth() { return _state.playback === 'tour' ? SCENES.tour[(_state.tourIndex + 1) % SCENES.tour.length].month : _state.month % 12 + 1; }
@@ -648,6 +696,17 @@
   // restored from storage.
   function resolveRegion(region) {
     if (!region || !region.name || region.name === 'All Scotland') return Promise.resolve(SCOTLAND_REGION);
+    if (region.kind === 'cell') {
+      if (_resolvedCell && _resolvedCell.id === region.id && _resolvedCell.longitude === region.longitude &&
+          _resolvedCell.latitude === region.latitude) return Promise.resolve(Object.assign({}, _resolvedCell, {name:region.name}));
+      return ClimaScopeProfile.get('/api/location?' + new URLSearchParams({lon:region.longitude, lat:region.latitude}))
+        .then(function (resolved) {
+          if (resolved.id !== region.id) throw new Error('Location does not match its climate cell');
+          resolved.name = region.name;
+          _resolvedCell = resolved;
+          return resolved;
+        });
+    }
     if (region.kind && region.geometry && region.bounds) return Promise.resolve(region);
     return _councilsReady.then(function () {
       var kind = region.kind || (_councilGeom[region.name] ? 'council' : 'catchment');
@@ -1033,6 +1092,7 @@
   }
 
   function activeMaps() {
+    if (_shown && _shown.scene === 'local-climate') return [];
     var out = [];
     _panels.forEach(function (ps) {
       if (ps.root.hidden) return;
@@ -1044,6 +1104,8 @@
 
   var _layoutKey = '';
   function applySceneLayout(frame) {
+    document.getElementById('local-climate').hidden = true;
+    document.getElementById('panels').style.display = '';
     var key = frame.scene + '|' + frame.focus;
     if (key === _layoutKey) return false;
     _layoutKey = key;
@@ -1153,6 +1215,13 @@
 
   function renderContext() {
     var frame = _shown;
+    if (frame && frame.scene === 'local-climate') {
+      var status = document.querySelector('#local-climate .local-status');
+      if (status) status.textContent = _status.kind === 'loading' ? 'Loading…' : _status.message ||
+        (_state.playing ? (_state.playback === 'places' ? 'Place ' + (_state.placeIndex + 1) + ' of ' + _state.places.length + ' · ' + _state.dwell + ' s per place' :
+          'Month loop · ' + _state.dwell + ' s per month') : 'Paused');
+      return;
+    }
     _panels.forEach(function (ps) {
       if (frame) {
         ps.ctxSel.textContent = MONTH_LONG[frame.month] + ' · ' + regionLabel(frame.region) +
@@ -1284,19 +1353,63 @@
 
   // ── Frame staging and commit ───────────────────────────────────────
 
+  function stageLocal(target, seq) {
+    var scope = target.region.kind === 'cell' ? 'cell:' + target.region.id :
+      target.region.kind ? target.region.kind + ':' + target.region.name : 'national';
+    Promise.all([ClimaScopeProfile.load(scope, target.member), resolveRegion(target.region), _councilsReady])
+      .then(async function (items) {
+        if (seq !== _stageSeq) return;
+        var data = items[0], region = items[1];
+        var areas = await ClimaScopeLocalScene.comparisons(region, target.member, data);
+        if (seq !== _stageSeq) return;
+        var root = document.getElementById('local-climate');
+        var frame = Object.assign({}, target, {region:region, rid:regionId(region), subs:[], missing:[], annualReset:false});
+        var view = ClimaScopeLocalScene.build(frame, data, areas, locatorSVG(region));
+        root.replaceChildren.apply(root, view.nodes);
+        root.classList.toggle('near-you', region.kind === 'cell');
+        document.body.dataset.scene = 'local-climate';
+        document.getElementById('panels').style.display = 'none';
+        root.hidden = false;
+        _layoutKey = '';
+        _state.region = region;
+        _shown = frame;
+        _annualReset = false;
+        _firstCommitDone = true;
+        document.getElementById('footer-method').textContent = data.method;
+        persist();
+        renderContext();
+        var mapResult = await view.drawMap(function () { return seq === _stageSeq; });
+        if (seq !== _stageSeq) return;
+        setStatus(mapResult.mapWarning ? 'warning' : 'ready', mapResult.mapWarning ? 'Background map unavailable' : '');
+        scheduleDwell();
+      }).catch(function (error) { if (seq === _stageSeq) stageFailed(target, error); });
+  }
+
+  function stageFailed(target, err) {
+    if (_shown) {
+      ['month','member','region','scene','focus','tourIndex','placeIndex'].forEach(function (key) { _state[key] = _shown[key]; });
+    }
+    syncPlaceIndex();
+    _state.playing = false;
+    bump();
+    setStatus('error', 'Could not show ' + SCENES.get(target.scene).title + ' for ' + MONTH_LONG[target.month] + ': ' +
+      (err && err.message ? err.message : 'unknown error') + ' — playback paused');
+  }
+
   function stage() {
     var seq = ++_stageSeq;
     function isCurrent() { return seq === _stageSeq; }
     clearTimeout(_dwellTimer);
     startDwellBars(0);
     var target = { month: _state.month, member: _state.member, region: _state.region,
-      scene: _state.scene, focus: _state.focus, tourIndex: _state.tourIndex };
+      scene: _state.scene, focus: _state.focus, tourIndex: _state.tourIndex, placeIndex:_state.placeIndex };
     var needMaps = target.scene !== 'water-classes' && _mapKey !== payloadKey(target.month, target.member);
     var t0 = performance.now();
     setStatus('loading');
+    if (target.scene === 'local-climate') { stageLocal(target, seq); return; }
 
     Promise.all([
-      _mapsReady,
+      ensureMaps(),
       loadSummary('mean'),
       target.member !== 'mean' ? loadSummary(target.member) : null,
       needMaps ? getPayload(target.month, target.member, isCurrent) : null,
@@ -1321,6 +1434,7 @@
         scene: target.scene,
         focus: target.focus,
         tourIndex: target.tourIndex,
+        placeIndex: target.placeIndex,
         summary: { mean: res[1], member: res[2] },
         extra: res[5],
         context: res[6],
@@ -1359,18 +1473,7 @@
       if (!isCurrent()) return;
       console.error('[immersive] frame failed:', err);
       // Keep the previous frame and its labels; requested state reverts to it.
-      if (_shown) {
-        _state.month = _shown.month;
-        _state.member = _shown.member;
-        _state.region = _shown.region;
-        _state.scene = _shown.scene;
-        _state.focus = _shown.focus;
-        _state.tourIndex = _shown.tourIndex;
-      }
-      _state.playing = false;
-      bump();
-      setStatus('error', 'Could not show ' + SCENES.get(target.scene).title + ' for ' + MONTH_LONG[target.month] + ': ' +
-        (err && err.message ? err.message : 'unknown error') + ' — playback paused');
+      stageFailed(target, err);
       renderContext();
     });
   }
@@ -1493,6 +1596,10 @@
       if (_state.playback === 'tour') {
         _state.tourIndex = (_state.tourIndex + 1) % SCENES.tour.length;
         applyTourStep();
+      } else if (_state.playback === 'places' && _state.places.length) {
+        _state.placeIndex = (_state.placeIndex + 1) % _state.places.length;
+        _state.region = _state.places[_state.placeIndex];
+        _state.scene = 'local-climate';
       } else {
         _state.month = _state.month % 12 + 1;
         if (_state.month === 1) _annualReset = true;
@@ -1517,6 +1624,7 @@
       case 'set': {
         // Any manual selection pauses playback so a presenter keeps control.
         _state.playing = false;
+        if (_status.kind === 'error') restage = true;
         if (SCENES.valid(msg.scene) && msg.scene !== _state.scene) {
           _state.scene = msg.scene;
           _state.focus = SCENES.metric(msg.scene, _state.focus);
@@ -1536,10 +1644,15 @@
             restage = true;
           }
         }
-        if (msg.region && typeof msg.region.name === 'string' && msg.region.name !== _state.region.name) {
+        if (msg.region && typeof msg.region.name === 'string' &&
+            (msg.region.name !== _state.region.name || msg.region.kind !== _state.region.kind || msg.region.id !== _state.region.id ||
+             (msg.region.kind === 'cell' && (msg.region.longitude !== _state.region.longitude || msg.region.latitude !== _state.region.latitude)))) {
+          _state.playback = 'months';
           var r = msg.region;
           if (!r.name || r.name === 'All Scotland') {
             _state.region = SCOTLAND_REGION;
+          } else if (r.kind === 'cell' && Number.isInteger(r.id) && Number.isFinite(r.longitude) && Number.isFinite(r.latitude)) {
+            _state.region = r;
           } else if (r.bounds && !regionBoundsSane(padBounds(r.bounds, 0.02))) {
             console.error('[immersive] bad region bounds for "' + r.name + '" — ignored');
           } else {
@@ -1549,6 +1662,10 @@
             };
           }
           restage = true;
+        }
+        if (_state.region.kind === 'cell') {
+          _state.scene = 'local-climate';
+          if (_state.playback === 'tour') _state.playback = 'months';
         }
         break;
       }
@@ -1564,10 +1681,35 @@
         _state.playing = true;
         break;
       case 'tour':
+        if (_state.region.kind === 'cell') break;
         _state.playback = 'tour';
         _state.tourIndex = 0;
         _state.playing = true;
         applyTourStep();
+        restage = true;
+        break;
+      case 'save-place': {
+        var place = _shown && (_status.kind === 'ready' || _status.kind === 'warning') && savedPlace(_shown.region);
+        if (!place || _state.places.length >= 8 || _state.places.some(function (p) { return placeKey(p) === placeKey(place); })) return;
+        _state.places.push(place);
+        _state.playing = false;
+        break;
+      }
+      case 'remove-place': {
+        _state.places = _state.places.filter(function (p) { return placeKey(p) !== msg.placeKey; });
+        var index = syncPlaceIndex();
+        _state.playing = false;
+        if (index < 0 && _state.playback === 'places') _state.playback = 'months';
+        if (_status.kind === 'loading') restage = true;
+        break;
+      }
+      case 'places-play':
+        if (!_state.places.length) return;
+        _state.placeIndex = 0;
+        _state.region = _state.places[0];
+        _state.scene = 'local-climate';
+        _state.playback = 'places';
+        _state.playing = true;
         restage = true;
         break;
       case 'pause':
@@ -1768,6 +1910,7 @@
     _resizeTimer = setTimeout(function () {
       applyScale();
       if (!_shown) return;
+      if (_shown.scene === 'local-climate') { ClimaScopeLocalScene.resize(); return; }
       activeMaps().forEach(function (m) { m.resize(); });
       fitAll(_shown.region.bounds, 0);
       _panels.forEach(function (ps) { renderCharts(ps, _shown); });
@@ -1784,19 +1927,13 @@
   renderContext();
   loadCouncils();
 
-  _mapsReady = loadSummary('mean').then(function (mean) {
-    var foot = document.getElementById('footer-method');
-    if (foot) {
-      foot.textContent = 'Regional means: valid 1 km climate cells, equally weighted';
-    }
-    return createMaps();
-  });
-  _mapsReady.catch(function (e) {
-    console.error('[immersive] startup failed:', e);
-    setStatus('error', 'Wall data unavailable: ' + (e && e.message ? e.message : e));
-  });
+  function ensureMaps() {
+    // A failed summary download must not be cached, or area scenes could never retry.
+    if (!_mapsReady) _mapsReady = loadSummary('mean').catch(function (e) { _mapsReady = null; throw e; }).then(createMaps);
+    return _mapsReady;
+  }
 
-  // Commands are accepted only once _mapsReady exists (stage() waits on it).
+  // Climate map scenes create their WebGL maps on first use.
   try {
     var Channel = PREVIEW ? window.BroadcastChannel : (window.ClimaScopeRemoteChannel || window.BroadcastChannel);
     _channel = new Channel(CHANNEL_NAME);

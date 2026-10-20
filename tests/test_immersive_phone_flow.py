@@ -64,7 +64,9 @@ class ImmersivePhoneFlow(unittest.TestCase):
                 wall.goto(BASE + "/immersive?fresh=1&scene=overview")
                 wait(lambda: "July" in wall.locator(".ctx-sel").first.inner_text() and
                      not wall.locator(".ctx-chip").first.inner_text(), "initial real-data frame")
-                self.assertEqual(wall.locator(".mapcell:visible canvas").count(), 9)
+                # Nine climate maps, plus the land-cover context map shown with the overview.
+                self.assertEqual(wall.locator(".group .mapcell:visible canvas").count(), 9)
+                self.assertEqual(wall.locator(".context-map:visible canvas").count(), 1)
                 self.assertEqual(wall.locator('.group:not([data-metric="ETPT_sum"]) .num:not(.change-num) .num-value').all_text_contents(),
                     ["3.2 mm", "−3.7 mm", "−24.9 mm", "94.5 mm", "94.8 mm", "82.3 mm", "16.4 °C", "19.1 °C", "21.1 °C"])
                 checks.append("real July data, nine maps, six charts")

@@ -11,11 +11,14 @@
   <link rel="stylesheet" href="/static/immersive/remote.css?v={{ av('immersive/remote.css') }}" />
   <link rel="stylesheet" href="/static/immersive/scenes.css?v={{ av('immersive/scenes.css') }}" />
   <link rel="stylesheet" href="/static/immersive/context.css?v={{ av('immersive/context.css') }}" />
+  <link rel="stylesheet" href="/static/css/climate_profile.css?v={{ av('css/climate_profile.css') }}" />
+  <link rel="stylesheet" href="/static/immersive/local.css?v={{ av('immersive/local.css') }}" />
 </head>
 <body data-summary-v="{{ av('immersive/summaries/v2/mean.json') }}"
       data-scenes-v="{{ av('immersive/summaries/scenes-v1/mean.json') }}">
   <div id="wall">
     <div id="panels"></div>
+    <section id="local-climate" hidden aria-label="Climate near you"></section>
     <footer id="wall-footer">
       <span class="footer-logo">ClimaScope</span>
       <span class="footer-note">Monthly averages over 30-year periods</span>
@@ -27,6 +30,8 @@
   <script src="/static/immersive/vendor/proj4-2.22.0.js"></script>
   <script src="/static/immersive/locator.js?v={{ av('immersive/locator.js') }}"></script>
   <script src="/static/immersive/context.js?v={{ av('immersive/context.js') }}"></script>
+  <script src="/static/js/climate_profile.js?v={{ av('js/climate_profile.js') }}"></script>
+  <script src="/static/immersive/local_scene.js?v={{ av('immersive/local_scene.js') }}"></script>
   <script src="/static/immersive/immersive.js?v={{ av('immersive/immersive.js') }}"></script>
 </body>
 </html>

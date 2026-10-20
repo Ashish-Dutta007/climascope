@@ -8,7 +8,8 @@
     { id: 'water-extent', title: 'Negative water balance', kind: 'extent', metric: 'CWBPT', description: 'Share of valid cells with water balance below zero.' },
     { id: 'landscape', title: 'Land cover', kind: 'landscape', metric: 'CWBPT', description: 'Water balance below zero within each land-cover class.' },
     { id: 'water-classes', title: 'Water ratio classes', kind: 'cwr', metric: 'CWBPT', description: 'CWR PT: monthly land-use areas in four classes.' },
-    { id: 'agreement', title: 'Member spread', kind: 'agreement', description: 'Changes in regional means across 12 ensemble members.' }
+    { id: 'agreement', title: 'Member spread', kind: 'agreement', description: 'Changes in regional means across 12 ensemble members.' },
+    { id: 'local-climate', title: 'Climate near you', kind: 'local', description: 'A location’s monthly climate and changes in the surrounding area.' }
   ];
   var tour = [
     { scene: 'overview', month: 1, hold: 2 },

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ClimaScope · Wall preview</title>
   <link rel="stylesheet" href="/static/immersive/preview.css?v={{ av('immersive/preview.css') }}">
+  <link rel="stylesheet" href="/static/immersive/places.css?v={{ av('immersive/places.css') }}">
 </head>
 <body>
   <header><a href="/">ClimaScope</a><h1>Wall preview</h1>
@@ -23,6 +24,14 @@
       <label>Catchment<select id="catchment-select"><option value="">All Scotland</option></select></label>
       <button id="reset-region" type="button">Reset to Scotland</button>
     </div>
+    <form id="preview-postcode-form" class="preview-controls">
+      <label>Postcode<input id="preview-postcode" autocomplete="postal-code" placeholder="e.g. PH2 7HP" maxlength="10" required></label>
+      <button type="submit">Find climate</button>
+      <span id="preview-location-status" role="status"></span>
+      <div id="preview-location-scopes"></div>
+    </form>
+    <div id="saved-places"></div>
+    <p class="places-hint">Save up to 8 places. Place loop keeps the month and ensemble selection.</p>
     <p id="scene-description"></p>
     <div class="playback-controls">
       <button id="prev-month" type="button">Previous month</button>
@@ -30,7 +39,7 @@
       <button id="next-month" type="button">Next month</button>
       <button id="annual" type="button">Month loop</button>
       <button id="tour" type="button">Scene loop</button>
-      <label>Seconds per month<select id="dwell-select"><option>4</option><option selected>6</option><option>10</option><option>15</option><option>20</option></select></label>
+      <label>Seconds per step<select id="dwell-select"><option>4</option><option selected>6</option><option>10</option><option>15</option><option>20</option></select></label>
       <button id="copy-link" type="button">Copy this view</button>
     </div>
     <p id="preview-status" role="status" aria-live="polite">Preparing the wall…</p>
@@ -40,6 +49,8 @@
     <input id="view-link" aria-label="Link to the selected preview" readonly hidden>
   </main>
   <script src="/static/immersive/scenes.js?v={{ av('immersive/scenes.js') }}"></script>
+  <script src="/static/js/climate_profile.js?v={{ av('js/climate_profile.js') }}"></script>
+  <script src="/static/immersive/places.js?v={{ av('immersive/places.js') }}"></script>
   <script src="/static/immersive/preview.js?v={{ av('immersive/preview.js') }}"></script>
 </body>
 </html>

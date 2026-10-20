@@ -16,6 +16,7 @@ Strategic Research Programme 2022–2027.
 - Land-cover fractions, habitat context, LiDAR coverage and terrain layers.
 - Filters combining climate, land cover and terrain criteria.
 - Cell details, area summaries, CSV exports and selected geospatial downloads.
+- Postcode climate profiles in Dashboard, with Climate and Land & catchments tabs.
 
 The geographic grid contains 81,659 cells and covers 32 Scottish councils.
 Climate-data coverage depends on the supplied files. LiDAR products and
@@ -63,15 +64,21 @@ Dataset licences and attribution requirements apply separately. See
 - [Browser preview](https://climascope.hutton.ac.uk/immersive/preview)
 
 Select **Phone remote** on the wall and enter its temporary code on the
-controller. Eight scenes compare climate periods, negative water balance,
-land cover, CWR classes and member spread. Month loop cycles through the year;
-Scene loop runs nine stops. The wall runs playback after the controller closes.
+controller. Nine scenes compare climate periods, negative water balance,
+land cover, CWR classes, member spread and **Climate near you**. Search a postcode
+on the controller to show its 1 km square, monthly climate and changes alongside
+the surrounding council or catchment. Save up to eight places for **Place loop**.
+**Month loop** cycles through the year at one place; **Scene loop** runs nine
+stops for area selections. The wall runs playback after the controller closes.
 Manual changes pause it.
 
 The [immersive repo](https://github.com/Ashish-Dutta007/climascope-immersive)
 contains setup, methods and release records. The
 [land-cover and CWR notes](docs/immersive/JESS_FEEDBACK_2026-10-15.md) describe the
 latest additions.
+
+See [local climate](docs/climate-profiles.md) for postcode lookup, area summaries
+and the required data-generation step.
 
 ## Running
 

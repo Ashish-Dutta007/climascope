@@ -26,6 +26,18 @@ analysis and export requests default to a 30,000 km² ceiling (approximately the
 largest Scottish council plus drawing tolerance); override it with
 `AOI_AREA_LIMIT_M2` if required.
 
+Postcode search uses Postcodes.io through the server and needs no OS API key.
+Generate the local climate tables before deploying the Dashboard/remote postcode
+feature:
+
+```bash
+venv/bin/python tools/precompute_place_profiles.py
+```
+
+Keep `data/place_profiles/` in the existing data bind mount. Regenerate it and
+the regional summaries whenever source climate data change; see
+[local climate](docs/climate-profiles.md).
+
 Hillshade GeoTIFF exports have a separate, intentionally tight 100 km² ceiling,
 plus server-side pixel and dimension caps. Override only the area ceiling with
 `HILLSHADE_EXPORT_AREA_LIMIT_M2` if required.
