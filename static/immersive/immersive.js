@@ -613,16 +613,38 @@
 
   function payloadKey(month, member) { return month + '|' + member; }
 
+  // Compact map values (see immersive_values.py): one shared id list and one
+  // int16 array per metric/period, in tenths. The result keeps the JSON
+  // shape, payload[metric][period], with {ids, values, scale, count} columns.
+  function decodeGrid(buffer) {
+    var bytes = new Uint8Array(buffer);
+    if (String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) !== 'CSI1') throw new Error('unrecognised map data');
+    var headerLength = new DataView(buffer).getUint32(4, true);
+    var header = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + headerLength)));
+    var n = header.count, offset = 8 + headerLength;
+    var ids = new Int32Array(buffer, offset, n);
+    var payload = { _meta: header };
+    header.columns.forEach(function (column, i) {
+      var values = new Int16Array(buffer, offset + 4 * n + 2 * n * i, n), count = 0;
+      for (var k = 0; k < n; k++) if (values[k] !== header.nodata) count++;
+      (payload[column[0]] = payload[column[0]] || {})[column[1]] =
+        { ids: ids, values: values, scale: header.scale, nodata: header.nodata, count: count };
+    });
+    return payload;
+  }
+
   function startFetch(month, member) {
     var key = payloadKey(month, member);
     var url = '/api/immersive_values?month=' + month +
-      '&change=1&metrics=' + PANELS.map(function (p) { return p.id; }).join(',') +
+      '&change=1&format=i16&metrics=' + PANELS.map(function (p) { return p.id; }).join(',') +
       (member !== 'mean' ? '&member=' + member : '');
     var t0 = performance.now();
     var p = fetch(url)
       .then(function (r) {
         if (!r.ok) throw new Error('map data for ' + MONTH_LONG[month] + ' unavailable (HTTP ' + r.status + ')');
-        return r.json();
+        // A server without the compact format answers with JSON; accept either.
+        if ((r.headers.get('Content-Type') || '').indexOf('application/json') === 0) return r.json();
+        return r.arrayBuffer().then(decodeGrid);
       })
       .then(function (data) {
         console.log('[immersive] payload ' + key + ' in ' + Math.round(performance.now() - t0) + ' ms');
@@ -1322,6 +1344,13 @@
   function applyValues(map, data) {
     map.removeFeatureState({ source: 'cells-vt', sourceLayer: 'cells' });
     if (!data) return;
+    if (data.ids) {
+      for (var i = 0; i < data.ids.length; i++) {
+        if (data.values[i] === data.nodata) continue;
+        map.setFeatureState({ source: 'cells-vt', sourceLayer: 'cells', id: data.ids[i] }, { value: data.values[i] / data.scale });
+      }
+      return;
+    }
     for (var id in data) {
       var v = data[id];
       if (v != null && isFinite(v)) {
@@ -1483,7 +1512,7 @@
     PANELS.forEach(function (panel) {
       PERIODS.forEach(function (p) {
         var d = payload[panel.id] && payload[panel.id][p.id];
-        if (!d || !Object.keys(d).length) out.push(panel.code + ' ' + p.short);
+        if (!d || (d.ids ? !d.count : !Object.keys(d).length)) out.push(panel.code + ' ' + p.short);
       });
     });
     return out;
