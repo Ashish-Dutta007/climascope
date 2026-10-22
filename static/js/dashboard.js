@@ -30,6 +30,8 @@ class DashboardPie {
     this._habitatItems  = null;
     this._pendingKey    = null;
     this._aoiCells      = null;
+    this._requestRevision = 0;
+    this._requestController = null;
     this._build();
     this._loadLcItems();
     this._loadHabitatItems();
@@ -61,7 +63,7 @@ class DashboardPie {
         <div class="dp-heading">
           <div><span class="dp-title" id="dp-title">Land cover : </span>
           <span class="dp-scope-name" id="dp-scope-name">Scotland</span></div>
-          <span class="dp-source" id="dp-source">Source: UKCEH LCM · exact 1 km cell fractions</span>
+          <span class="dp-source" id="dp-source">Source: UKCEH LCM · 1 km cell fractions</span>
         </div>
       </div>
       <div class="dp-body" id="dp-body">
@@ -86,45 +88,60 @@ class DashboardPie {
   onMapStateChange(state) {
     const scope    = state.scope || 'national';
     this._aoiCells = state.aoiCells || null;
-    const scopeKey = scope === 'aoi' ? `aoi:${state.aoiCells?.length ?? 0}` : scope;
-    if (scopeKey === this._lastScope && this.variable === this._lastVariable) return;
-    this._lastScope    = scopeKey;
-    this._lastVariable = this.variable;
+    if (this._fetchKey(scope) === this._pendingKey) return;
     this._fetch(scope);
   }
 
+  _fetchKey(scope) {
+    return JSON.stringify([scope, this.variable, scope === 'aoi' ? this._aoiCells : null]);
+  }
+
   _scopeLabel(scope) {
-    if (!scope || scope === 'national') return 'Scotland';
+    const catchmentTotals = !['LCM', 'HABITAT'].includes(this.variable);
+    if (!scope || scope === 'national') return catchmentTotals ? 'Scotland · available catchments' : 'Scotland';
     if (scope === 'aoi')                return `AOI (${(this._aoiCells?.length ?? 0).toLocaleString()} cells)`;
-    if (scope.startsWith('council:'))   return scope.slice(8);
+    if (scope.startsWith('council:'))   return (catchmentTotals ? 'Catchments linked to ' : '') + scope.slice(8);
     if (scope.startsWith('catchment:')) return scope.slice(10).split(' : ')[0];
     return scope;
   }
 
   async _fetch(scope) {
     const variable   = this.variable || 'LCM';
-    const fetchKey   = scope === 'aoi'
-      ? `aoi:${this._aoiCells?.length ?? 0}|${variable}`
-      : `${scope}|${variable}`;
-    this._pendingKey = fetchKey;
+    const aoiCells = this._aoiCells;
+    const revision = ++this._requestRevision;
+    this._requestController?.abort();
+    const controller = this._requestController = new AbortController();
+    this._pendingKey = this._fetchKey(scope);
+    this._lastScope = scope;
+    this._lastVariable = variable;
+    const empty = this.el.querySelector('#dp-empty');
+    const canvas = this.el.querySelector('#dp-canvas');
+    if (canvas) canvas.style.display = 'none';
+    if (empty) { empty.textContent = 'Loading…'; empty.style.display = 'flex'; }
     try {
       let resp;
-      if (scope === 'aoi' && this._aoiCells?.length) {
+      if (scope === 'aoi') {
+        if (!aoiCells?.length) { this._render({}, scope); return; }
         resp = await fetch('/api/landuse_composition', {
-          method:  'POST',
+          method:  'POST', signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ aoi_ids: this._aoiCells, variable }),
+          body:    JSON.stringify({ aoi_ids: aoiCells, variable }),
         });
       } else {
         resp = await fetch(
-          `/api/landuse_composition?scope=${encodeURIComponent(scope)}&variable=${encodeURIComponent(variable)}`
+          `/api/landuse_composition?scope=${encodeURIComponent(scope)}&variable=${encodeURIComponent(variable)}`,
+          { signal: controller.signal }
         );
       }
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (fetchKey !== this._pendingKey) return;
+      const data = await resp.json().catch(() => { throw new Error('Could not load land composition. Try again.'); });
+      if (!resp.ok) throw new Error(data.error || 'Could not load land composition.');
+      if (revision !== this._requestRevision) return;
       this._render(data, scope);
-    } catch {}
+    } catch (error) {
+      if (revision !== this._requestRevision || error.name === 'AbortError') return;
+      this._pendingKey = null;
+      if (empty) { empty.textContent = error.message; empty.style.display = 'flex'; }
+    }
   }
 
   _render(data, scope) {
@@ -140,9 +157,9 @@ class DashboardPie {
     const sourceEl = this.el.querySelector('#dp-source');
     if (sourceEl) {
       sourceEl.textContent = this.variable === 'HABITAT'
-        ? 'Source: NatureScot HLCM 2022 · exact 20 m fractions grouped to 1 km'
+        ? 'Source: NatureScot HLCM 2022 · 20 m fractions grouped to 1 km'
         : this.variable === 'LCM'
-          ? 'Source: UKCEH LCM · exact 1 km cell fractions'
+          ? 'Source: UKCEH LCM · 1 km cell fractions'
           : scope === 'aoi'
             ? 'Catchment-derived totals · overlap-weighted AOI estimate'
             : 'Catchment-derived totals';
@@ -153,7 +170,7 @@ class DashboardPie {
     const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
 
     if (!entries.length) {
-      if (emptyEl) emptyEl.style.display = 'flex';
+      if (emptyEl) { emptyEl.textContent = 'No data'; emptyEl.style.display = 'flex'; }
       if (canvas) canvas.style.display = 'none';
       return;
     }

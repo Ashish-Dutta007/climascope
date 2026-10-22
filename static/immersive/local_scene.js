@@ -55,10 +55,10 @@
     var region = frame.region, month = frame.month;
     var root = document.createElement('section'); root.className = 'near-comparison';
     var entries = [{kind:'cell', name:region.name, data:data}].concat(areas);
-    root.innerHTML = '<h2>Nearby comparison</h2><p class="near-period">' + profile.months[month - 1] +
+    root.innerHTML = '<h2>Cell and area changes</h2><p class="near-period">' + profile.months[month - 1] +
       ' change · 2050–2079 minus 1990–2019</p>' +
       '<div class="near-area-key">' + entries.map(function (entry, i) {
-        var label = entry.kind === 'cell' ? 'Here' : entry.kind === 'national' ? 'Scotland mean' : entry.kind === 'council' ? 'Council mean' : 'Catchment mean';
+        var label = entry.kind === 'cell' ? 'Climate cell' : entry.kind === 'national' ? 'Scotland mean' : entry.kind === 'council' ? 'Council mean' : 'Catchment mean';
         return '<div style="color:' + colours[i] + '"><strong>' + label + '</strong><span>' + esc(entry.name) + '</span></div>';
       }).join('') + '</div>' +
       metrics.map(function (metric) {
@@ -89,22 +89,23 @@
         labels:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],tileSize:256}},
         layers:[{id:'base',type:'raster',source:'base'},{id:'labels',type:'raster',source:'labels'}]},
       center:[-3.5,56.5],zoom:9});
+    map.addControl(new maplibregl.ScaleControl({maxWidth:90, unit:'metric'}), 'bottom-left');
     map.on('error',function () { tileFailed = true; });
     mapReady = new Promise(function (resolve) { map.once('style.load',resolve); });
   }
   function resize() {
     if (!map || !mapBox || !mapBox.isConnected || !mapBox.clientWidth) return;
-    // Render at a smaller logical size so raster place labels remain readable
-    // at wall scale. Climate geometry still uses its original coordinates.
-    var scale = 3 * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u'));
-    scale = Math.max(.6, scale || 3);
+    // Enlarge place labels while keeping the climate geometry at display resolution.
+    var scale = 2 * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u'));
+    scale = Math.max(.6, scale || 2);
     mapNode.style.width = mapBox.clientWidth / scale + 'px';
     mapNode.style.height = mapBox.clientHeight / scale + 'px';
     mapNode.style.transform = 'scale(' + scale + ')';
+    map.setPixelRatio(Math.max(1, scale * window.devicePixelRatio));
     map.resize();
     if (lastRegion) {
       var r = lastRegion;
-      map.fitBounds([[r.longitude - .12,r.latitude - .065],[r.longitude + .12,r.latitude + .065]],{padding:12,duration:0});
+      map.fitBounds(window.ClimaScopeLocator.contextBounds(r.geometry, [r.longitude,r.latitude], 1500), {padding:12,duration:0});
     }
   }
   function paintMap(region, box, isCurrent) {
@@ -142,7 +143,10 @@
     place.innerHTML = '<h1>' + esc(region.kind ? region.name : 'Scotland') + '</h1><p>' +
       profile.months[frame.month - 1] + ' · ' + esc(frame.member === 'mean' ? 'Ensemble mean' : 'Member ' + frame.member) + '</p>' +
       '<p>' + esc(region.kind === 'cell' ? (region.distance_m ? 'Nearest 1 km climate cell, ' + region.distance_m + ' m away' : '1 km climate cell') + ' · ' + (region.council || 'Scotland') : data.method) + '</p>' +
-      (region.kind === 'cell' ? '<div class="near-map"><div class="near-inset">' + locator + '</div></div>' : '<div class="local-locator">' + locator + '</div>') +
+      (region.kind === 'cell' ? '<div class="near-map"><div class="near-inset">' + locator + '</div></div>' +
+        '<p class="near-map-key"><span><i class="near-point-key"></i>' +
+        (region.name === 'Selected location' ? 'Selected point' : 'Postcode point') +
+        '</span><span><i class="near-cell-key"></i>1 km climate cell</span></p>' : '<div class="local-locator">' + locator + '</div>') +
       (region.catchment ? '<p class="near-catchment">' + esc(region.catchment) + ' · catchment</p>' : '') +
       '<p class="local-status" role="status"></p>';
     var content = document.createElement('section'); content.className = 'local-content';

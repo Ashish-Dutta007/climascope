@@ -8,6 +8,28 @@
 
   function grid(coord) { return toGrid.forward(coord); }
 
+  function contextBounds(geometry, point, margin) {
+    var bounds = [Infinity, Infinity, -Infinity, -Infinity];
+    function include(coord) {
+      var p = grid(coord);
+      bounds[0] = Math.min(bounds[0], p[0]); bounds[1] = Math.min(bounds[1], p[1]);
+      bounds[2] = Math.max(bounds[2], p[0]); bounds[3] = Math.max(bounds[3], p[1]);
+    }
+    include(point);
+    var polygons = geometry && geometry.type === 'Polygon' ? [geometry.coordinates] :
+      geometry && geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+    polygons.forEach(function (polygon) { polygon[0].forEach(include); });
+    var geographic = [Infinity, Infinity, -Infinity, -Infinity];
+    [bounds[0] - margin, bounds[2] + margin].forEach(function (x) {
+      [bounds[1] - margin, bounds[3] + margin].forEach(function (y) {
+        var p = toGrid.inverse([x, y]);
+        geographic[0] = Math.min(geographic[0], p[0]); geographic[1] = Math.min(geographic[1], p[1]);
+        geographic[2] = Math.max(geographic[2], p[0]); geographic[3] = Math.max(geographic[3], p[1]);
+      });
+    });
+    return [[geographic[0], geographic[1]], [geographic[2], geographic[3]]];
+  }
+
   // Intersect a horizontal scanline with each polygon, including its holes.
   // The midpoint of the widest inside interval stays on the region. Work in
   // the source geometry's coordinates, then project the resulting point.
@@ -69,5 +91,6 @@
     };
   }
 
-  window.ClimaScopeLocator = { grid: grid, create: create, interiorPoint: interiorPoint, crs: 'EPSG:27700' };
+  window.ClimaScopeLocator = { grid: grid, create: create, interiorPoint: interiorPoint,
+    contextBounds: contextBounds, crs: 'EPSG:27700' };
 })();

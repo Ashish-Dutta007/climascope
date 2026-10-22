@@ -5,7 +5,7 @@
       this.el = el; this.getState = getState; this.onScope = onScope;
       this.location = null; this.data = null; this.key = null; this.sequence = 0;
       this.lookupSequence = 0; this.lookupPending = false; this.lookupAbort = null;
-      el.innerHTML = `<form class="profile-search"><label for="climate-postcode">Postcode</label><input id="climate-postcode" name="postcode" autocomplete="postal-code" placeholder="e.g. PH2 7HP" required maxlength="10"><button type="submit">Find climate</button></form><div class="profile-controls"><label>Month<select id="climate-month"></select></label><label>Compare with 1990–2019<select id="climate-period"></select></label><label>Ensemble<select id="climate-member"></select></label></div><p class="profile-status" role="status"></p><div class="profile-scopes" aria-label="Climate area"></div><div class="profile-heading"></div><div class="profile-content"></div>`;
+      el.innerHTML = `<form class="profile-search"><label for="climate-postcode">Postcode</label><input id="climate-postcode" name="postcode" autocomplete="postal-code" required maxlength="10"><button type="submit">Find climate</button></form><div class="profile-controls"><label>Month<select id="climate-month"></select></label><label>Compare with 1990–2019<select id="climate-period"></select></label><label>Ensemble<select id="climate-member"></select></label></div><p class="profile-status" role="status"></p><div class="profile-scopes" aria-label="Climate area"></div><div class="profile-heading"></div><div class="profile-content"></div>`;
       ['month','period','member'].forEach(name => {
         const control = el.querySelector('#climate-' + name);
         const main = document.getElementById(name);
@@ -58,14 +58,19 @@
     }
     async update(state, cellSelected) {
       const seq = ++this.sequence;
-      const scope = cellSelected && this.location ? this.location.scope : state.scope;
+      const scope = state.scope === 'aoi' ? 'aoi' : cellSelected && this.location ? this.location.scope : state.scope;
       const key = scope + '|' + state.member;
-      this.state = state; this.cellSelected = cellSelected;
+      this.state = state; this.cellSelected = cellSelected && scope !== 'aoi';
       ['month','period','member'].forEach(name => {
-        this.el.querySelector('#climate-' + name).value = String(state[name]);
+        const control = this.el.querySelector('#climate-' + name);
+        const main = document.getElementById(name);
+        control.value = String(state[name]);
+        control.disabled = main.disabled;
+        control.title = main.title;
       });
       this.drawScopes();
       if (scope === 'aoi') {
+        this.el.classList.remove('cp-loading');
         this.key = null;
         this.el.querySelector('.profile-content').innerHTML = '';
         this.el.querySelector('.profile-heading').textContent = 'Drawn area';

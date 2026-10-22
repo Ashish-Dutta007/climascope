@@ -7,7 +7,7 @@ const _KP_VARIABLES = ['Land Use', 'Farm Type', 'LCA', 'Peat Condition'];
 const _KP_MONTHS    = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const _KP_COMPARE_PERIODS = ['1960-1989', '1990-2019', '2020-2049', '2050-2079'];
 const _KP_PERIOD_LABELS   = {
-  '1960-1989': '1960s', '1990-2019': '1990s', '2020-2049': '2020s', '2050-2079': '2050s'
+  '1960-1989': '1960–1989', '1990-2019': '1990–2019', '2020-2049': '2020–2049', '2050-2079': '2050–2079'
 };
 const _CATCHMENT_METRICS = ['CWBPT', 'CWBPM', 'CWRPT', 'CWRPM'];
 
@@ -35,6 +35,8 @@ class CatchmentPanel {
     this.lastFetchKey = null;
     this._chart       = null;
     this._aoiCells    = null;
+    this._requestRevision = 0;
+    this._requestController = null;
     this._build();
 
     document.addEventListener('climascope:aoi:ready', () => {
@@ -68,6 +70,7 @@ class CatchmentPanel {
           <span class="kp-meta-tag" id="kp-metric-echo">—</span>
           <span class="kp-meta-tag" id="kp-month-echo">—</span>
           <span class="kp-meta-tag" id="kp-period-echo">—</span>
+          <span class="kp-meta-tag" id="kp-member-echo">—</span>
         </div>
       </div>
       <div class="kp-legend">
@@ -103,137 +106,79 @@ class CatchmentPanel {
     await this._fetch();
   }
 
-  onMapStateChange(newState) {
-    const scope     = newState.scope  || 'national';
-    const rawMetric = newState.metric || 'CWBPT';
-    const month     = newState.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
-    const period    = newState.period || '2050-2079';
-    const metric    = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
-    this._aoiCells  = newState.aoiCells || null;
+  _selection(state = this.getMapState()) {
+    const rawMetric = state.metric || 'CWBPT';
+    return {
+      scope: state.scope || 'national',
+      metric: _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT',
+      month: state.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1,
+      period: state.period || '2050-2079',
+      member: state.member || 'mean',
+      variable: this.variable,
+      compare: this.compareMode,
+      aoiCells: state.aoiCells || [],
+    };
+  }
 
-    this._setMeta(metric, month, this.compareMode ? null : period);
-    this._setScopeLabel(scope, newState.aoiCells);
+  _fetchKey(selection) {
+    return JSON.stringify([
+      selection.variable, selection.metric, selection.month, selection.member,
+      selection.scope, selection.compare, selection.compare ? null : selection.period,
+      selection.scope === 'aoi' ? selection.aoiCells : null,
+    ]);
+  }
 
-    const aoiKey   = scope === 'aoi' ? `|aoi:${newState.aoiCells?.length ?? 0}` : '';
-    const fetchKey = this.compareMode
-      ? `compare|${this.variable}|${metric}|${month}|${scope}${aoiKey}`
-      : `${this.variable}|${metric}|${month}|${period}|${scope}${aoiKey}`;
+  onMapStateChange(state) {
+    if (this._fetchKey(this._selection(state)) !== this.lastFetchKey) this._fetch();
+  }
 
-    if (fetchKey !== this.lastFetchKey) {
-      this.lastFetchKey = fetchKey;
-      this._fetch();
-    }
+  async _fetchPeriod(selection, period, signal) {
+    const { scope, variable, metric, month, member, aoiCells } = selection;
+    const values = { variable, metric, month, period, member };
+    const response = scope === 'aoi'
+      ? await fetch('/api/catchment', {
+          method: 'POST', signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...values, aoi_ids: aoiCells }),
+        })
+      : await fetch('/api/catchment?' + new URLSearchParams({ ...values, scope }), { signal });
+    const data = await response.json().catch(() => { throw new Error('Could not load catchment data. Try again.'); });
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    return data;
   }
 
   async _fetch() {
-    if (this.compareMode) {
-      await this._fetchCompare();
-    } else {
-      await this._fetchSingle();
-    }
-  }
-
-  async _fetchSingle() {
-    const state      = this.getMapState();
-    const scope      = state.scope  || 'national';
-    const rawMetric  = state.metric || 'CWBPT';
-    const month      = state.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
-    const period     = state.period || '2050-2079';
-    const metric     = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
-    const aoiCells   = this._aoiCells || state.aoiCells || null;
-
-    this._setMeta(metric, month, period);
-    this._setScopeLabel(scope, aoiCells);
-
-    const aoiKey   = scope === 'aoi' ? `|aoi:${aoiCells?.length ?? 0}` : '';
-    const fetchKey = `${this.variable}|${metric}|${month}|${period}|${scope}${aoiKey}`;
-    this.lastFetchKey = fetchKey;
+    const selection = this._selection();
+    const revision = ++this._requestRevision;
+    this._requestController?.abort();
+    const controller = this._requestController = new AbortController();
+    this.lastFetchKey = this._fetchKey(selection);
+    this._setMeta(selection.metric, selection.month, selection.compare ? null : selection.period, selection.member);
+    this._setScopeLabel(selection.scope, selection.aoiCells);
     this._setLoading(true);
-
+    if (selection.scope === 'aoi' && !selection.aoiCells.length) {
+      this._showNoData();
+      return;
+    }
     try {
-      let resp;
-      if (scope === 'aoi') {
-        if (!aoiCells?.length) { this._showNoData('AOI'); return; }
-        resp = await fetch('/api/catchment', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ aoi_ids: aoiCells, variable: this.variable, metric, month, period }),
-        });
+      const periods = selection.compare ? _KP_COMPARE_PERIODS : [selection.period];
+      const results = await Promise.all(periods.map(period => this._fetchPeriod(selection, period, controller.signal)));
+      if (revision !== this._requestRevision) return;
+      this.metricNote = null;
+      const scopeLabel = this.el.querySelector('#kp-scope-label');
+      if (scopeLabel && results[0].scope_label) scopeLabel.textContent = results[0].scope_label;
+      if (selection.compare) {
+        this.compareData = results;
+        this._renderCompare();
       } else {
-        resp = await fetch(
-          `/api/catchment?variable=${encodeURIComponent(this.variable)}`
-          + `&metric=${encodeURIComponent(metric)}`
-          + `&month=${month}`
-          + `&period=${encodeURIComponent(period)}`
-          + `&scope=${encodeURIComponent(scope)}`
-        );
-      }
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        if (resp.status === 404 && err.error?.includes('unknown council')) {
-          this._showNoData(scope.startsWith('council:') ? scope.slice(8) : scope);
-        } else {
-          this._showError(err.error || `HTTP ${resp.status}`);
-        }
-        return;
-      }
-      const data = await resp.json();
-      if (fetchKey === this.lastFetchKey) {
-        this.data       = data;
-        this.metricNote = null;
+        this.data = results[0];
         this._renderRows();
       }
-    } catch (e) {
-      this._showError(e.message);
-    } finally {
-      this._setLoading(false);
-    }
-  }
-
-  async _fetchCompare() {
-    const state      = this.getMapState();
-    const scope      = state.scope  || 'national';
-    const rawMetric  = state.metric || 'CWBPT';
-    const month      = state.month || Number(document.getElementById('month')?.value) || new Date().getMonth() + 1;
-    const metric     = _CATCHMENT_METRICS.includes(rawMetric) ? rawMetric : 'CWBPT';
-    const aoiCells   = this._aoiCells || state.aoiCells || null;
-
-    this._setMeta(metric, month, null);
-    this._setScopeLabel(scope, aoiCells);
-
-    const aoiKey   = scope === 'aoi' ? `|aoi:${aoiCells?.length ?? 0}` : '';
-    const fetchKey = `compare|${this.variable}|${metric}|${month}|${scope}${aoiKey}`;
-    this.lastFetchKey = fetchKey;
-    this._setLoading(true);
-
-    try {
-      const results = await Promise.all(
-        _KP_COMPARE_PERIODS.map(period => {
-          if (scope === 'aoi') {
-            if (!aoiCells?.length) return Promise.resolve(null);
-            return fetch('/api/catchment', {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify({ aoi_ids: aoiCells, variable: this.variable, metric, month, period }),
-            }).then(r => r.ok ? r.json() : null).catch(() => null);
-          }
-          return fetch(
-            `/api/catchment?variable=${encodeURIComponent(this.variable)}`
-            + `&metric=${encodeURIComponent(metric)}`
-            + `&month=${month}`
-            + `&period=${encodeURIComponent(period)}`
-            + `&scope=${encodeURIComponent(scope)}`
-          ).then(r => r.ok ? r.json() : null).catch(() => null);
-        })
-      );
-      if (fetchKey !== this.lastFetchKey) return;
-      this.compareData = results;
-      this.metricNote  = null;
-      this._renderCompare();
-    } catch (e) {
-      this._showError(e.message);
-    } finally {
-      this._setLoading(false);
+    } catch (error) {
+      if (revision !== this._requestRevision || error.name === 'AbortError') return;
+      controller.abort();
+      this.lastFetchKey = null;
+      this._showError(error.message);
     }
   }
 
@@ -252,19 +197,21 @@ class CatchmentPanel {
     if (body) body.innerHTML = `<div class="kp-error">${_kpEsc(msg)}</div>`;
   }
 
-  _showNoData(councilName) {
+  _showNoData() {
     const body = this.el.querySelector('#kp-body');
     this._destroyChart();
-    if (body) body.innerHTML = `<div class="kp-empty">No catchment data available for <strong>${_kpEsc(councilName)}</strong> — this council has no rivers in the dataset.</div>`;
+    if (body) body.innerHTML = `<div class="kp-empty">No catchment data for this selection.</div>`;
   }
 
-  _setMeta(metric, month, period) {
+  _setMeta(metric, month, period, member) {
     const mEl = this.el.querySelector('#kp-metric-echo');
     const mo  = this.el.querySelector('#kp-month-echo');
     const pe  = this.el.querySelector('#kp-period-echo');
     if (mEl) mEl.textContent = metric || '—';
     if (mo)  mo.textContent  = _KP_MONTHS[month] || String(month);
     if (pe)  pe.textContent  = period || 'All periods';
+    const me = this.el.querySelector('#kp-member-echo');
+    if (me) me.textContent = member === 'mean' ? 'Mean class areas · 12 members' : 'Member ' + member;
   }
 
   _setScopeLabel(scope, aoiCells) {
@@ -363,15 +310,17 @@ class CatchmentPanel {
       return;
     }
 
-    // Sort types by the reference period's total_ha descending
-    const types = [...first.rows].sort((a, b) => b.total_ha - a.total_ha).map(r => r.type);
+    const types = [...new Set(results.flatMap(result => result.rows.map(row => row.type)))];
+    const referenceArea = type => results.find(result => result.rows.some(row => row.type === type))
+      .rows.find(row => row.type === type).total_ha;
+    types.sort((a, b) => referenceArea(b) - referenceArea(a));
 
     let html = this.metricNote
       ? `<div class="kp-metric-note">${this.metricNote}</div>`
       : '';
 
     types.forEach(type => {
-      const refRow = first.rows.find(r => r.type === type);
+      const refRow = results.flatMap(result => result.rows).find(row => row.type === type);
       // Scale bars within each group to that group's own maximum across periods
       const groupMax = Math.max(
         ...results.map(res => res?.rows?.find(r => r.type === type)?.total_ha || 0)

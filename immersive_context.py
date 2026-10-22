@@ -30,8 +30,11 @@ def create_context_blueprint(root, council_catchments, catchment_names):
                 where = "Member IN (" + ",".join("?" for _ in selected) + ")"
                 params = [path, *selected]
                 if names is not None:
-                    where += " AND catchment_name IN (" + ",".join("?" for _ in names) + ")"
-                    params += list(names)
+                    if names:
+                        where += " AND catchment_name IN (" + ",".join("?" for _ in names) + ")"
+                        params += list(names)
+                    else:
+                        where += " AND FALSE"
                 rows = db.execute(f"""
                     SELECT Month, Type, class, SUM(total_area_HA)::DOUBLE,
                            COUNT(DISTINCT Member)

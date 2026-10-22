@@ -87,6 +87,7 @@
   function monthlyChart(items, selected) {
     var W=1400,H=350,L=80,R=20,T=15,B=50,pw=W-L-R,ph=H-T-B,bw=pw/12;
     var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Monthly CWR PT class shares">';
+    if(!items.some(function (item) { return item.total_km2 > 0; })) return svg+'<text x="25" y="100" fill="#bdcce0" font-size="36">No classified land-use data</text></svg>';
     [0,50,100].forEach(function (v) { var y=T+ph*(1-v/100); svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="#394354"/><text x="'+(L-12)+'" y="'+(y+10)+'" text-anchor="end" fill="#bdcce0" font-size="30">'+v+'</text>'; });
     items.forEach(function (item,i) { var bottom=T+ph,x=L+i*bw+bw*.12;
       item.classes_km2.forEach(function (value,j) { var h=item.total_km2 ? ph*value/item.total_km2 : 0; bottom-=h;
@@ -98,7 +99,7 @@
   function landUseChart(item, types, max) {
     var W=1400,H=455,L=25,R=185,band=57,pw=W-L-R;
     var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="CWR PT class areas by land use">';
-    if(!item.total_km2) return svg+'<text x="25" y="100" fill="#bdcce0" font-size="36">No classified land-use areas</text></svg>';
+    if(!item.total_km2) return svg+'<text x="25" y="100" fill="#bdcce0" font-size="36">No classified land-use data</text></svg>';
     types.forEach(function (type,i) { var values=item.land_use[type]||[0,0,0,0],x=L,y=32+i*band,total=values.reduce(function (a,b) {return a+b;},0);
       svg+='<text x="'+L+'" y="'+y+'" fill="#e6ecfb" font-size="31">'+esc(type)+'</text>';
       values.forEach(function (v,j) { var width=pw*v/max; svg+='<rect data-use="'+esc(type)+'" data-class="'+j+'" data-area-km2="'+v+'" x="'+x+'" y="'+(y+10)+'" width="'+width+'" height="24" fill="'+classColors[j]+'"/>'; x+=width; });

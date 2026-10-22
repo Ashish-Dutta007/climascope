@@ -41,6 +41,7 @@ MAX_AOI_COORDINATES = int(os.environ.get("MAX_AOI_COORDINATES", 50_000))
 MAX_AOI_CELL_IDS = int(os.environ.get("MAX_AOI_CELL_IDS", 35_000))
 MAX_REQUEST_CELL_IDS = int(os.environ.get("MAX_REQUEST_CELL_IDS", 100_000))
 MAX_FILTER_RULES = int(os.environ.get("MAX_FILTER_RULES", 20))
+_VALID_MEMBERS = {'01','04','05','06','07','08','09','10','11','12','13','15'}
 OUTPUT_MAX_AGE_SECONDS = int(os.environ.get("OUTPUT_MAX_AGE_SECONDS", 86_400))
 MAX_JSON_BYTES = int(os.environ.get("MAX_JSON_BYTES", 5 * 1024 * 1024))
 
@@ -2135,10 +2136,19 @@ JESS_ROOT = os.environ.get("JESS_ROOT", "data/jess/parquet")
 JESS_CWR_ROOT = os.environ.get("JESS_CWR_ROOT", "data/jess/parquet_cwr")
 
 from immersive_context import create_context_blueprint
-app.register_blueprint(create_context_blueprint(JESS_CWR_ROOT, _COUNCIL_CATCHMENTS, _CATCHMENT_NAMES))
+app.register_blueprint(create_context_blueprint(
+    JESS_CWR_ROOT,
+    {name: _COUNCIL_CATCHMENTS.get(name, []) for name in _COUNCIL_CELLS},
+    _CATCHMENT_NAMES,
+))
+
+class CatchmentDataUnavailable(LookupError):
+    pass
+
 
 @lru_cache(maxsize=256)
-def _catchment_cached(variable, metric, month, period, scenario, scope_str):
+def _catchment_cached(variable, metric, month, period, scenario, scope_str,
+                      member='mean', aoi_weights=()):
     # Target the exact partitioned file — DuckDB cannot partition-prune
     # URL-encoded directory names like Variable=Land%20Use (space encoded as %20 on disk),
     # so the /**/*.parquet glob would scan all ~40 files instead of one.
@@ -2146,69 +2156,50 @@ def _catchment_cached(variable, metric, month, period, scenario, scope_str):
     root  = JESS_CWR_ROOT if metric in ('CWRPM', 'CWRPT') else JESS_ROOT
     path  = f"{root}/Variable={v_enc}/Period={period}/Metric={metric}/*.parquet"
 
-    db = duckdb.connect()
-
-    if scope_str == 'national':
-        q = f"""
-            SELECT Type as type, class, ROUND(SUM(total_area_HA)) as area_ha
-            FROM read_parquet('{path}')
-            WHERE Month = ? AND Scenario = ? AND Member = '01'
-            GROUP BY Type, class
-            ORDER BY Type, class
-        """
-        params = [month, scenario]
+    weights = dict(aoi_weights) if scope_str == 'aoi' else None
+    names = None
+    if scope_str == 'aoi':
+        names = list(weights)
     elif scope_str.startswith('catchment:'):
-        cname = scope_str[len('catchment:'):]
-        q = f"""
-            SELECT Type as type, class, ROUND(SUM(total_area_HA)) as area_ha
-            FROM read_parquet('{path}')
-            WHERE Month = ? AND Scenario = ? AND Member = '01'
-              AND catchment_name = ?
-            GROUP BY Type, class
-            ORDER BY Type, class
-        """
-        params = [month, scenario, cname]
-    else:
-        council = scope_str[len('council:'):]
-        names = _COUNCIL_CATCHMENTS.get(council)
-        if not names:
-            return None
-        placeholders = ','.join(['?' for _ in names])
-        q = f"""
-            SELECT Type as type, class, ROUND(SUM(total_area_HA)) as area_ha
-            FROM read_parquet('{path}')
-            WHERE Month = ? AND Scenario = ? AND Member = '01'
-              AND catchment_name IN ({placeholders})
-            GROUP BY Type, class
-            ORDER BY Type, class
-        """
-        params = [month, scenario] + list(names)
-
-    df = db.execute(q, params).fetchdf()
-
-    classes = ['Strong Deficit', 'Moderate Deficit', 'Moderate Surplus', 'Strong Surplus']
-    if df.empty:
+        names = [scope_str[len('catchment:'):]]
+    elif scope_str.startswith('council:'):
+        names = list(dict.fromkeys(_COUNCIL_CATCHMENTS.get(scope_str[len('council:'):], [])))
+    if names == []:
         return '[]'
 
-    pivot = df.pivot_table(
-        index='type',
-        columns='class',
-        values='area_ha',
-        fill_value=0
-    ).reset_index()
+    selected = sorted(_VALID_MEMBERS) if member == 'mean' else [member]
+    members_sql = ','.join('?' for _ in selected)
+    where_scope = '' if names is None else ' AND catchment_name IN (' + ','.join('?' for _ in names) + ')'
+    scope_params = [] if names is None else names
+    with duckdb.connect() as db:
+        db.execute('SET threads=2')
+        available = db.execute(f"""
+            SELECT catchment_name,
+                   COUNT(DISTINCT CASE WHEN Member IN ({members_sql}) THEN Member END)
+            FROM read_parquet(?, hive_partitioning=false)
+            WHERE Month = ? AND Scenario = ? {where_scope}
+            GROUP BY catchment_name
+        """, [*selected, path, month, scenario, *scope_params]).fetchall()
+        if any(count != len(selected) for _, count in available):
+            raise CatchmentDataUnavailable('Catchment data is incomplete for the selected member.')
+        source = db.execute(f"""
+            SELECT catchment_name, Type, class, SUM(total_area_HA)::DOUBLE / ?
+            FROM read_parquet(?, hive_partitioning=false)
+            WHERE Month = ? AND Scenario = ? AND Member IN ({members_sql}) {where_scope}
+            GROUP BY catchment_name, Type, class
+        """, [len(selected), path, month, scenario, *selected, *scope_params]).fetchall()
 
-    for c in classes:
-        if c not in pivot.columns:
-            pivot[c] = 0
-
+    classes = ['Strong Deficit', 'Moderate Deficit', 'Moderate Surplus', 'Strong Surplus']
+    totals = {}
+    for catchment_name, cover, category, area in source:
+        if category not in classes or not math.isfinite(area) or area < 0:
+            raise CatchmentDataUnavailable('Invalid catchment class areas.')
+        values = totals.setdefault(cover, dict.fromkeys(classes, 0.0))
+        values[category] += area * (weights[catchment_name] if weights is not None else 1.0)
     rows = []
-    for _, r in pivot.iterrows():
-        total = sum(r.get(c, 0) for c in classes)
-        rows.append({
-            'type': r['type'],
-            'total_ha': round(total),
-            'classes': {c: round(r.get(c, 0)) for c in classes}
-        })
+    for cover, values in totals.items():
+        rounded = {category: round(area) for category, area in values.items()}
+        rows.append({'type': cover, 'total_ha': sum(rounded.values()), 'classes': rounded})
     rows.sort(key=lambda x: x['total_ha'], reverse=True)
     if variable == 'LCA':
         for row in rows:
@@ -2245,140 +2236,75 @@ _PERIOD_SCENARIO = {
 
 @app.route('/api/catchment', methods=['GET', 'POST'])
 def catchment():
-    if request.method == 'POST':
-        body     = _json_object()
-        aoi_ids  = body.get('aoi_ids', [])
-        variable = body.get('variable', 'Land Use')
-        metric   = body.get('metric',   'CWBPT')
-        try:
-            month = int(body.get('month', _current_month()))
-        except (TypeError, ValueError):
-            return jsonify({'error': 'month must be 1-12'}), 400
-        period   = body.get('period', '2050-2079')
-
-        valid_variables = ['Land Use', 'Farm Type', 'LCA', 'Peat Condition', 'NA']
-        valid_metrics   = ['CWBPT', 'CWBPM', 'CWRPT', 'CWRPM']
-        valid_periods   = ['1960-1989', '1990-2019', '2020-2049', '2050-2079']
-        if variable not in valid_variables:
-            return jsonify({'error': f'unknown variable: {variable}'}), 400
-        if metric not in valid_metrics:
-            return jsonify({'error': f'unknown metric: {metric}'}), 400
-        if period not in valid_periods:
-            return jsonify({'error': f'unknown period: {period}'}), 400
-        if not 1 <= month <= 12:
-            return jsonify({'error': 'month must be 1-12'}), 400
-        if not aoi_ids:
-            return jsonify({'error': 'aoi_ids required'}), 400
-
-        aoi_set = _validated_ids(aoi_ids, limit=MAX_AOI_CELL_IDS, field="aoi_ids")
-        weights = {}
-        for cname, cells in _CATCHMENT_CELLS.items():
-            overlap = len(cells & aoi_set)
-            if overlap > 0:
-                weights[cname] = overlap / len(cells)
-
-        if not weights:
-            return jsonify({'variable': variable, 'metric': metric, 'month': month,
-                            'period': period, 'scope': 'aoi', 'rows': []})
-
-        scenario       = _PERIOD_SCENARIO[period]
-        v_enc          = _url_quote(variable, safe='')
-        root           = JESS_CWR_ROOT if metric in ('CWRPM', 'CWRPT') else JESS_ROOT
-        path           = f"{root}/Variable={v_enc}/Period={period}/Metric={metric}/*.parquet"
-        catchment_list = list(weights.keys())
-        placeholders   = ','.join(['?' for _ in catchment_list])
-        q = f"""
-            SELECT catchment_name, Type as type, class, SUM(total_area_HA) as area_ha
-            FROM read_parquet('{path}')
-            WHERE Month = ? AND Scenario = ? AND Member = '01'
-              AND catchment_name IN ({placeholders})
-            GROUP BY catchment_name, Type, class
-        """
-        try:
-            db  = duckdb.connect()
-            df  = db.execute(q, [month, scenario] + catchment_list).fetchdf()
-            db.close()
-        except Exception as e:
-            app.logger.exception('catchment AOI query failed')
-            return jsonify({'error': 'catchment analysis failed'}), 500
-
-        if df.empty:
-            return jsonify({'variable': variable, 'metric': metric, 'month': month,
-                            'period': period, 'scope': 'aoi', 'rows': []})
-
-        df['weight']  = df['catchment_name'].map(weights)
-        df['area_ha'] = df['area_ha'] * df['weight']
-        agg     = df.groupby(['type', 'class'])['area_ha'].sum().reset_index()
-        classes = ['Strong Deficit', 'Moderate Deficit', 'Moderate Surplus', 'Strong Surplus']
-        pivot   = agg.pivot_table(
-            index='type', columns='class', values='area_ha', fill_value=0
-        ).reset_index()
-        for c in classes:
-            if c not in pivot.columns:
-                pivot[c] = 0
-
-        rows = []
-        for _, r in pivot.iterrows():
-            total = sum(float(r.get(c, 0)) for c in classes)
-            rows.append({
-                'type':     r['type'],
-                'total_ha': round(total),
-                'classes':  {c: round(float(r.get(c, 0))) for c in classes},
-            })
-        rows.sort(key=lambda x: x['total_ha'], reverse=True)
-        if variable == 'LCA':
-            for row in rows:
-                row['type'] = _LCA_LABELS.get(str(row['type']), str(row['type']))
-        return jsonify({'variable': variable, 'metric': metric, 'month': month,
-                        'period': period, 'scope': 'aoi', 'rows': rows})
-
-    # ── GET (existing behaviour) ─────────────────────────────────────────
-    variable = request.args.get('variable', 'Land Use')
-    metric   = request.args.get('metric', 'CWBPT')
-    month    = request.args.get('month', _current_month(), type=int)
-    period   = request.args.get('period', '2050-2079')
-    scope    = request.args.get('scope', 'national')
-
-    valid_variables = ['Land Use', 'Farm Type', 'LCA', 'Peat Condition', 'NA']
-    valid_metrics   = ['CWBPT', 'CWBPM', 'CWRPT', 'CWRPM']
-    valid_periods   = ['1960-1989', '1990-2019', '2020-2049', '2050-2079']
-
-    if variable not in valid_variables:
-        return jsonify({'error': f'unknown variable: {variable}'}), 400
-    if metric not in valid_metrics:
-        return jsonify({'error': f'unknown metric: {metric}'}), 400
-    if period not in valid_periods:
-        return jsonify({'error': f'unknown period: {period}'}), 400
+    params = _json_object() if request.method == 'POST' else request.args
+    variable = params.get('variable', 'Land Use')
+    metric = params.get('metric', 'CWBPT')
+    period = params.get('period', '2050-2079')
+    member = params.get('member', 'mean')
+    scope = 'aoi' if request.method == 'POST' else params.get('scope', 'national')
+    try:
+        month = int(str(params.get('month', _current_month())))
+    except (TypeError, ValueError):
+        return jsonify(error='month must be 1-12'), 400
     if not 1 <= month <= 12:
-        return jsonify({'error': 'month must be 1-12'}), 400
-    if scope != 'national' and not scope.startswith('council:') and not scope.startswith('catchment:'):
-        return jsonify({'error': 'scope must be national, council:<name>, or catchment:<name>'}), 400
-    if scope.startswith('council:'):
+        return jsonify(error='month must be 1-12'), 400
+    if variable not in ('Land Use', 'Farm Type', 'LCA', 'Peat Condition', 'NA'):
+        return jsonify(error='unknown variable'), 400
+    if metric not in ('CWBPT', 'CWBPM', 'CWRPT', 'CWRPM'):
+        return jsonify(error='unknown metric'), 400
+    if period not in ('1960-1989', '1990-2019', '2020-2049', '2050-2079'):
+        return jsonify(error='unknown period'), 400
+    if not isinstance(member, str) or (member != 'mean' and member not in _VALID_MEMBERS):
+        return jsonify(error='invalid ensemble member'), 400
+
+    weights = ()
+    if scope == 'aoi':
+        aoi_set = _validated_ids(params.get('aoi_ids', []), limit=MAX_AOI_CELL_IDS, field='aoi_ids')
+        if not aoi_set:
+            return jsonify(error='aoi_ids required'), 400
+        weights = tuple(sorted(
+            (name, len(cells & aoi_set) / len(cells))
+            for name, cells in _CATCHMENT_CELLS.items() if cells & aoi_set
+        ))
+        scope_label = 'Drawn area · estimated catchment shares'
+        spatial_method = 'catchment totals weighted by intersecting grid-cell counts'
+    elif scope == 'national':
+        scope_label = 'Scotland · available catchments'
+        spatial_method = 'whole catchments'
+    elif scope.startswith('council:'):
         council = scope[len('council:'):]
-        if council not in _COUNCIL_CATCHMENTS:
-            return jsonify({'error': f'unknown council: {council}'}), 404
-    if scope.startswith('catchment:'):
-        cname = scope[len('catchment:'):]
-        if cname not in _CATCHMENT_NAMES:
-            return jsonify({'error': f'unknown catchment: {cname}'}), 404
+        known = get_councils()
+        if council not in _COUNCIL_CATCHMENTS and (known is None or council not in set(known['council_name'])):
+            return jsonify(error=f'unknown council: {council}'), 404
+        # Dundee City and North Lanarkshire have no linked catchments: an empty result, not an error.
+        scope_label = 'Catchments linked to ' + council
+        spatial_method = 'whole catchments linked by the council lookup'
+    elif scope.startswith('catchment:'):
+        name = scope[len('catchment:'):]
+        if name not in _CATCHMENT_NAMES:
+            return jsonify(error=f'unknown catchment: {name}'), 404
+        scope_label = name
+        spatial_method = 'whole catchment'
+    else:
+        return jsonify(error='scope must be national, council:<name>, or catchment:<name>'), 400
 
     try:
-        scenario = _PERIOD_SCENARIO[period]
-        result = _catchment_cached(variable, metric, month, period, scenario, scope)
-        if result is None:
-            return jsonify({'error': 'no data'}), 404
-        rows = json.loads(result)
-        return jsonify({
-            'variable': variable,
-            'metric': metric,
-            'month': month,
-            'period': period,
-            'scope': scope,
-            'rows': rows
-        })
-    except Exception as e:
+        result = _catchment_cached(variable, metric, month, period,
+                                   _PERIOD_SCENARIO[period], scope, member, weights)
+        return jsonify(
+            variable=variable, metric=metric, month=month, period=period, scope=scope,
+            member=member, scope_label=scope_label, spatial_method=spatial_method,
+            ensemble_label='Mean class areas · 12 members' if member == 'mean' else 'Member ' + member,
+            rows=json.loads(result),
+        )
+    except CatchmentDataUnavailable as exc:
+        return jsonify(error=str(exc)), 503
+    except duckdb.IOException:
+        app.logger.exception('catchment source unavailable')
+        return jsonify(error='Requested catchment data is unavailable.'), 503
+    except Exception:
         app.logger.exception('catchment query failed')
-        return jsonify({'error': 'catchment analysis failed'}), 500
+        return jsonify(error='catchment analysis failed'), 500
 
 
 def _prewarm_catchment():
@@ -2650,7 +2576,6 @@ def hillshade_export():
     return response
 
 
-_VALID_MEMBERS = {'01','04','05','06','07','08','09','10','11','12','13','15'}
 
 # Metrics and periods served by the immersive wall display
 _IMMERSIVE_PANELS  = ('CWBPT', 'Prec_sum', 'Tmax_mean', 'ETPT_sum')

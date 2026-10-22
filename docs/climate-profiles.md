@@ -30,8 +30,8 @@ own controls and temporary place list. Copy this view includes the location.
   the displayed cell distance is labelled.
 - Cell and area source versions must match. Missing member tables stop the load.
 
-APIs: `/api/location?postcode=PH27HP` (or `lon` and `lat`) and
-`/api/climate/profile?scope=cell:135422&member=mean`. Area scopes are `national`,
+APIs: `/api/location?postcode=<postcode>` (or `lon` and `lat`) and
+`/api/climate/profile?scope=cell:<id>&member=mean`. Area scopes are `national`,
 `council:<name>` and `catchment:<name>`.
 
 Regenerate cell tables when the source data change:

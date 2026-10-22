@@ -22,7 +22,6 @@
   var _channel = null;
   var _councilItems = [];    // [{name, bounds, geometry}] sorted
   var _catchItems   = [];    // [{name, bounds}] sorted (geometry fetched on demand)
-  var _catchGeom    = {};    // catchment name → geometry (cache)
   var _helloTimer   = null;
   var _lastSeen     = 0;     // the wall reports at least every 10 s
   var _location = null;
@@ -242,23 +241,9 @@
     syncSelectStyles();
     var item = findItem(_catchItems, val);
     if (!item) { resetRegion(); return; }
-    // Catchment geometry isn't in /api/catchments — fetch it (cached) so the
-    // wall can fit and clip in one step. The wall fetches it itself if absent.
-    if (_catchGeom[val] !== undefined) {
-      sendRegion('catchment', val, item.bounds, _catchGeom[val]);
-      return;
-    }
-    fetch('/api/catchments/' + encodeURIComponent(val) + '/geometry')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (fc) {
-        var geom = (fc && fc.features && fc.features[0]) ? fc.features[0].geometry : null;
-        _catchGeom[val] = geom;
-        sendRegion('catchment', val, item.bounds, geom);
-      })
-      .catch(function (e) {
-        console.warn('[control] catchment geometry fetch failed:', e);
-        sendRegion('catchment', val, item.bounds, null);
-      });
+    // The wall resolves geometry; send the selection now so a slow lookup
+    // cannot replace a newer council or postcode selection.
+    sendRegion('catchment', val, item.bounds, null);
   });
 
   document.getElementById('reset-region').addEventListener('click', resetRegion);

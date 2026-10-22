@@ -36,7 +36,7 @@ class ProfileError(Exception):
 def normalise_postcode(value):
     compact = re.sub(r"\s+", "", value.upper())
     if not POSTCODE.fullmatch(compact):
-        raise ProfileError("Enter a full UK postcode, for example PH2 7HP.")
+        raise ProfileError("Enter a full UK postcode.")
     return compact[:-3] + " " + compact[-3:]
 
 

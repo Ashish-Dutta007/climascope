@@ -1525,8 +1525,8 @@ document.addEventListener('DOMContentLoaded', () => {
     el.id = 'map-unavail-msg';
     el.innerHTML =
       '<button type="button" class="map-unavail-close" title="Dismiss" aria-label="Dismiss message">×</button>' +
-      '<p class="map-unavail-title">Map view not available for CWR</p>' +
-      '<p class="map-unavail-sub">Use the Dashboard or Catchment tab to explore CWR data</p>';
+      '<p class="map-unavail-title">CWR map unavailable for this period</p>' +
+      '<p class="map-unavail-sub">See Land &amp; catchments in the Dashboard for catchment data.</p>';
     el.querySelector('.map-unavail-close').addEventListener('click', () => el.remove());
     document.getElementById('map-area').appendChild(el);
   }
@@ -1535,8 +1535,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('map-unavail-msg')?.remove();
   }
 
+  function _climateMapAvailable() {
+    return activeMetric.map_available !== false
+      || (activeMetric.map_available_periods || []).includes($('period').value);
+  }
+
+  function _clearUnavailableClimateMap() {
+    ['cells-fill', 'cells-line', 'grid-fill', 'grid-line'].forEach(id =>
+      map.setLayoutProperty(id, 'visibility', 'none'));
+    setData(SRC.grid, emptyFC());
+    _lastLayerState = { geojson: null, dataMin: null, dataMax: null };
+    _vtValues = null;
+    updateLegend(null);
+    showLoading(false);
+    _showMapUnavailMsg();
+  }
+
   async function _paintAoiFeature(feature, revision = ++_layerLoadRevision) {
     _setCurrentViewData(null);
+    if (!_climateMapAvailable()) { _clearUnavailableClimateMap(); return; }
+    _hideMapUnavailMsg();
     map.setLayoutProperty('cells-fill', 'visibility', 'none');
     map.setLayoutProperty('cells-line', 'visibility', 'none');
     map.setLayoutProperty('grid-fill',  'visibility', 'visible');
@@ -2159,6 +2177,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // export control while its replacement is loading (or after an error).
     _setCurrentViewData(null);
 
+    if (!_climateMapAvailable()) { _clearUnavailableClimateMap(); return; }
+    _hideMapUnavailMsg();
+
     if (aoiGeoJSON?.geometry) {
       await _paintAoiFeature(aoiGeoJSON, revision);
       return;
@@ -2167,10 +2188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const metric = activeMetric.id;
     const period = $('period').value || '2050-2079';
     const month  = parseInt($('month').value || _defaultMonth);
-
-    const _mapAvailPeriods = activeMetric.map_available_periods || [];
-    const _mapUnavail = activeMetric.map_available === false
-      && !_mapAvailPeriods.includes(period);
 
     if (activeCatchment) {
       _hideMapUnavailMsg();
@@ -2213,14 +2230,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!activeCouncil) {
-      if (_mapUnavail) {
-        map.setLayoutProperty('cells-fill', 'visibility', 'none');
-        map.setLayoutProperty('cells-line', 'visibility', 'none');
-        map.setLayoutProperty('grid-fill',  'visibility', 'none');
-        map.setLayoutProperty('grid-line',  'visibility', 'none');
-        _showMapUnavailMsg();
-        return;
-      }
       _hideMapUnavailMsg();
       map.setLayoutProperty('cells-fill', 'visibility', 'visible');
       map.setLayoutProperty('cells-line', 'visibility', 'visible');
@@ -2233,14 +2242,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (_mapUnavail) {
-      map.setLayoutProperty('cells-fill', 'visibility', 'none');
-      map.setLayoutProperty('cells-line', 'visibility', 'none');
-      map.setLayoutProperty('grid-fill',  'visibility', 'none');
-      map.setLayoutProperty('grid-line',  'visibility', 'none');
-      _showMapUnavailMsg();
-      return;
-    }
     _hideMapUnavailMsg();
     map.setLayoutProperty('cells-fill', 'visibility', 'none');
     map.setLayoutProperty('cells-line', 'visibility', 'none');
@@ -2464,8 +2465,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('climascope:aoi:ready', async e => {
     const feature = e.detail?.feature;
     if (!feature?.geometry) return;
+    dashClimatePanel?.cancelLookup();
+    climateCellSelected = false;
+    if (climateMarker) climateMarker.remove();
+    _showClimateCell(null);
+    $('dash-land-context').textContent = '';
     _updateHillshadeExportControl();
-    await _paintAoiFeature(feature);
+    _emitStateChange();
+    const revision = ++_layerLoadRevision;
+    await _paintAoiFeature(feature, revision);
+    if (revision !== _layerLoadRevision) return;
     const _geom   = feature.geometry;
     const _coords = _geom?.type === 'Polygon'      ? _geom.coordinates.flat()
                   : _geom?.type === 'MultiPolygon' ? _geom.coordinates.flat(2)
@@ -2477,7 +2486,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { padding: 40, duration: 700 }
       );
     }
-    _emitStateChange();
   });
 
   document.addEventListener('climascope:aoi:clear', () => {

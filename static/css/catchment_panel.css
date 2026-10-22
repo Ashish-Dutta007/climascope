@@ -401,7 +401,8 @@
 .kp-cg-period {
   font-size: 9px;
   color: rgba(249,250,251,.38);
-  width: 34px;
+  width: 62px;
+  white-space: nowrap;
   flex-shrink: 0;
   text-align: right;
   font-variant-numeric: tabular-nums;

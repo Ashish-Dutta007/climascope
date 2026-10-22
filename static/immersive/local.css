@@ -23,6 +23,12 @@
 .near-map {flex:1;position:relative;min-height:calc(480 * var(--u));overflow:hidden;background:#101722;border:1px solid #354257}
 .near-map-host {position:absolute;inset:0}
 .near-map-inner {transform-origin:0 0}
+.near-map-inner .maplibregl-ctrl-scale {font-size:14px!important;font-weight:500!important;padding:3px 5px!important;white-space:nowrap;overflow-wrap:normal}
+.near-map-key {display:flex;flex-wrap:wrap;gap:calc(14 * var(--u)) calc(26 * var(--u));font-size:calc(26 * var(--u))!important}
+.near-map-key span {display:inline-flex;align-items:center;gap:calc(10 * var(--u))}
+.near-map-key i {display:inline-block;width:calc(20 * var(--u));height:calc(20 * var(--u));flex:none}
+.near-point-key {border-radius:50%;background:#f4d06f;border:calc(3 * var(--u)) solid #101827}
+.near-cell-key {border:calc(3 * var(--u)) solid #f4d06f;background:#f4d06f29}
 .near-inset {position:absolute;z-index:2;top:calc(16 * var(--u));right:calc(16 * var(--u));height:calc(210 * var(--u));padding:calc(12 * var(--u));background:#0a101be6;border:1px solid #354257;pointer-events:none}
 .near-inset svg {height:100%;width:auto}
 .near-you .local-status {min-height:calc(42 * var(--u));font-size:calc(26 * var(--u))}

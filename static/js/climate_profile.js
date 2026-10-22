@@ -13,7 +13,14 @@
 
   async function get(url, signal) {
     const response = await fetch(url, {signal});
-    const body = await response.json();
+    let body;
+    try {
+      body = await response.json();
+    } catch (_) {
+      const error = new Error('Could not load climate data. Try again.');
+      error.status = response.status;
+      throw error;
+    }
     if (!response.ok) {
       const error = new Error(body.error || 'Could not load climate data.');
       error.status = response.status;
@@ -81,7 +88,7 @@
     const width = wide ? 740 : 520, right = width - 27, band = (right - 53) / 12, bw = band * .26;
     const x = i => 53 + (i + .5) * band;
     const y = v => 218 - v / hi * 192;
-    let svg = `<svg class="cp-chart" viewBox="0 0 ${width} 260" role="img" aria-label="${escape(metric.label)}: monthly totals for three periods">`;
+    let svg = `<svg class="cp-chart" viewBox="0 0 ${width} 260" role="img" aria-label="${escape(metric.label)}: mean monthly totals for three periods">`;
     svg += `<rect class="cp-month-band" x="${x(month - 1) - band / 2}" y="22" width="${band}" height="196"/>`;
     for (let v = 0; v <= hi + step / 100; v += step) {
       svg += `<path class="cp-grid" d="M53 ${y(v)}H${right}"/><text x="45" y="${y(v) + 4}" text-anchor="end">${tick(v, step)}</text>`;
@@ -91,7 +98,7 @@
     periods.forEach((p, j) => metric.values[p].forEach((v, i) => {
       if (!Number.isFinite(v)) return;
       svg += `<rect x="${(x(i) + (j - 1.5) * bw).toFixed(1)}" y="${y(Math.max(v, 0)).toFixed(1)}" width="${(bw - 1).toFixed(1)}" ` +
-        `height="${Math.max(1, 218 - y(Math.max(v, 0))).toFixed(1)}" fill="${colours[j]}" opacity="${i === month - 1 ? 1 : .8}"/>`;
+        `height="${(v > 0 ? Math.max(1, 218 - y(v)) : 0).toFixed(1)}" fill="${colours[j]}" opacity="${i === month - 1 ? 1 : .8}"/>`;
     }));
     return svg + '</svg>';
   }
@@ -100,8 +107,8 @@
     if (!Number.isFinite(a) || !Number.isFinite(b)) return 'No comparison available for this month.';
     if (period === periods[0]) return `${longMonths[month - 1]} average for 1990–2019.`;
     const d = b - a;
-    const change = Math.abs(d) < .05 ? 'less than 0.1 ' + metric.units + ' change' :
-      number(Math.abs(d)) + ' ' + metric.units + (d > 0 ? ' higher' : ' lower');
+    if (Math.abs(d) < .05) return `${longMonths[month - 1]}: less than 0.1 ${metric.units} change from 1990–2019 to ${period.replace('-', '–')}.`;
+    const change = number(Math.abs(d)) + ' ' + metric.units + (d > 0 ? ' higher' : ' lower');
     return `${longMonths[month - 1]}: ${change} in ${period.replace('-', '–')} than in 1990–2019.`;
   }
   function spread(metric, month, period) {
@@ -110,8 +117,12 @@
     if (!changes.length) return '<p class="cp-spread">No member comparison available.</p>';
     const rounded = changes.map(n => Number(n.toFixed(1)));
     const higher = rounded.filter(n => n > 0).length, lower = rounded.filter(n => n < 0).length;
-    return `<p class="cp-spread">${higher} of ${changes.length} members higher · ${lower} lower` +
-      (changes.length - higher - lower ? ` · ${changes.length - higher - lower} no change at 0.1 ${escape(metric.units)}` : '') +
+    const counts = [];
+    if (higher) counts.push(`${higher} of ${changes.length} members higher`);
+    if (lower) counts.push(`${lower}${counts.length ? '' : ` of ${changes.length} members`} lower`);
+    const unchanged = changes.length - higher - lower;
+    if (unchanged) counts.push(`${unchanged}${counts.length ? '' : ` of ${changes.length} members`} no change at 0.1 ${escape(metric.units)}`);
+    return `<p class="cp-spread">${counts.join(' · ')}` +
       `<br>Change across members: ${number(Math.min(...changes))} to ${number(Math.max(...changes))} ${escape(metric.units)}</p>`;
   }
   function render(el, data, options = {}) {
@@ -123,7 +134,7 @@
       return `<article class="cp-card" data-metric="${id}"><h3>${escape(m.label)}</h3>` +
         `<p class="cp-caption">${escape(caption(m, month, period))}</p>` +
         `<div class="cp-values">` + periods.map((p, j) => `<div><span class="cp-period" style="color:${colours[j]}">${p.replace('-', '–')}</span><strong>${number(m.values[p][month - 1])}<small> ${escape(m.units)}</small></strong></div>`).join('') + '</div>' +
-        `<h4>${id === 'Prec_sum' ? 'Monthly totals' : 'Monthly averages'}</h4>${id === 'Prec_sum' ? bars(m, month, options.wall) : chart(m, month, options.wall)}${spread(m, month, period)}` +
+        `<h4>${id === 'Prec_sum' ? 'Mean monthly totals' : 'Monthly averages'}</h4>${id === 'Prec_sum' ? bars(m, month, options.wall) : chart(m, month, options.wall)}${spread(m, month, period)}` +
         (data.kind !== 'cell' ? `<p class="cp-support">${n ? n.toLocaleString('en-GB') + ' valid climate cells' : 'No valid climate cells'}</p>` : '') +
         '</article>';
     }).join('') + '</div>';

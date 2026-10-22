@@ -55,7 +55,8 @@
   renderPlaces(null);
   function describe() {
     node('member-select').options[0].textContent = node('scene-select').value === 'water-classes' ? 'Mean class areas' : 'Ensemble mean';
-    node('scene-description').textContent = SCENES.get(node('scene-select').value).description;
+    node('scene-description').textContent = report && report.state.region.kind === 'cell'
+      ? 'Choose Catchment or Council to use the other scenes.' : SCENES.get(node('scene-select').value).description;
     node('focus-select').disabled = node('scene-select').value !== 'agreement';
     node('focus-control').hidden = node('scene-select').value !== 'agreement';
   }
