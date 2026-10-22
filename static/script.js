@@ -2329,7 +2329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = METRIC_LABELS[activeMetric.id] || display.short || activeMetric.short || activeMetric.id;
     const period     = $('period')?.value || '';
     const isBaseline = period === '1990-2019';
-    const scopeLabel = aoiGeoJSON ? 'AOI 1 km cells'
+    const scopeLabel = aoiGeoJSON ? 'Drawn area 1 km cells'
       : activeCouncil ? `${activeCouncil} 1 km cells`
       : activeCatchment ? `${activeCatchment.split(' : ')[0]} 1 km cells`
       : 'Scotland 1 km cells';

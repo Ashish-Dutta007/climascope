@@ -147,7 +147,7 @@ class CatchmentChartFlows(unittest.TestCase):
         self.page.wait_for_function("panel._chart?.data.labels[0] === 'Current'")
         self.page.evaluate("pending[0].resolve({ok:true,json:async () => ({Old:100})})")
         self.assertEqual(self.page.evaluate('panel._chart.data.labels'), ['Current'])
-        self.assertEqual(self.page.locator('#dp-scope-name').inner_text(), 'AOI (2 cells)')
+        self.assertEqual(self.page.locator('#dp-scope-name').inner_text(), 'Drawn area (2 cells)')
 
 
 if __name__ == '__main__':

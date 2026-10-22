@@ -99,7 +99,7 @@ class DashboardPie {
   _scopeLabel(scope) {
     const catchmentTotals = !['LCM', 'HABITAT'].includes(this.variable);
     if (!scope || scope === 'national') return catchmentTotals ? 'Scotland · available catchments' : 'Scotland';
-    if (scope === 'aoi')                return `AOI (${(this._aoiCells?.length ?? 0).toLocaleString()} cells)`;
+    if (scope === 'aoi')                return `Drawn area (${(this._aoiCells?.length ?? 0).toLocaleString()} cells)`;
     if (scope.startsWith('council:'))   return (catchmentTotals ? 'Catchments linked to ' : '') + scope.slice(8);
     if (scope.startsWith('catchment:')) return scope.slice(10).split(' : ')[0];
     return scope;

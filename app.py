@@ -2277,7 +2277,7 @@ def catchment():
         if council not in _COUNCIL_CATCHMENTS and (known is None or council not in set(known['council_name'])):
             return jsonify(error=f'unknown council: {council}'), 404
         # Dundee City and North Lanarkshire have no linked catchments: an empty result, not an error.
-        scope_label = 'Catchments linked to ' + council
+        scope_label = ('Catchments linked to ' if _COUNCIL_CATCHMENTS.get(council) else 'No catchments linked to ') + council
         spatial_method = 'whole catchments linked by the council lookup'
     elif scope.startswith('catchment:'):
         name = scope[len('catchment:'):]

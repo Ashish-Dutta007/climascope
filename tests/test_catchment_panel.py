@@ -106,7 +106,7 @@ class CatchmentMembers(unittest.TestCase):
         response = self.get(scope='council:Dundee City')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['rows'], [])
-        self.assertEqual(response.json['scope_label'], 'Catchments linked to Dundee City')
+        self.assertEqual(response.json['scope_label'], 'No catchments linked to Dundee City')
         self.assertEqual(self.get(scope='council:Nowhere').status_code, 404)
 
     def test_missing_member_returns_an_error_instead_of_partial_mean(self):

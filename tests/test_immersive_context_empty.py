@@ -51,7 +51,7 @@ class EmptyCWRData(CWRFixture):
                 with self.subTest(council=council, member=member):
                     response = self.get("council:" + council, member)
                     self.assertEqual(response.status_code, 200)
-                    self.assertEqual(response.json["scope_label"], "Catchments linked to " + council)
+                    self.assertEqual(response.json["scope_label"], "No catchments linked to " + council)
                     for period in PERIODS:
                         self.assertEqual(len(response.json["periods"][period]), 12)
                         for item in response.json["periods"][period]:

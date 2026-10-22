@@ -66,7 +66,7 @@ def create_context_blueprint(root, council_catchments, catchment_names):
                     item["total_km2"] += area
                 result[period] = months
         if scope.startswith("council:"):
-            label = "Catchments linked to " + scope[8:]
+            label = ("Catchments linked to " if names else "No catchments linked to ") + scope[8:]
         elif scope.startswith("catchment:"):
             label = scope[10:] + " · catchment"
         else:
