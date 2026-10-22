@@ -1,4 +1,4 @@
-import os, json, uuid, math, glob as _glob, logging, time, sqlite3, base64, shutil, threading
+import os, json, uuid, math, glob as _glob, hashlib, logging, time, sqlite3, base64, shutil, threading
 from collections import deque
 from urllib.parse import quote as _url_quote, urlencode as _urlencode
 from urllib.request import Request as _UrlRequest, urlopen as _urlopen
@@ -2132,8 +2132,32 @@ def coverage():
         return jsonify({'error': 'coverage analysis failed'}), 500
 
 
-JESS_ROOT = os.environ.get("JESS_ROOT", "data/jess/parquet")
-JESS_CWR_ROOT = os.environ.get("JESS_CWR_ROOT", "data/jess/parquet_cwr")
+def _jess_tables(name):
+    """Jess's table root: the sorted copies from tools/optimize_jess_tables.py when
+    they are complete and match the current sources, otherwise the originals."""
+    source, optimized = os.path.join("data/jess", name), os.path.join("data/jess_opt", name)
+    try:
+        with open("data/jess_opt/MANIFEST.json") as f:
+            tables = json.load(f)["tables"]
+        for folder in _glob.glob(os.path.join(source, "Variable=*", "Period=*", "Metric=*")):
+            files = sorted(_glob.glob(os.path.join(folder, "*.parquet")))
+            if not files:
+                continue
+            digest = hashlib.sha256()
+            for path in files:
+                st = os.stat(path)
+                digest.update(f"{os.path.relpath(path, '.')}|{st.st_size}|{int(st.st_mtime)}\n".encode())
+            entry = tables.get(name + "/" + os.path.relpath(folder, source))
+            if not entry or entry["source_fingerprint"] != digest.hexdigest()[:16]:
+                logging.warning("Optimised %s tables are stale; using %s", name, source)
+                return source
+        return optimized
+    except (OSError, ValueError, KeyError):
+        return source
+
+
+JESS_ROOT = os.environ.get("JESS_ROOT") or _jess_tables("parquet")
+JESS_CWR_ROOT = os.environ.get("JESS_CWR_ROOT") or _jess_tables("parquet_cwr")
 
 from immersive_context import create_context_blueprint
 app.register_blueprint(create_context_blueprint(
