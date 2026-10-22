@@ -82,7 +82,8 @@ def _catchment_cached(variable, metric, month, period, scenario, scope_str,
     for cover, values in totals.items():
         rounded = {category: round(area) for category, area in values.items()}
         rows.append({'type': cover, 'total_ha': sum(rounded.values()), 'classes': rounded})
-    rows.sort(key=lambda x: x['total_ha'], reverse=True)
+    # Largest first; ties by name so the order never depends on how DuckDB grouped them.
+    rows.sort(key=lambda x: (-x['total_ha'], str(x['type'])))
     if variable == 'LCA':
         for row in rows:
             code = str(row['type'])

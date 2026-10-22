@@ -1583,7 +1583,7 @@ def _landuse_composition(scope: str, variable: str = 'LCM') -> dict:
     WHERE Month = ? AND Scenario = ? AND Member = '01'
     {where_scope}
     GROUP BY Type
-    ORDER BY total_ha DESC
+    ORDER BY total_ha DESC, Type
     """
 
     try:
