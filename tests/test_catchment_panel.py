@@ -12,7 +12,8 @@ class CatchmentMembers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import app
-        cls.module = app
+        import catchment_api
+        cls.module = catchment_api   # the route and its lookups live here
         cls.client = app.app.test_client()
 
     def setUp(self):
