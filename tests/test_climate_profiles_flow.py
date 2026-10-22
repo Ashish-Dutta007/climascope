@@ -160,7 +160,10 @@ class ProfileFlows(unittest.TestCase):
         self.wait(wall,lambda:not report().get('state',{}).get('playing',True),'paused')
         # Reload without fresh=1 restores the location and selected member.
         wall.goto(BASE + '/immersive')
-        self.wait(wall,lambda:ready(month=2,member='07'),'location restored')
+        # The relay still holds the pre-reload report, so also wait for the new page.
+        place = wall.locator('#local-climate .local-place')
+        self.wait(wall,lambda:ready(month=2,member='07') and place.count() and place.locator('h1').inner_text() == 'PH2 7HP'
+                  and place.locator('p').first.inner_text() == 'Feb · Member 07','location restored')
         # An unavailable target retains the previous frame and pauses.
         wall.route('**/api/climate/profile?*',lambda route:route.fulfill(status=503,content_type='application/json',body='{"error":"Test outage"}'))
         phone.click('.btn-member[data-member="01"]')
