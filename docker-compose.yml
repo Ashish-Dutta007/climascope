@@ -4,10 +4,15 @@ services:
     ports:
       - "8123:8000"
     volumes:
-      - ./data:/data
+      # retina's local disk; fill it with tools/sync_local_data.sh (see DEPLOY.md)
+      - climascope-data-local:/data
     environment:
       OS_NAMES_API_KEY: ${OS_NAMES_API_KEY:-}
       AOI_AREA_LIMIT_M2: ${AOI_AREA_LIMIT_M2:-30000000000}
       HILLSHADE_EXPORT_AREA_LIMIT_M2: ${HILLSHADE_EXPORT_AREA_LIMIT_M2:-100000000}
     shm_size: '256m'
     restart: unless-stopped
+
+volumes:
+  climascope-data-local:
+    external: true

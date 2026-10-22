@@ -34,13 +34,47 @@ feature:
 venv/bin/python tools/precompute_place_profiles.py
 ```
 
-Keep `data/place_profiles/` in the existing data bind mount. Regenerate it and
-the regional summaries whenever source climate data change; see
+Keep `data/place_profiles/` in `data/`. Regenerate it and the regional
+summaries whenever source climate data change, then sync the data (below); see
 [local climate](docs/climate-profiles.md).
 
 Hillshade GeoTIFF exports have a separate, intentionally tight 100 km² ceiling,
 plus server-side pixel and dimension caps. Override only the area ceiling with
 `HILLSHADE_EXPORT_AREA_LIMIT_M2` if required.
+
+## Data on retina's local disk
+
+The container reads `data/` from the Docker volume `climascope-data-local` on
+retina's local disk, not from the shared drive, which slows every Parquet read.
+`data/` on the shared drive stays the master copy. After changing anything in
+it, on retina:
+
+```bash
+venv/bin/python tools/optimize_jess_tables.py   # only if Jess's tables changed
+tools/sync_local_data.sh                         # copy data/ into the volume
+docker compose restart
+```
+
+`optimize_jess_tables.py` writes sorted copies of Jess's tables to
+`data/jess_opt/`, checking each against its source. It is slow on the shared
+drive but resumes where it stopped and skips unchanged tables. The app uses the
+copies only while they match the source files; otherwise it logs a warning and
+reads `data/jess/`, which is correct but slower. The sync leaves
+`data/outputs/` (export jobs) alone.
+
+## Releases and rollback
+
+Build each release from a commit, tag the image with it and keep the previous
+image:
+
+```bash
+docker tag app-climascope:latest app-climascope:previous
+git archive HEAD | docker build -t app-climascope:$(git rev-parse --short HEAD) -t app-climascope:latest -
+docker compose up -d --no-build --force-recreate
+```
+
+To roll back, run `docker tag app-climascope:previous app-climascope:latest`
+and recreate the container the same way.
 
 ## Data layout
 
@@ -53,6 +87,7 @@ app/
 │   ├── facts_catalog/
 │   ├── precomputed/
 │   ├── jess/parquet/
+│   ├── jess_opt/            # sorted copies of jess/, see below
 │   ├── soilwet_parquet/
 │   ├── grid.parquet
 │   ├── landcover_fractions.parquet
