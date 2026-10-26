@@ -1,7 +1,9 @@
 (function () {
   'use strict';
   const periods = ['1990-2019', '2020-2049', '2050-2079'];
-  const colours = ['#a7c4e8', '#f2c14e', '#ff793f'];
+  // Period colours; darker on the desktop light theme so lines and labels read on white.
+  const light = () => document.documentElement.dataset.theme === 'light';
+  const colour = j => (light() ? ['#3d6a99', '#8a6400', '#c2410c'] : ['#a7c4e8', '#f2c14e', '#ff793f'])[j];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const longMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
@@ -72,9 +74,9 @@
         if (!Number.isFinite(v)) { gap = true; return; }
         path += `${gap ? 'M' : 'L'}${x(i)} ${y(v)} `; gap = false;
       });
-      svg += `<path d="${path}" fill="none" stroke="${colours[j]}" stroke-width="2.8" ${j === 1 ? 'stroke-dasharray="7 4"' : ''}/>`;
+      svg += `<path d="${path}" fill="none" stroke="${colour(j)}" stroke-width="2.8" ${j === 1 ? 'stroke-dasharray="7 4"' : ''}/>`;
       const v = metric.values[p][month - 1];
-      if (Number.isFinite(v)) svg += `<circle cx="${x(month - 1)}" cy="${y(v)}" r="4" fill="${colours[j]}" stroke="#101827" stroke-width="1.5"/>`;
+      if (Number.isFinite(v)) svg += `<circle cx="${x(month - 1)}" cy="${y(v)}" r="4" fill="${colour(j)}" stroke="${light() ? '#ffffff' : '#101827'}" stroke-width="1.5"/>`;
     });
     return svg + '</svg>';
   }
@@ -98,7 +100,7 @@
     periods.forEach((p, j) => metric.values[p].forEach((v, i) => {
       if (!Number.isFinite(v)) return;
       svg += `<rect x="${(x(i) + (j - 1.5) * bw).toFixed(1)}" y="${y(Math.max(v, 0)).toFixed(1)}" width="${(bw - 1).toFixed(1)}" ` +
-        `height="${(v > 0 ? Math.max(1, 218 - y(v)) : 0).toFixed(1)}" fill="${colours[j]}" opacity="${i === month - 1 ? 1 : .8}"/>`;
+        `height="${(v > 0 ? Math.max(1, 218 - y(v)) : 0).toFixed(1)}" fill="${colour(j)}" opacity="${i === month - 1 ? 1 : .8}"/>`;
     }));
     return svg + '</svg>';
   }
@@ -133,7 +135,7 @@
       const n = m.n_cells?.[month - 1];
       return `<article class="cp-card" data-metric="${id}"><h3>${escape(m.label)}</h3>` +
         `<p class="cp-caption">${escape(caption(m, month, period))}</p>` +
-        `<div class="cp-values">` + periods.map((p, j) => `<div><span class="cp-period" style="color:${colours[j]}">${p.replace('-', '–')}</span><strong>${number(m.values[p][month - 1])}<small> ${escape(m.units)}</small></strong></div>`).join('') + '</div>' +
+        `<div class="cp-values">` + periods.map((p, j) => `<div><span class="cp-period" style="color:${colour(j)}">${p.replace('-', '–')}</span><strong>${number(m.values[p][month - 1])}<small> ${escape(m.units)}</small></strong></div>`).join('') + '</div>' +
         `<h4>${id === 'Prec_sum' ? 'Mean monthly totals' : 'Monthly averages'}</h4>${id === 'Prec_sum' ? bars(m, month, options.wall) : chart(m, month, options.wall)}${spread(m, month, period)}` +
         (data.kind !== 'cell' ? `<p class="cp-support">${n ? n.toLocaleString('en-GB') + ' valid climate cells' : 'No valid climate cells'}</p>` : '') +
         '</article>';

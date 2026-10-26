@@ -22,6 +22,8 @@
         const postcode = el.querySelector('input').value.trim();
         this.locate('/api/location?' + new URLSearchParams({postcode}));
       });
+      // Chart colours are drawn into the SVG, so redraw on a theme switch.
+      window.addEventListener('climascope:theme', () => { if (this.data && this.state) this.draw(); });
     }
     async locate(url) {
       this.cancelLookup();

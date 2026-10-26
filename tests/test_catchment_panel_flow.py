@@ -46,6 +46,7 @@ class CatchmentChartFlows(unittest.TestCase):
         }''')
 
     def create(self, pie=False):
+        self.page.add_script_tag(path=str(ROOT / 'static/js/theme.js'))   # loaded first, as in index.html
         self.page.add_script_tag(path=str(ROOT / 'static/js' / ('dashboard.js' if pie else 'catchment_panel.js')))
         name = 'DashboardPie' if pie else 'CatchmentPanel'
         self.page.evaluate(f"window.panel = new {name}(document.querySelector('#panel'), () => state)")

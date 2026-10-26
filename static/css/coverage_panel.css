@@ -33,7 +33,7 @@
   display: block;
   width: 32px; height: 3px;
   border-radius: 2px;
-  background: rgba(255,255,255,.2);
+  background: rgba(var(--ink),.2);
 }
 @media (max-width: 767px) {
   .cp-collapse-handle { display: flex; }
@@ -90,7 +90,7 @@
   font-size: 10px;
   font-weight: 500;
   background: transparent;
-  color: rgba(255,255,255,.4);
+  color: rgba(var(--ink),.4);
   border: none;
   cursor: pointer;
   transition: all .15s;
@@ -124,7 +124,7 @@
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -132,7 +132,7 @@
 }
 
 .cp-meta-tag {
-  background: rgba(255,255,255,.05);
+  background: rgba(var(--ink),.05);
   padding: 1px 6px;
   border-radius: 4px;
   letter-spacing: .3px;
@@ -143,9 +143,9 @@
   padding: 3px 8px;
   font-size: 10px;
   font-weight: 500;
-  background: rgba(255,255,255,.05);
+  background: rgba(var(--ink),.05);
   border: 1px solid var(--border-default);
-  color: rgba(255,255,255,.4);
+  color: rgba(var(--ink),.4);
   border-radius: 5px;
   cursor: pointer;
   transition: all .15s;
@@ -154,8 +154,8 @@
 }
 
 .cp-period-btn:hover {
-  background: rgba(255,255,255,.09);
-  color: rgba(255,255,255,.7);
+  background: rgba(var(--ink),.09);
+  color: rgba(var(--ink),.7);
 }
 
 .cp-period-btn.active {
@@ -176,13 +176,13 @@
 
 .cp-pp-label {
   font-size: 10px;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   white-space: nowrap;
 }
 
 .cp-pp-vs {
   font-size: 10px;
-  color: rgba(255,255,255,.25);
+  color: rgba(var(--ink),.25);
 }
 
 .cp-pp-sel {
@@ -210,7 +210,7 @@
   display: flex;
   gap: 12px;
   padding: 5px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(var(--ink),.04);
   flex-shrink: 0;
   margin-top: 28px;
 }
@@ -220,7 +220,7 @@
   align-items: center;
   gap: 5px;
   font-size: 9px;
-  color: rgba(255,255,255,.35);
+  color: rgba(var(--ink),.35);
 }
 
 .cp-legend-swatch {
@@ -236,7 +236,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.07) transparent;
+  scrollbar-color: rgba(var(--ink),.07) transparent;
   padding: 2px 0;
   margin-top: 4px;
 }
@@ -244,18 +244,18 @@
 .cp-sparse-msg {
   padding: 6px 10px 2px;
   font-size: 10px;
-  color: rgba(255,255,255,.35);
+  color: rgba(var(--ink),.35);
   font-style: italic;
 }
 
 .cp-loading, .cp-error {
   padding: 18px 14px;
   font-size: 12px;
-  color: rgba(255,255,255,.35);
+  color: rgba(var(--ink),.35);
   text-align: center;
 }
 
-.cp-error { color: #ff6b6b; }
+.cp-error { color: var(--danger-text); }
 
 /* ── Rows ── */
 .cp-row {
@@ -263,12 +263,12 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border-bottom: 1px solid rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(var(--ink),.03);
   min-height: 32px;
   transition: background .1s;
 }
 
-.cp-row:hover { background: rgba(255,255,255,.02); }
+.cp-row:hover { background: rgba(var(--ink),.02); }
 
 .cp-row-label {
   display: flex;
@@ -303,7 +303,7 @@
 
 .cp-lc-area {
   font-size: 9px;
-  color: rgba(255,255,255,.28);
+  color: rgba(var(--ink),.28);
   margin-top: 1px;
 }
 
@@ -325,7 +325,7 @@
   width: 100%;
   height: 6px;
   border-radius: 2px;
-  background: rgba(255,255,255,.04);
+  background: rgba(var(--ink),.04);
 }
 
 .cp-delta-cell {
@@ -339,14 +339,14 @@
 }
 
 .cp-delta-bad     { color: var(--error); }
-.cp-delta-good    { color: #22c55e; }
-.cp-delta-neutral { color: rgba(255,255,255,.4); }
-.cp-dash          { color: rgba(255,255,255,.18); font-weight: 400; }
+.cp-delta-good    { color: var(--success-text); }
+.cp-delta-neutral { color: rgba(var(--ink),.4); }
+.cp-dash          { color: rgba(var(--ink),.18); font-weight: 400; }
 
 /* ── Totals row ── */
 .cp-row-totals {
   background: rgba(59,130,246,.06);
-  border-top: 1px solid rgba(255,255,255,.07) !important;
+  border-top: 1px solid rgba(var(--ink),.07) !important;
   border-bottom: none !important;
 }
 
@@ -362,7 +362,7 @@
 /* ← Scotland back link */
 .cp-back-link {
   font-size: 10px;
-  color: rgba(139,171,255,.7);
+  color: var(--accent-light);
   text-decoration: none;
   white-space: nowrap;
   transition: color .15s;

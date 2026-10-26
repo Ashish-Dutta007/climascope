@@ -49,6 +49,12 @@ class CatchmentPanel {
       this.lastFetchKey = null;
       this._fetch();
     });
+    // Canvas charts keep the colours they were drawn with, so redraw on a theme switch.
+    window.addEventListener('climascope:theme', () => {
+      if (!this._chart || !this.data) return;
+      this._destroyChart();
+      this._renderRows();
+    });
   }
 
   _build() {
@@ -257,6 +263,7 @@ class CatchmentPanel {
       + '<div class="kp-chart-wrap"><canvas></canvas></div>';
 
     const canvas = body.querySelector('canvas');
+    const themed = ClimaScopeTheme.chart();
     this._chart = new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: { labels, datasets },
@@ -266,9 +273,9 @@ class CatchmentPanel {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(13,16,24,0.95)',
-            titleColor: '#e2e8f4',
-            bodyColor: '#e2e8f4',
+            backgroundColor: themed.tooltip,
+            titleColor: themed.tooltipText,
+            bodyColor: themed.tooltipText,
             borderColor: '#3b82f6',
             borderWidth: 1,
             callbacks: {
@@ -285,14 +292,14 @@ class CatchmentPanel {
         scales: {
           x: {
             stacked: true,
-            ticks: { color: 'rgba(226,232,244,.7)', font: { size: 10 }, maxRotation: 40 },
-            grid:   { color: 'rgba(255,255,255,.04)' },
+            ticks: { color: themed.tick, font: { size: 10 }, maxRotation: 40 },
+            grid:   { color: themed.grid },
           },
           y: {
             stacked: true,
-            title:  { display: true, text: 'Area (Ha)', color: 'rgba(226,232,244,.5)', font: { size: 10 } },
-            ticks:  { color: 'rgba(226,232,244,.6)', font: { size: 10 }, callback: v => _kpFmtHa(v) },
-            grid:   { color: 'rgba(255,255,255,.04)' },
+            title:  { display: true, text: 'Area (Ha)', color: themed.title, font: { size: 10 } },
+            ticks:  { color: themed.tick, font: { size: 10 }, callback: v => _kpFmtHa(v) },
+            grid:   { color: themed.grid },
           },
         },
       },

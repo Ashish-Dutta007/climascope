@@ -11,7 +11,7 @@ button, input, select { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 
 :where(button, select, input, [role="button"], [tabindex]):focus-visible {
-  outline: 2px solid #93c5fd !important;
+  outline: 2px solid var(--focus-ring) !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(59,130,246,.2);
 }
@@ -46,7 +46,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: 2px solid #bfdbfe !important;
   border-radius: 50%;
   background: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(17,24,39,.9) !important;
+  box-shadow: 0 0 0 2px rgba(var(--surface),.9) !important;
 }
 input[type="range"]::-moz-range-track {
   height: 3px;
@@ -66,7 +66,7 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid #bfdbfe !important;
   border-radius: 50%;
   background: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(17,24,39,.9) !important;
+  box-shadow: 0 0 0 2px rgba(var(--surface),.9) !important;
 }
 .month-section #month::-webkit-slider-runnable-track,
 .month-section #month::-moz-range-track,
@@ -88,11 +88,11 @@ button:disabled, select:disabled, input:disabled {
 .cp-meta,
 .fp-label,
 .kp-label {
-  color: rgba(255,255,255,.52);
+  color: rgba(var(--ink),.52);
 }
 
-.month-ticks { color: rgba(255,255,255,.55); font-size: 9px; }
-.metric-card-units { color: rgba(255,255,255,.5); }
+.month-ticks { color: rgba(var(--ink),.55); font-size: 9px; }
+.metric-card-units { color: rgba(var(--ink),.5); }
 
 /* Hints and inactive controls use one readable secondary level instead of
    many one-off alpha values that fall below normal-text contrast. */
@@ -115,13 +115,13 @@ button:disabled, select:disabled, input:disabled {
 .cp-sparse-msg,
 .kp-source-note,
 .kp-loading,
-.dp-empty { color: rgba(255,255,255,.55); }
+.dp-empty { color: rgba(var(--ink),.55); }
 
 .fp-toggle-btn,
 .fp-clear-btn,
 .fp-export-btn,
 .fp-add-btn {
-  color: rgba(255,255,255,.65);
+  color: rgba(var(--ink),.65);
 }
 
 /* MapLibre's navigation artwork is embedded as a dark SVG background. Draw
@@ -142,7 +142,7 @@ button:disabled, select:disabled, input:disabled {
   inset: 0;
   display: grid;
   place-items: center;
-  color: #f8fafc;
+  color: var(--text-primary);
   line-height: 1;
   text-shadow: 0 1px 2px rgba(0,0,0,.75);
 }

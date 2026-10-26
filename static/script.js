@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let aoiGeoJSON      = null;       // drawn / uploaded AOI (kept for map layer)
   let refreshTimer    = null;
   let _layerLoadRevision = 0;
-  let currentBasemap   = 'dark';
+  let currentBasemap   = ClimaScopeTheme.get();   // 'dark' or 'light' grey to match the page
   let _lastLayerState  = { geojson: null, dataMin: null, dataMax: null };
   let _filterMaskState = { ids: null, mode: 'none' };
   let _filterCellsGJ   = null;   // persisted filter-cells GeoJSON for basemap-switch re-apply
@@ -365,9 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sources: {
         'carto': {
           type: 'raster',
-          tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
-          ],
+          tiles: [BASEMAPS[currentBasemap].tiles],
           tileSize: 256,
           attribution: '© Esri'
         }
@@ -1501,10 +1499,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Reference labels overlay — always on top; fades in from zoom 8→9
-    // World_Dark_Gray_Reference has light text that reads on dark, satellite, and light basemaps
     map.addSource('esri-labels', {
       type: 'raster',
-      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],
+      tiles: [labelTiles()],
       tileSize: 256,
       attribution: '© Esri'
     });
@@ -1515,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', () => {
       paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0, 9, 0.9] }
     });
 
+    applyMapTheme();
     attachPopup();
     initMode('explore', true);  // skip loadLayer — loadMetrics() is the sole first-render trigger
     await loadMetrics();       // sets activeMetric, calls loadLayer() once data is confirmed
@@ -1762,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!map.getSource('esri-labels'))
       map.addSource('esri-labels', {
         type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],
+        tiles: [labelTiles()],
         tileSize: 256,
         attribution: '© Esri'
       });
@@ -1794,7 +1792,38 @@ document.addEventListener('DOMContentLoaded', () => {
     _applyDataOpacity();
     _renderActiveLayers();
     _showClimateCell(climateCell);
+    applyMapTheme();
   }
+
+  // Light grey basemap: dark labels. Dark grey and satellite: light labels.
+  function labelTiles() {
+    const shade = currentBasemap === 'light' ? 'Light' : 'Dark';
+    return `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${shade}_Gray_Reference/MapServer/tile/{z}/{y}/{x}`;
+  }
+
+  // Overlay colours that depend on the page theme; data colours do not.
+  const THEMED_PAINT = {
+    'cells-line':        ['line-color', 'rgba(255,255,255,0.15)', 'rgba(15,23,42,0.14)'],
+    'filter-cells-line': ['line-color', 'rgba(255,255,255,0.85)', 'rgba(15,23,42,0.85)'],
+    'grid-fill-mask':    ['fill-color', '#0d1018', '#f4f6f9'],
+    'aoi-line':          ['line-color', '#00d4ff', '#0284c7'],
+  };
+  function applyMapTheme() {
+    const light = ClimaScopeTheme.get() === 'light';
+    for (const [id, [prop, dark, lightValue]] of Object.entries(THEMED_PAINT)) {
+      if (map.getLayer(id)) map.setPaintProperty(id, prop, light ? lightValue : dark);
+    }
+  }
+
+  // A theme switch moves a grey basemap to the matching grey; satellite stays.
+  window.addEventListener('climascope:theme', (e) => {
+    if (currentBasemap !== 'satellite' && currentBasemap !== e.detail) {
+      switchBasemap(e.detail);
+      _renderActiveLayers();
+    } else {
+      applyMapTheme();
+    }
+  });
 
   function switchBasemap(bm) {
     const cfg = BASEMAPS[bm];
@@ -1976,7 +2005,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstAvailable = catalogue.find(m => m.available !== false);
 
       if (!firstAvailable) {
-        grid.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:11px;padding:4px 0">No data available yet</div>';
+        grid.innerHTML = '<div style="color:rgba(var(--ink),.4);font-size:11px;padding:4px 0">No data available yet</div>';
         return;
       }
 
@@ -2682,7 +2711,7 @@ document.addEventListener('DOMContentLoaded', () => {
       new maplibregl.Popup({ maxWidth: '320px' }).setLngLat(lngLat).setHTML(`
         <div style="min-width:270px">${header}
           <div style="font-size:11px;opacity:.6;margin-bottom:6px">${MONTH_NAMES[month] || month} &nbsp;·&nbsp; ${context}<br>
-            ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:#e2e8f4">${valDisplay}</strong></div>
+            ${METRIC_LABELS[activeMetric.id] || activeMetric.id}: <strong style="color:var(--popup-value)">${valDisplay}</strong></div>
           <div id="wet-${id}" style="font-size:11px;opacity:.6;margin-bottom:6px">Soil wetness: loading…</div>
           <canvas id="ts-${id}" width="260" height="110"></canvas>
         </div>`).addTo(map);
@@ -2701,7 +2730,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!_habitatById) _buildHabitatLookup();
       const r = _habitatById?.get(id);
       if (!r) { el.textContent = 'No habitat data'; return; }
-      el.innerHTML = `<strong style="color:#a3c95b">Dominant:</strong> ${_html(_habitatCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
+      el.innerHTML = `<strong style="color:var(--popup-habitat)">Dominant:</strong> ${_html(_habitatCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
       try {
         const comp = await fetch('/api/landuse_composition', { method: 'POST',
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aoi_ids: [id], variable: 'HABITAT' }) }).then(r => r.json());
@@ -2716,7 +2745,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!_lcById) _buildLcLookup();
       const r = _lcById?.get(id);
       if (!r) { el.textContent = 'No land-cover data'; return; }
-      el.innerHTML = `<strong style="color:#4ade80">Dominant:</strong> ${_html(_lcCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
+      el.innerHTML = `<strong style="color:var(--success-text)">Dominant:</strong> ${_html(_lcCodeName.get(r.code))} (${Math.round(r.frac * 100)}%)`;
       try {
         const comp = await fetch('/api/landuse_composition', { method: 'POST',
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aoi_ids: [id], variable: 'LCM' }) }).then(r => r.json());
@@ -2733,12 +2762,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!t || t.elevation == null) { el.textContent = 'No terrain data for this cell'; return; }
         el.innerHTML = [['Elevation', t.elevation, 'm'], ['Slope', t.slope, '°'], ['Ruggedness', t.ruggedness, ''], ['Canopy height', t.canopy, 'm']]
           .filter(r => r[1] != null)
-          .map(([k, v, u]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:#e2e8f4">${v} ${u}</span></div>`).join('');
+          .map(([k, v, u]) => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${k}</span><span style="color:var(--popup-value)">${v} ${u}</span></div>`).join('');
       } else {
         if (!d.has_lidar) { el.textContent = 'No LiDAR coverage here'; return; }
         const avail = []; if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM'); if (d.point_cloud) avail.push('point cloud');
-        el.innerHTML = (d.collections ? `<div><strong style="color:#7dd3fc">Phase:</strong> ${_html(d.collections)}</div>` : '')
-          + `<div style="margin-top:4px"><strong style="color:#7dd3fc">Captured:</strong> ${avail.join(' · ') || '—'}</div>`;
+        el.innerHTML = (d.collections ? `<div><strong style="color:var(--popup-key)">Phase:</strong> ${_html(d.collections)}</div>` : '')
+          + `<div style="margin-top:4px"><strong style="color:var(--popup-key)">Captured:</strong> ${avail.join(' · ') || '—'}</div>`;
       }
     } catch { el.textContent = 'error'; }
   }
@@ -2845,6 +2874,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ctx = canvas.getContext('2d');
       if (canvas._chart) canvas._chart.destroy();
       const activeM = +($('month')?.value || 0);
+      const themed = ClimaScopeTheme.chart();
       canvas._chart = new Chart(ctx, {
         type:'line',
         data:{
@@ -2862,8 +2892,8 @@ document.addEventListener('DOMContentLoaded', () => {
         options:{
           plugins:{ legend:{ display:false } },
           scales:{
-            x:{ ticks:{ color:'rgba(226,232,244,.35)', font:{size:9} }, grid:{ color:'rgba(255,255,255,.04)' } },
-            y:{ ticks:{ color:'rgba(226,232,244,.35)', font:{size:9} }, grid:{ color:'rgba(255,255,255,.04)' } }
+            x:{ ticks:{ color: themed.light ? themed.tick : 'rgba(226,232,244,.35)', font:{size:9} }, grid:{ color: themed.grid } },
+            y:{ ticks:{ color: themed.light ? themed.tick : 'rgba(226,232,244,.35)', font:{size:9} }, grid:{ color: themed.grid } }
           }
         }
       });
@@ -2892,7 +2922,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const avail = [];
         if (d.dtm) avail.push('DTM'); if (d.dsm) avail.push('DSM');
         if (d.point_cloud) avail.push('point cloud');
-        let s = '<strong style="color:#7dd3fc;opacity:1">LiDAR</strong>';
+        let s = '<strong style="color:var(--popup-key);opacity:1">LiDAR</strong>';
         if (d.collections) s += ` · ${_html(d.collections)}`;
         if (avail.length) s += `<br><span style="opacity:.7">${avail.join(' · ')}</span>`;
         parts.push(s);

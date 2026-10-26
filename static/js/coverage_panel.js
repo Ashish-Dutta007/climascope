@@ -33,7 +33,7 @@ function _cpLerp(hex1, hex2, t) {
 // Temperature: positive = warmer (red), negative = cooler (blue).
 function _cpDeltaColor(delta, type, maxAbsDelta) {
   if (delta === null || delta === undefined || maxAbsDelta === 0)
-    return 'rgba(255,255,255,.12)';
+    return 'rgba(var(--ink),.12)';
   const t   = _cpClamp(delta / maxAbsDelta, -1, 1);
   const RED = '#d73027', WHITE = '#eeeeee', BLUE = '#4575b4';
   const [neg, pos] = type === 'temperature' ? [BLUE, RED] : [RED, BLUE];
@@ -46,7 +46,7 @@ function _cpDeltaColor(delta, type, maxAbsDelta) {
 // Balance: fixed diverging domain [-150, 0, 150] via chroma.js
 // Temperature / volume: normalised to the current axis range
 function _cpPeriodValueColor(value, type, axisMin, axisMax) {
-  if (value == null) return 'rgba(255,255,255,.12)';
+  if (value == null) return 'rgba(var(--ink),.12)';
   if (type === 'balance') {
     return chroma.scale(['#d73027','#f7f7f7','#4575b4']).domain([-150, 0, 150])(value).hex();
   }
@@ -440,7 +440,7 @@ class CoveragePanel {
         : '<span class="cp-dash">—</span>';
       totalsEl.innerHTML = `<div class="cp-row cp-row-totals">
         <div class="cp-row-label">
-          <div class="cp-lc-dot" style="background:rgba(255,255,255,.28)"></div>
+          <div class="cp-lc-dot" style="background:rgba(var(--ink),.28)"></div>
           <div class="cp-lc-info">
             <div class="cp-lc-name">All land covers</div>
             <div class="cp-lc-area">${_cpFmt(totalArea)}</div>
@@ -467,8 +467,8 @@ class CoveragePanel {
     const tip  = `${_cpEsc(lcName)}\nChange: ${sign}${dv} ${units}\nArea: ${_cpFmt(area_km2)}\nTotal impact: ${ifmt(impact)} ${impactUnits}\n${p1Label} → ${p2Label}`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
-      <rect x="0" y="4" width="${W}" height="8" rx="2" fill="rgba(255,255,255,.06)"/>
-      <rect x="0" y="4" width="${barW.toFixed(1)}" height="8" rx="2" fill="${col}"/>
+      <rect x="0" y="4" width="${W}" height="8" rx="2" style="fill:rgba(var(--ink),.06)"/>
+      <rect x="0" y="4" width="${barW.toFixed(1)}" height="8" rx="2" style="fill:${col}"/>
     </svg>`;
   }
 
@@ -489,10 +489,10 @@ class CoveragePanel {
     const tip   = `${_cpEsc(lcName)}\n${p1Label}: ${v1.toFixed(1)} ${units}\n${p2Label}: ${v2.toFixed(1)} ${units}\nΔ ${sign}${diff.toFixed(1)} ${units}\nArea: ${_cpFmt(areaKm2)}\nTotal impact: ${ifmt(impact)} ${impactUnits}`;
     return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <title>${tip}</title>
-      <rect x="0" y="2"  width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>
-      <rect x="0" y="13" width="${W}" height="9" rx="2" fill="rgba(255,255,255,.06)"/>
-      <rect x="0" y="2"  width="${currW.toFixed(1)}" height="9" rx="2" fill="${col1}" fill-opacity="0.3" stroke="rgba(255,255,255,.55)" stroke-width="1" vector-effect="non-scaling-stroke"/>
-      <rect x="0" y="13" width="${futW.toFixed(1)}"  height="9" rx="2" fill="${col2}"/>
+      <rect x="0" y="2"  width="${W}" height="9" rx="2" style="fill:rgba(var(--ink),.06)"/>
+      <rect x="0" y="13" width="${W}" height="9" rx="2" style="fill:rgba(var(--ink),.06)"/>
+      <rect x="0" y="2"  width="${currW.toFixed(1)}" height="9" rx="2" style="fill:${col1};stroke:rgba(var(--ink),.55)" fill-opacity="0.3" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      <rect x="0" y="13" width="${futW.toFixed(1)}"  height="9" rx="2" style="fill:${col2}"/>
     </svg>`;
   }
 

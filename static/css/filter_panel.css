@@ -52,7 +52,7 @@
 }
 
 .fp-section-copy span {
-  color: rgba(255,255,255,.38);
+  color: rgba(var(--ink),.38);
   font-size: 9px;
   line-height: 1.35;
 }
@@ -70,7 +70,7 @@
   font-weight: 600;
   letter-spacing: .5px;
   text-transform: uppercase;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -88,7 +88,7 @@
   font-size: 11px;
   font-weight: 500;
   background: transparent;
-  color: rgba(255,255,255,.4);
+  color: rgba(var(--ink),.4);
   border: none;
   cursor: pointer;
   transition: all .15s;
@@ -110,14 +110,14 @@
   font-size: 10px;
   background: none;
   border: 1px solid var(--border-default);
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   border-radius: 4px;
   cursor: pointer;
   transition: all .15s;
 }
 .fp-clear-btn:hover {
   border-color: var(--border-strong);
-  color: rgba(255,255,255,.7);
+  color: rgba(var(--ink),.7);
 }
 .fp-clear-btn:disabled { opacity: .35; }
 
@@ -165,9 +165,9 @@
   padding: 6px 8px;
   font-size: 10px;
   font-weight: 600;
-  background: rgba(255,255,255,.06);
+  background: rgba(var(--ink),.06);
   border: 1px solid var(--border-default);
-  color: rgba(255,255,255,.5);
+  color: rgba(var(--ink),.5);
   border-radius: 4px;
   cursor: pointer;
   transition: all .15s;
@@ -181,8 +181,8 @@
   border-color: rgba(96,165,250,.45);
 }
 .fp-sp-btn:hover:not(:disabled) {
-  background: rgba(255,255,255,.09);
-  color: rgba(255,255,255,.8);
+  background: rgba(var(--ink),.09);
+  color: rgba(var(--ink),.8);
 }
 .fp-sp-btn.active {
   background: rgba(59,130,246,.25);
@@ -192,18 +192,18 @@
 .fp-sp-clear:hover:not(:disabled) {
   background: rgba(220,60,50,.1);
   border-color: rgba(220,60,50,.3);
-  color: #ff6b6b;
+  color: var(--danger-text);
 }
 .fp-sp-btn:disabled { opacity: .3; cursor: not-allowed; }
 
 .fp-sp-status {
   margin-top: 4px;
   font-size: 10px;
-  color: rgba(255,255,255,.35);
+  color: rgba(var(--ink),.35);
 }
 .fp-sp-status.hidden { display: none; }
-.fp-sp-status.fp-sp-ok    { color: #4ade80; }
-.fp-sp-status.fp-sp-error { color: #ff6b6b; }
+.fp-sp-status.fp-sp-ok    { color: var(--success-text); }
+.fp-sp-status.fp-sp-error { color: var(--danger-text); }
 
 /* ── Dynamic export controls ── */
 .fp-export-btns {
@@ -221,7 +221,7 @@
 
 .fp-export-label {
   font-size: 10px;
-  color: rgba(255,255,255,.35);
+  color: rgba(var(--ink),.35);
   white-space: nowrap;
   flex: 1;
   overflow: hidden;
@@ -233,9 +233,9 @@
   padding: 3px 7px;
   font-size: 10px;
   font-weight: 500;
-  background: rgba(255,255,255,.05);
+  background: rgba(var(--ink),.05);
   border: 1px solid var(--border-default);
-  color: rgba(255,255,255,.4);
+  color: rgba(var(--ink),.4);
   border-radius: 5px;
   cursor: pointer;
   transition: all .15s;
@@ -254,14 +254,14 @@
   max-height: 160px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.07) transparent;
+  scrollbar-color: rgba(var(--ink),.07) transparent;
 }
 
 .fp-job-card {
   padding: 7px 10px;
-  border-top: 1px solid rgba(255,255,255,.04);
+  border-top: 1px solid rgba(var(--ink),.04);
   font-size: 10px;
-  color: rgba(255,255,255,.5);
+  color: rgba(var(--ink),.5);
   line-height: 1.6;
 }
 .fp-job-card strong { color: var(--text-primary); }
@@ -277,7 +277,7 @@
   text-decoration: none;
 }
 .fp-job-dl:hover { text-decoration: underline; }
-.fp-job-error { color: #ff6b6b; }
+.fp-job-error { color: var(--danger-text); }
 
 /* ── Rules list ── */
 .fp-rules {
@@ -285,16 +285,16 @@
   overflow-y: auto;
   padding: 4px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.07) transparent;
+  scrollbar-color: rgba(var(--ink),.07) transparent;
   min-height: 0;
 }
 
 .fp-rule-row {
   padding: 7px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
-  background: rgba(255,255,255,.01);
+  border-bottom: 1px solid rgba(var(--ink),.04);
+  background: rgba(var(--ink),.01);
 }
-.fp-rule-row:hover { background: rgba(255,255,255,.025); }
+.fp-rule-row:hover { background: rgba(var(--ink),.025); }
 
 .fp-rule-top {
   display: flex;
@@ -347,7 +347,7 @@
 .fp-between-sep {
   flex-shrink: 0;
   font-size: 11px;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
 }
 
 .fp-remove-btn {
@@ -355,9 +355,9 @@
   width: 20px;
   height: 20px;
   border-radius: 3px;
-  border: 1px solid rgba(255,255,255,.09);
+  border: 1px solid rgba(var(--ink),.09);
   background: none;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
@@ -370,26 +370,26 @@
 .fp-remove-btn:hover {
   background: rgba(220,60,50,.12);
   border-color: rgba(220,60,50,.35);
-  color: #ff6b6b;
+  color: var(--danger-text);
 }
 
 .fp-rule-hint {
   margin-top: 3px;
   min-height: 13px;
   font-size: 10px;
-  color: rgba(255,255,255,.25);
+  color: rgba(var(--ink),.25);
 }
 
 /* Range derived from partial LiDAR coverage — lift it out of the faint
    hint colour so the caveat is actually read, not skimmed past. */
 .fp-rule-hint.fp-hint-partial {
-  color: rgba(251,191,36,.72);
+  color: var(--warning-text);
 }
 
 /* ── Add rule row ── */
 .fp-add-row {
   padding: 6px 10px;
-  border-top: 1px solid rgba(255,255,255,.04);
+  border-top: 1px solid rgba(var(--ink),.04);
   flex-shrink: 0;
 }
 
@@ -397,9 +397,9 @@
   width: 100%;
   padding: 5px;
   background: none;
-  border: 1px dashed rgba(255,255,255,.11);
+  border: 1px dashed rgba(var(--ink),.11);
   border-radius: 5px;
-  color: rgba(255,255,255,.3);
+  color: rgba(var(--ink),.3);
   font-size: 11px;
   cursor: pointer;
   transition: all .15s;
@@ -445,7 +445,7 @@
 
 .fp-result {
   font-size: 11px;
-  color: rgba(255,255,255,.4);
+  color: rgba(var(--ink),.4);
   min-height: 16px;
 }
 
@@ -459,7 +459,7 @@
   align-items: center;
   gap: 6px;
   padding-top: 7px;
-  border-top: 1px solid rgba(255,255,255,.05);
+  border-top: 1px solid rgba(var(--ink),.05);
   flex-wrap: wrap;
 }
 
@@ -470,6 +470,6 @@
 
 .fp-mask-hint {
   font-size: 10px;
-  color: rgba(255,255,255,.2);
+  color: rgba(var(--ink),.2);
   margin-left: auto;
 }

@@ -1,8 +1,12 @@
 'use strict';
 
-Chart.defaults.color = '#d1d5db';
-Chart.defaults.borderColor = '#374151';
-Chart.defaults.plugins.legend.labels.color = '#d1d5db';
+function _dpChartDefaults() {
+  const themed = ClimaScopeTheme.chart();
+  Chart.defaults.color = themed.text;
+  Chart.defaults.borderColor = themed.border;
+  Chart.defaults.plugins.legend.labels.color = themed.text;
+}
+_dpChartDefaults();
 
 const _DP_PALETTE = [
   '#4ade80','#60a5fa','#f59e0b','#a78bfa','#34d399',
@@ -32,9 +36,17 @@ class DashboardPie {
     this._aoiCells      = null;
     this._requestRevision = 0;
     this._requestController = null;
+    this._lastRender   = null;
     this._build();
     this._loadLcItems();
     this._loadHabitatItems();
+
+    // Canvas charts keep the colours they were drawn with, so redraw on a theme switch.
+    window.addEventListener('climascope:theme', () => {
+      _dpChartDefaults();
+      if (this._chart) { this._chart.destroy(); this._chart = null; }
+      if (this._lastRender) this._render(...this._lastRender);
+    });
 
     document.addEventListener('climascope:variable', e => {
       const v = e.detail?.variable || 'LCM';
@@ -145,6 +157,7 @@ class DashboardPie {
   }
 
   _render(data, scope) {
+    this._lastRender = [data, scope];
     const nameEl = this.el.querySelector('#dp-scope-name');
     if (nameEl) nameEl.textContent = this._scopeLabel(scope);
 
@@ -199,6 +212,7 @@ class DashboardPie {
     }
 
     const ctx = canvas.getContext('2d');
+    const themed = ClimaScopeTheme.chart();
     this._chart = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -206,7 +220,7 @@ class DashboardPie {
         datasets: [{
           data: values,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: themed.surface,
           borderWidth: 1.5,
           hoverBorderWidth: 2,
         }],
@@ -220,7 +234,7 @@ class DashboardPie {
             display: true,
             position: 'right',
             labels: {
-              color: '#d1d5db',
+              color: themed.text,
               font: { size: 11 },
               boxWidth: 9,
               boxHeight: 9,
@@ -231,7 +245,7 @@ class DashboardPie {
                   text: `${label}  ${datasets[0].data[i].toFixed(1)}%`,
                   fillStyle: datasets[0].backgroundColor[i],
                   strokeStyle: 'transparent',
-                  fontColor: '#d1d5db',
+                  fontColor: themed.text,
                   hidden: false,
                   index: i,
                 }));
@@ -239,9 +253,9 @@ class DashboardPie {
             },
           },
           tooltip: {
-            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-            titleColor: '#d1d5db',
-            bodyColor: '#d1d5db',
+            backgroundColor: themed.tooltip,
+            titleColor: themed.tooltipText,
+            bodyColor: themed.tooltipText,
             borderColor: '#3b82f6',
             borderWidth: 1,
             callbacks: {

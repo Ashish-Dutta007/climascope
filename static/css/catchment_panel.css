@@ -37,7 +37,7 @@
   display: flex;
   align-items: center;
   padding: 3px;
-  background: rgba(17,24,39,.94);
+  background: rgba(var(--surface),.94);
   border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,.32);
@@ -59,7 +59,7 @@
   background: transparent;
   border: none;
   border-radius: 7px;
-  color: rgba(249,250,251,.62);
+  color: rgba(var(--ink),.62);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .02em;
@@ -69,7 +69,7 @@
 
 .rp-tab:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,.06);
+  background: rgba(var(--ink),.06);
 }
 
 .rp-tab.active {
@@ -97,7 +97,7 @@
   border: none;
   border-left: 1px solid var(--border-subtle);
   background: transparent;
-  color: rgba(255,255,255,.55);
+  color: rgba(var(--ink),.55);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
@@ -107,7 +107,7 @@
 
 #rp-toggle:hover {
   color: var(--text-primary);
-  background: rgba(255,255,255,.06);
+  background: rgba(var(--ink),.06);
 }
 
 .rp-pane {
@@ -207,10 +207,10 @@
 
 .kp-var-btn {
   padding: 3px 8px;
-  background: rgba(255,255,255,.07);
+  background: rgba(var(--ink),.07);
   border: 1px solid var(--border-default);
   border-radius: 4px;
-  color: rgba(249,250,251,.6);
+  color: rgba(var(--ink),.6);
   font-size: 11px;
   cursor: pointer;
   transition: background .12s, color .12s;
@@ -224,7 +224,7 @@
 
 .kp-source-note {
   margin-top: 5px;
-  color: rgba(226,232,244,.58);
+  color: rgba(var(--ink),.58);
   font-size: 10px;
   line-height: 1.25;
 }
@@ -238,9 +238,9 @@
 .kp-meta-tag {
   font-size: 10px;
   padding: 2px 6px;
-  background: rgba(255,255,255,.06);
+  background: rgba(var(--ink),.06);
   border-radius: 3px;
-  color: rgba(249,250,251,.55);
+  color: rgba(var(--ink),.55);
 }
 
 .kp-legend {
@@ -257,13 +257,13 @@
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  color: rgba(249,250,251,.6);
+  color: rgba(var(--ink),.6);
 }
 
 .kp-legend-note {
   margin-left: auto;
   font-size: 10px;
-  color: rgba(249,250,251,.28);
+  color: rgba(var(--ink),.28);
   font-style: italic;
   white-space: nowrap;
 }
@@ -298,18 +298,18 @@
 .kp-metric-note {
   padding: 5px 14px 2px;
   font-size: 11px;
-  color: rgba(249,250,251,.45);
+  color: rgba(var(--ink),.45);
   font-style: italic;
 }
 
 .kp-loading, .kp-error, .kp-empty {
   padding: 24px 14px;
   font-size: 12px;
-  color: rgba(249,250,251,.4);
+  color: rgba(var(--ink),.4);
   text-align: center;
 }
 
-.kp-error { color: #f87171; }
+.kp-error { color: var(--danger-text); }
 
 .kp-row {
   padding: 6px 14px;
@@ -330,14 +330,14 @@
 
 .kp-type-area {
   font-size: 10px;
-  color: rgba(249,250,251,.45);
+  color: rgba(var(--ink),.45);
   white-space: nowrap;
   margin-left: 6px;
 }
 
 .kp-bar-wrap {
   height: 12px;
-  background: rgba(255,255,255,.04);
+  background: rgba(var(--ink),.04);
   border-radius: 3px;
   overflow: visible;
 }
@@ -360,10 +360,10 @@
 /* ── Compare toggle button ── */
 .kp-compare-btn {
   padding: 3px 8px;
-  background: rgba(255,255,255,.07);
+  background: rgba(var(--ink),.07);
   border: 1px solid var(--border-default);
   border-radius: 4px;
-  color: rgba(249,250,251,.6);
+  color: rgba(var(--ink),.6);
   font-size: 11px;
   cursor: pointer;
   transition: background .12s, color .12s;
@@ -379,7 +379,7 @@
 /* ── Compare-mode group ── */
 .kp-compare-group {
   padding: 6px 14px 5px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(var(--ink),.04);
 }
 .kp-compare-group:last-child { border-bottom: none; }
 
@@ -400,7 +400,7 @@
 
 .kp-cg-period {
   font-size: 9px;
-  color: rgba(249,250,251,.38);
+  color: rgba(var(--ink),.38);
   width: 62px;
   white-space: nowrap;
   flex-shrink: 0;
@@ -411,7 +411,7 @@
 .kp-cg-bar-wrap {
   flex: 1;
   height: 9px;
-  background: rgba(255,255,255,.04);
+  background: rgba(var(--ink),.04);
   border-radius: 2px;
   overflow: visible;
 }
