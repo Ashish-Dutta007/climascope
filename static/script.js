@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const $ = id => document.getElementById(id);
+  // The proxy can refuse theme.js under load (HTTP 429): keep the dark page working rather than break the map.
+  const Theme = window.ClimaScopeTheme || { get: () => 'dark', chart: () => ({}) };
+  if (!window.ClimaScopeTheme) $('theme-toggle')?.remove();
   const _ukCalendarMonth = () => Number(new Intl.DateTimeFormat('en-GB', {
     month: 'numeric', timeZone: 'Europe/London'
   }).format(new Date()));
@@ -317,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let aoiGeoJSON      = null;       // drawn / uploaded AOI (kept for map layer)
   let refreshTimer    = null;
   let _layerLoadRevision = 0;
-  let currentBasemap   = ClimaScopeTheme.get();   // 'dark' or 'light' grey to match the page
+  let currentBasemap   = Theme.get();   // 'dark' or 'light' grey to match the page
   let _lastLayerState  = { geojson: null, dataMin: null, dataMax: null };
   let _filterMaskState = { ids: null, mode: 'none' };
   let _filterCellsGJ   = null;   // persisted filter-cells GeoJSON for basemap-switch re-apply
@@ -1809,7 +1812,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'aoi-line':          ['line-color', '#00d4ff', '#0284c7'],
   };
   function applyMapTheme() {
-    const light = ClimaScopeTheme.get() === 'light';
+    const light = Theme.get() === 'light';
     for (const [id, [prop, dark, lightValue]] of Object.entries(THEMED_PAINT)) {
       if (map.getLayer(id)) map.setPaintProperty(id, prop, light ? lightValue : dark);
     }
@@ -2874,7 +2877,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ctx = canvas.getContext('2d');
       if (canvas._chart) canvas._chart.destroy();
       const activeM = +($('month')?.value || 0);
-      const themed = ClimaScopeTheme.chart();
+      const themed = Theme.chart();
       canvas._chart = new Chart(ctx, {
         type:'line',
         data:{

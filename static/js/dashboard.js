@@ -1,7 +1,8 @@
 'use strict';
 
 function _dpChartDefaults() {
-  const themed = ClimaScopeTheme.chart();
+  const themed = window.ClimaScopeTheme?.chart();   // missing if the proxy refused theme.js
+  if (!themed) return;
   Chart.defaults.color = themed.text;
   Chart.defaults.borderColor = themed.border;
   Chart.defaults.plugins.legend.labels.color = themed.text;
@@ -212,7 +213,7 @@ class DashboardPie {
     }
 
     const ctx = canvas.getContext('2d');
-    const themed = ClimaScopeTheme.chart();
+    const themed = window.ClimaScopeTheme?.chart() || {};
     this._chart = new Chart(ctx, {
       type: 'doughnut',
       data: {

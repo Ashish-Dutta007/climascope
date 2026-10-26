@@ -263,7 +263,7 @@ class CatchmentPanel {
       + '<div class="kp-chart-wrap"><canvas></canvas></div>';
 
     const canvas = body.querySelector('canvas');
-    const themed = ClimaScopeTheme.chart();
+    const themed = window.ClimaScopeTheme?.chart() || {};
     this._chart = new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: { labels, datasets },

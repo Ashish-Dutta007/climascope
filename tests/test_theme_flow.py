@@ -54,6 +54,19 @@ class ThemeFlows(unittest.TestCase):
         self.wait(page, lambda: page.evaluate(THEME)["basemap"] == "light", "light again")
         self.assertEqual(self.errors, [])
 
+    def test_page_still_works_in_dark_if_the_proxy_refuses_theme_js(self):
+        page = self.browser.new_context(viewport={"width": 1440, "height": 900}, color_scheme="light").new_page()
+        page.on("pageerror", lambda e: self.errors.append(str(e)))
+        page.route("**/static/js/theme.js*", lambda route: route.fulfill(status=429, body="Too Many Requests"))
+        page.goto(BASE + "/")
+        page.click("#mode-dashboard")
+        self.wait(page, lambda: page.locator("#dash-climate .cp-card").count() == 3, "climate cards without theme.js")
+        page.click("#dash-tab-land")
+        self.wait(page, lambda: page.locator("#kp-body canvas").count() == 1, "land-use chart without theme.js")
+        self.assertEqual(page.evaluate(THEME)["sidebar"], "rgb(17, 24, 39)")
+        self.assertEqual(page.locator("#theme-toggle").count(), 0)
+        self.assertEqual(self.errors, [])
+
     def test_wall_stays_dark_on_a_light_device(self):
         page = self.browser.new_context(viewport={"width": 1920, "height": 1200}, color_scheme="light").new_page()
         page.goto(BASE + "/immersive?fresh=1&scene=local-climate&month=7")
