@@ -61,7 +61,7 @@ class ProfileFlows(unittest.TestCase):
         page.click('#dash-tab-climate')
         page.get_by_role('button', name='Council', exact=True).click()
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'Perth and Kinross', 'council climate')
-        page.get_by_role('button', name='This location', exact=True).click()
+        page.get_by_role('button', name='1 km cell', exact=True).click()
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'PH2 7HP', 'return to cell')
         page.select_option('#climate-member','07')
         self.wait(page, lambda: 'Member 07' in page.locator('.cp-footnote').inner_text(), 'selected member')
@@ -84,7 +84,7 @@ class ProfileFlows(unittest.TestCase):
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'AB15 8QH', 'second postcode')
         page.get_by_role('button',name='Catchment',exact=True).click()
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'Hol Burn : 23244', 'postcode catchment')
-        page.get_by_role('button',name='This location',exact=True).click()
+        page.get_by_role('button',name='1 km cell',exact=True).click()
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'AB15 8QH', 'return from catchment')
         page.locator('#map').click(position={'x':650,'y':180})
         self.wait(page, lambda: page.locator('.profile-heading h2').inner_text() == 'Selected location', 'map click selects climate profile')
@@ -251,7 +251,7 @@ class ProfileFlows(unittest.TestCase):
                 cell_id = locations[code.replace(' ','')]['id']
                 self.wait(page,lambda:page.locator('.profile-heading h2').inner_text()==code and
                           not page.locator('#dash-climate .profile-status').inner_text(),'cell '+code)
-                self.assertEqual(page.get_by_role('button',name='This location',exact=True).get_attribute('aria-pressed'),'true')
+                self.assertEqual(page.get_by_role('button',name='1 km cell',exact=True).get_attribute('aria-pressed'),'true')
                 self.assertEqual(page.locator('#council').input_value(),'Perth and Kinross')
                 self.assertTrue(page.locator('#map .maplibregl-marker').is_visible())
                 profile_scopes = [parse_qs(urlsplit(url).query)['scope'][0] for url in calls[before:] if '/api/climate/profile?' in url]

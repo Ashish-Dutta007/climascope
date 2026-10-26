@@ -82,7 +82,7 @@ class DesktopScopeFlows(unittest.TestCase):
         self.assertEqual(page.locator('#dash-land-context').inner_text(), '')
         self.assertIn('Choose a location', page.locator('.profile-status').inner_text())
         self.wait(lambda: 'Drawn area' in page.locator('#kp-scope-label').inner_text(), 'drawn catchment shares')
-        page.get_by_role('button', name='This location', exact=True).click()
+        page.get_by_role('button', name='1 km cell', exact=True).click()
         self.wait(lambda: page.locator('.profile-heading h2').count() == 1 and
                   page.locator('.profile-heading h2').inner_text() == 'AB15 8QH', 'return to postcode')
         self.assertEqual(page.locator('.cp-card').count(), 3)
@@ -140,6 +140,84 @@ class DesktopScopeFlows(unittest.TestCase):
         page.wait_for_timeout(400)
         self.assertEqual(page.evaluate('() => scopeFits'), fits)
         self.assertEqual(page.locator('.profile-heading h2').inner_text(), 'Fife')
+
+    def test_postcodes_keep_their_cell_outline_and_council_context(self):
+        page = self.page
+        page.evaluate('''() => {
+            const fit = maplibregl.Map.prototype.fitBounds;
+            maplibregl.Map.prototype.fitBounds = function (...args) {
+                window.selectedMap = this;
+                return fit.apply(this, args);
+            };
+        }''')
+        # A postcode inside a catchment and one outside must behave alike,
+        # including revisiting a previous postcode and searching from the map.
+        for postcode, council, search in (
+            ('AB15 8QH', 'Aberdeen City', 'dashboard'),
+            ('PH2 7HP', 'Perth and Kinross', 'dashboard'),
+            ('AB15 8QH', 'Aberdeen City', 'map'),
+            ('HS1 2BW', 'Na h-Eileanan Siar', 'dashboard'),
+        ):
+            with self.subTest(postcode=postcode, search=search):
+                if search == 'dashboard':
+                    page.fill('#climate-postcode', postcode)
+                    page.click('#dash-climate button[type=submit]')
+                else:
+                    page.fill('#search-input', postcode)
+                    page.get_by_role('option', name=postcode, exact=False).click()
+                self.wait(lambda: page.locator('.profile-heading h2').count() and
+                          page.locator('.profile-heading h2').inner_text() == postcode and
+                          not page.locator('.profile-status').inner_text(), postcode)
+                location = page.request.get(BASE + '/api/location', params={'postcode':postcode}).json()
+                self.wait(lambda: page.evaluate('''geometry =>
+                    JSON.stringify(selectedMap.getSource('climate-cell')._data.geometry) ===
+                    JSON.stringify(geometry)''', location['geometry']), 'current outline')
+                self.assertEqual(page.locator('#council').input_value(), council)
+                self.assertEqual(page.locator('#catchment').input_value(), '')
+                self.assertEqual(page.get_by_role('button', name='1 km cell', exact=True).get_attribute('aria-pressed'), 'true')
+                self.assertIn(postcode, page.locator('.legend-selection').inner_text())
+                self.wait(lambda: 'Context mean' in page.locator('#legend').inner_text(), 'map context')
+                self.assertIn('Map context: ' + council, page.locator('#legend').inner_text())
+                page.wait_for_timeout(700)  # includes delayed dashboard resizes
+                view = page.evaluate('''location => {
+                    const map = selectedMap, canvas = map.getCanvas();
+                    const points = [...location.geometry.coordinates[0], [location.longitude, location.latitude]];
+                    return {moving:map.isMoving(), zoom:map.getZoom(),
+                        visible:points.every(point => { const p=map.project(point);
+                            return p.x>0 && p.x<canvas.clientWidth && p.y>0 && p.y<canvas.clientHeight; })};
+                }''', location)
+                self.assertFalse(view['moving'])
+                self.assertTrue(view['visible'])
+                self.assertGreater(view['zoom'], 11)
+        self.assertIn('Nearest 1 km climate cell', page.locator('.profile-heading').inner_text())
+
+    def test_late_catchment_boundary_cannot_replace_a_postcode_council(self):
+        page = self.page
+        page.fill('#climate-postcode', 'AB15 8QH')
+        page.click('#dash-climate button[type=submit]')
+        self.wait(lambda: page.locator('.profile-heading h2').count() and
+                  page.locator('.profile-heading h2').inner_text() == 'AB15 8QH', 'postcode')
+        held = []
+        page.route('**/api/catchments/*/geometry', lambda route: held.append(route))
+        page.get_by_role('button', name='Catchment', exact=True).click()
+        self.wait(lambda: bool(held), 'held boundary')
+        page.get_by_role('button', name='1 km cell', exact=True).click()
+        self.wait(lambda: page.locator('#catchment').input_value() == '', 'cell council context')
+        page.evaluate('''() => {
+            const resize = maplibregl.Map.prototype.resize;
+            maplibregl.Map.prototype.resize = function (...args) {
+                window.selectedMap=this; return resize.apply(this,args);
+            };
+        }''')
+        page.dispatch_event('#dash-tab-climate', 'click')
+        self.wait(lambda: page.evaluate('() => !!window.selectedMap'), 'map resize')
+        for route in held:
+            route.fulfill(json={'type':'FeatureCollection','features':[{
+                'type':'Feature','properties':{},'geometry':{'type':'Point','coordinates':[0,0]}
+            }]})
+        page.wait_for_timeout(300)
+        data = page.evaluate("() => selectedMap.getSource('catchment-boundary')._data")
+        self.assertEqual(data['features'], [])
 
     def test_future_cwr_explains_its_missing_grid_for_catchment_and_drawn_area(self):
         page = self.page

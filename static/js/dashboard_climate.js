@@ -99,7 +99,7 @@
       const holder = this.el.querySelector('.profile-scopes');
       holder.replaceChildren();
       if (!this.location) return;
-      [['cell', 'This location'], ['catchment', 'Catchment'], ['council', 'Council']].forEach(([kind, label]) => {
+      [['cell', '1 km cell'], ['catchment', 'Catchment'], ['council', 'Council']].forEach(([kind, label]) => {
         if (kind !== 'cell' && !this.location[kind]) return;
         const button = document.createElement('button'); button.type = 'button';
         button.textContent = label;

@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function _selectClimateScope(kind, location) {
     _initClimateDashboard().setLocation(location);
     climateCellSelected = kind === 'cell';
-    const regionalKind = kind === 'cell' ? (location.catchment ? 'catchment' : 'council') : kind;
+    const regionalKind = kind === 'cell' ? 'council' : kind;
     const selector = $(regionalKind);
     selectingClimateScope = true;
     try {
@@ -85,9 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (climateMarker) climateMarker.remove();
     climateMarker = new maplibregl.Marker({color:'#f4d06f'}).setLngLat([location.longitude, location.latitude]).addTo(map);
     _showClimateCell(climateCellSelected ? location : null);
+    updateLegend(null);
     _setDashboardTab(true);
     if (mode !== 'dashboard') initMode('dashboard');
-    if (climateCellSelected) map.flyTo({center:[location.longitude, location.latitude], zoom:11});
+    if (climateCellSelected) {
+      map.resize();
+      _fitClimateCell();
+    }
     _emitStateChange();
   }
 
@@ -95,7 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function _showClimateCell(location) {
     climateCell = location && location.geometry ? location : null;
     const data = climateCell ? { type:'Feature', geometry: climateCell.geometry, properties:{} } : emptyFC();
-    if (!map.isStyleLoaded()) { map.once('idle', () => _showClimateCell(climateCell)); return; }
+    // Data downloads can make isStyleLoaded() false even when layers are ready.
+    // Update the outline immediately; reapplyLayer restores it after a style change.
+    if (!map.getSource(SRC.grid)) return;
     if (map.getSource('climate-cell')) { map.getSource('climate-cell').setData(data); return; }
     map.addSource('climate-cell', { type:'geojson', data });
     map.addLayer({ id:'climate-cell-halo', type:'line', source:'climate-cell', paint:{ 'line-color':'#101827', 'line-width':6 } });
@@ -377,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function _fitActiveScope(duration = 700) {
+    if (climateCellSelected && climateCell) { _fitClimateCell(); return; }
     if (activeCatchment) {
       const selected = catchmentsData.find(c => c.name === activeCatchment);
       if (selected?.bbox) {
@@ -394,6 +401,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     _fitScotland(duration);
+  }
+
+  function _fitClimateCell() {
+    if (!climateCell) return;
+    const bounds = geomBbox(climateCell.geometry);
+    if (!bounds) return;
+    const [sw, ne] = bounds;
+    const dx = (ne[0] - sw[0]) * 1.5, dy = (ne[1] - sw[1]) * 1.5;
+    const point = [climateCell.longitude, climateCell.latitude];
+    map.fitBounds([
+      [Math.min(sw[0], point[0]) - dx, Math.min(sw[1], point[1]) - dy],
+      [Math.max(ne[0], point[0]) + dx, Math.max(ne[1], point[1]) + dy],
+    ], {padding:40, maxZoom:13, duration:0});
   }
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -1751,8 +1771,10 @@ document.addEventListener('DOMContentLoaded', () => {
         paint:{ 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0, 9, 0.9] } });
 
     if (activeCatchment) {
-      fetch(`/api/catchments/${encodeURIComponent(activeCatchment)}/geometry`)
-        .then(r => r.ok ? r.json() : emptyFC()).then(gj => setData(SRC.catchment, gj)).catch(() => {});
+      const selectedCatchment = activeCatchment;
+      fetch(`/api/catchments/${encodeURIComponent(selectedCatchment)}/geometry`)
+        .then(r => r.ok ? r.json() : emptyFC())
+        .then(gj => { if (activeCatchment === selectedCatchment) setData(SRC.catchment, gj); }).catch(() => {});
     }
     if (activeCouncil && councilsGJ) {
       const feat = councilsGJ.features.find(f => f.properties.council_name === activeCouncil);
@@ -2085,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (feat) {
         setData(SRC.council, { type:'FeatureCollection', features:[feat] });
         const bb = geomBbox(feat.geometry);
-        if (bb) map.fitBounds(bb, { padding: 40, duration: 700 });
+        if (bb && !climateCellSelected) map.fitBounds(bb, { padding: 40, duration: 700 });
       }
     }
 
@@ -2138,15 +2160,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const cd = catchmentsData.find(c => c.name === activeCatchment);
-    if (cd?.bbox) {
+    if (cd?.bbox && !climateCellSelected) {
       const b = cd.bbox;
       map.fitBounds([[b.west, b.south], [b.east, b.north]], { padding: 40, duration: 700 });
     }
 
-    fetch(`/api/catchments/${encodeURIComponent(activeCatchment)}/geometry`)
+    const selectedCatchment = activeCatchment;
+    fetch(`/api/catchments/${encodeURIComponent(selectedCatchment)}/geometry`)
       .then(r => r.ok ? r.json() : emptyFC())
-      .then(gj => setData(SRC.catchment, gj))
-      .catch(() => setData(SRC.catchment, emptyFC()));
+      .then(gj => { if (activeCatchment === selectedCatchment) setData(SRC.catchment, gj); })
+      .catch(() => { if (activeCatchment === selectedCatchment) setData(SRC.catchment, emptyFC()); });
 
     if (_clearAoiForScopeChange()) return;
     loadLayer();
@@ -2337,7 +2360,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const valueContext = isBaseline
       ? 'Observed values (1990–2019 baseline)'
       : `${memberLabel} · Change from 1990–2019 baseline`;
-    const subtitle = `${scopeLabel} · ${valueContext}`;
+    const cellContext = climateCellSelected && climateCell;
+    const selection = cellContext
+      ? `<div class="legend-selection">${ClimaScopeProfile.escape(climateCell.name)} · outlined 1 km cell</div>` : '';
+    const subtitle = `${cellContext ? 'Map context: ' : ''}${scopeLabel} · ${valueContext}`;
     let minVal = null, maxVal = null, mean = null, cellCount = null;
 
     if (stats) {
@@ -2356,7 +2382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (minVal === null) {
-      legend.innerHTML = `<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
+      legend.innerHTML = `${selection}<div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
         <div class="legend-subtitle">${subtitle}</div>`;
       return;
     }
@@ -2394,6 +2420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     legend.innerHTML = `
+      ${selection}
       <div class="legend-title">${label} <span style="opacity:.35;font-weight:400">${units}</span></div>
       <div class="legend-subtitle">${subtitle}</div>
       <div class="legend-ramp-wrap">
@@ -2406,7 +2433,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ${mean!==null?`<div class="legend-stats">
         Period: <span>${period}</span><br>
         ${cellCount!=null?`Cells: <span>${cellCount.toLocaleString()}</span><br>`:''}
-        Mean: <span>${mean.toFixed(1)} ${units}</span><br>
+        ${cellContext ? 'Context mean' : 'Mean'}: <span>${mean.toFixed(1)} ${units}</span><br>
         Range: <span>${minVal.toFixed(1)} – ${maxVal.toFixed(1)}</span>
       </div>`:''}`;
   }
