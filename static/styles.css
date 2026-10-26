@@ -1197,6 +1197,7 @@ input[type=range]::-moz-range-thumb {
 :root[data-theme="light"] .search-tag-catchment { color: #7c2d12; }
 :root[data-theme="light"] .search-tag-tile      { color: #155e75; }
 :root[data-theme="light"] .fp-sp-btn.fp-sp-primary { color: #1e3a8a; }
+:root[data-theme="light"] #legend .legend-selection { color: #8a6400; }   /* amber of the cell outline, readable on white */
 :root[data-theme="light"] .maplibregl-popup-content,
 :root[data-theme="light"] .maplibregl-ctrl-group { box-shadow: 0 2px 10px rgba(15,23,42,.18) !important; }
 
